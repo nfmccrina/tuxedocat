@@ -23,11 +23,6 @@ namespace TuxedoCat
             {
                 return location;
             }
-            set
-            {
-                Debug.Assert(value >= 0 && value < 64);
-                location = value;
-            }
         }
 
         public PieceRank Rank
