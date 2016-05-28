@@ -71,42 +71,26 @@ namespace TuxedoCat
 
         public CastlingInfo ReadCastlingInfoFromFEN(string fen)
         {
-            CastlingInfo info;
+            CastlingInfo info = CastlingInfo.NONE;
 
             if (fen.Contains("K"))
             {
-                info.WhiteCanCastleShort = true;
-            }
-            else
-            {
-                info.WhiteCanCastleShort = false;
+                info = info | CastlingInfo.WHITE_SHORT;
             }
 
             if (fen.Contains("Q"))
             {
-                info.WhiteCanCastleLong = true;
-            }
-            else
-            {
-                info.WhiteCanCastleLong = false;
+                info = info | CastlingInfo.WHITE_LONG;
             }
 
             if (fen.Contains("k"))
             {
-                info.BlackCanCastleShort = true;
-            }
-            else
-            {
-                info.BlackCanCastleShort = false;
+                info = info | CastlingInfo.BLACK_SHORT;
             }
 
             if (fen.Contains("q"))
             {
-                info.BlackCanCastleLong = true;
-            }
-            else
-            {
-                info.BlackCanCastleLong = false;
+                info = info | CastlingInfo.BLACK_LONG;
             }
 
             return info;

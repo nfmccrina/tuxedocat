@@ -1,10 +1,14 @@
-﻿namespace TuxedoCat
+﻿using System;
+
+namespace TuxedoCat
 {
-    public struct CastlingInfo
+    [Flags]
+    public enum CastlingInfo
     {
-        public bool WhiteCanCastleShort;
-        public bool WhiteCanCastleLong;
-        public bool BlackCanCastleShort;
-        public bool BlackCanCastleLong;
+        NONE = 0,
+        WHITE_SHORT = 1,
+        WHITE_LONG = 2,
+        BLACK_SHORT = 4,
+        BLACK_LONG = 8
     }
 }

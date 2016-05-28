@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace TuxedoCat
 {
-    struct Position
+    public class Position
     {
         public Position(string fen)
         {
@@ -24,6 +25,56 @@ namespace TuxedoCat
             fullMoveCounter = parser.ReadFullMovesFromFEN(fenParts[5]);
         }
 
+        public override int GetHashCode()
+        {
+            int hash = 17;
+
+            hash = (hash * 23) + pieces.GetHashCode();
+            hash = (hash * 23) + castlingInfo.GetHashCode();
+            hash = (hash * 23) + fullMoveCounter.GetHashCode();
+
+
+            return hash;
+        }
+
+        public override bool Equals(object obj)
+        {
+            if (obj == null || GetType() != obj.GetType())
+            {
+                return false;
+            }
+
+            Position pos2 = (Position)obj;
+
+            bool piecesAreEqual = true;
+
+            foreach (Piece p in Pieces)
+            {
+                if (!pos2.Pieces.Contains(p))
+                {
+                    piecesAreEqual = false;
+                    break;
+                }
+            }
+
+            return piecesAreEqual
+                && (CastlingInfo == pos2.CastlingInfo)
+                && (ColorToMove == pos2.ColorToMove)
+                && (EnPassantTarget == pos2.EnPassantTarget)
+                && (FullMoveCounter == pos2.FullMoveCounter)
+                && (HalfMoveCounter == pos2.HalfMoveCounter);
+        }
+
+        public static bool operator ==(Position pos1, Position pos2)
+        {
+            return pos1.Equals(pos2);
+        }
+
+        public static bool operator !=(Position pos1, Position pos2)
+        {
+            return !(pos1 == pos2);
+        }
+
         public IReadOnlyList<Piece> Pieces
         {
             get
@@ -32,35 +83,11 @@ namespace TuxedoCat
             }
         }
 
-        public bool WhiteCanCastleShort
+        public CastlingInfo CastlingInfo
         {
             get
             {
-                return castlingInfo.WhiteCanCastleShort;
-            }
-        }
-
-        public bool WhiteCanCastleLong
-        {
-            get
-            {
-                return castlingInfo.WhiteCanCastleLong;
-            }
-        }
-
-        public bool BlackCanCastleShort
-        {
-            get
-            {
-                return castlingInfo.BlackCanCastleShort;
-            }
-        }
-
-        public bool BlackCanCastleLong
-        {
-            get
-            {
-                return castlingInfo.BlackCanCastleLong;
+                return castlingInfo;
             }
         }
 
@@ -96,14 +123,16 @@ namespace TuxedoCat
             }
         }
 
-        public void ApplyMove(Move mv)
+        public void Make(Move mv)
         {
             enPassantTarget = null;
-            halfMoveCounter++;
+            halfMoveCounter = mv.CurrentHalfMoves + 1;
 
-            if (pieces.Find(p => p.Location == mv.SourceLocation).Rank == PieceRank.KING && Math.Abs(mv.SourceLocation - mv.TargetLocation) > 1)
+            if (pieces.Find(p => p.Location == mv.SourceLocation).Rank == PieceRank.KING && Math.Abs((mv.SourceLocation % 8) - (mv.TargetLocation % 8)) > 1)
             {
                 // castle
+
+                halfMoveCounter = 0;
 
                 if (mv.SourceLocation == 4 && mv.TargetLocation == 2)
                 {
@@ -114,8 +143,8 @@ namespace TuxedoCat
 
                     pieces.RemoveAll(p => p.Location == 0 || p.Location == 4);
 
-                    castlingInfo.WhiteCanCastleLong = false;
-                    castlingInfo.WhiteCanCastleShort = false;
+                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
                 }
                 else if(mv.SourceLocation == 4 && mv.TargetLocation == 6)
                 {
@@ -126,8 +155,8 @@ namespace TuxedoCat
 
                     pieces.RemoveAll(p => p.Location == 7 || p.Location == 4);
 
-                    castlingInfo.WhiteCanCastleLong = false;
-                    castlingInfo.WhiteCanCastleShort = false;
+                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
                 }
                 else if(mv.SourceLocation == 60 && mv.TargetLocation == 58)
                 {
@@ -138,8 +167,8 @@ namespace TuxedoCat
 
                     pieces.RemoveAll(p => p.Location == 56 || p.Location == 60);
 
-                    castlingInfo.BlackCanCastleLong = false;
-                    castlingInfo.BlackCanCastleShort = false;
+                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
                 }
                 else if(mv.SourceLocation == 60 && mv.TargetLocation == 62)
                 {
@@ -150,69 +179,90 @@ namespace TuxedoCat
 
                     pieces.RemoveAll(p => p.Location == 63 || p.Location == 60);
 
-                    castlingInfo.BlackCanCastleLong = false;
-                    castlingInfo.BlackCanCastleShort = false;
+                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
                 }
             }
             else
             {
                 // not a castle
 
-                if (mv.MovingPiece.Rank == PieceRank.PAWN)
+                if (mv.MovingPiece == PieceRank.PAWN)
                 {
+                    // pawn move
+
                     halfMoveCounter = 0;
 
-                    if (mv.TargetLocation == (mv.SourceLocation + 16))
+                    if (mv.CapturedPiece.HasValue)
                     {
-                        enPassantTarget = mv.SourceLocation + 8;
+                        if (mv.TargetLocation == mv.CurrentEnPassant)
+                        {
+                            pieces.RemoveAll(p => p.Location == (mv.MoveColor == PieceColor.WHITE ? (mv.TargetLocation - 8) : (mv.TargetLocation + 8)));
+                        }
+                        else
+                        {
+                            pieces.RemoveAll(p => p.Location == mv.TargetLocation);
+                        }
                     }
-                    else if (mv.TargetLocation == (mv.SourceLocation - 16))
+                    else
                     {
-                        enPassantTarget = mv.SourceLocation - 8;
+                        if (mv.TargetLocation == (mv.SourceLocation + 16))
+                        {
+                            enPassantTarget = mv.SourceLocation + 8;
+                        }
+                        else if (mv.TargetLocation == (mv.SourceLocation - 16))
+                        {
+                            enPassantTarget = mv.SourceLocation - 8;
+                        }
                     }
-                }
 
-                if (mv.MovingPiece.Rank == PieceRank.ROOK && mv.MovingPiece.Color == PieceColor.WHITE
-                    && mv.SourceLocation == 0)
-                {
-                    castlingInfo.WhiteCanCastleLong = false;
+                    pieces.Add(new Piece(mv.TargetLocation, mv.PromotedRank.HasValue ? mv.PromotedRank.Value : mv.MovingPiece, mv.MoveColor));
+                    pieces.RemoveAll(p => p.Location == mv.SourceLocation);
                 }
-                else if (mv.MovingPiece.Rank == PieceRank.ROOK && mv.MovingPiece.Color == PieceColor.WHITE
-                    && mv.SourceLocation == 7)
+                else
                 {
-                    castlingInfo.WhiteCanCastleShort = false;
-                }
-                else if (mv.MovingPiece.Rank == PieceRank.ROOK && mv.MovingPiece.Color == PieceColor.BLACK
-                    && mv.SourceLocation == 56)
-                {
-                    castlingInfo.BlackCanCastleLong = false;
-                }
-                else if (mv.MovingPiece.Rank == PieceRank.ROOK && mv.MovingPiece.Color == PieceColor.BLACK
-                    && mv.SourceLocation == 63)
-                {
-                    castlingInfo.BlackCanCastleShort = false;
-                }
+                    if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
+                        && mv.SourceLocation == 0)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                    }
+                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
+                        && mv.SourceLocation == 7)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                    }
+                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
+                        && mv.SourceLocation == 56)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                    }
+                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
+                        && mv.SourceLocation == 63)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                    }
 
-                if (mv.MovingPiece.Rank == PieceRank.KING && mv.MovingPiece.Color == PieceColor.WHITE)
-                {
-                    castlingInfo.WhiteCanCastleLong = false;
-                    castlingInfo.WhiteCanCastleShort = false;
-                }
-                else if (mv.MovingPiece.Rank == PieceRank.KING && mv.MovingPiece.Color == PieceColor.BLACK)
-                {
-                    castlingInfo.BlackCanCastleLong = false;
-                    castlingInfo.BlackCanCastleShort = false;
-                }
+                    if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.WHITE)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                    }
+                    else if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.BLACK)
+                    {
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                    }
 
-                if (mv.CapturedPiece.HasValue)
-                {
-                    // a capture!
-                    pieces.RemoveAll(p => p.Location == mv.CapturedPiece.Value.Location); // he gone
-                    halfMoveCounter = 0;
-                }
+                    if (mv.CapturedPiece.HasValue)
+                    {
+                        // a capture!
+                        pieces.RemoveAll(p => p.Location == mv.TargetLocation); // he gone
+                        halfMoveCounter = 0;
+                    }
 
-                pieces.Add(new Piece(mv.TargetLocation, mv.PromotedRank.HasValue ? mv.PromotedRank.Value : mv.MovingPiece.Rank, mv.MovingPiece.Color));
-                pieces.RemoveAll(p => p.Location == mv.SourceLocation);
+                    pieces.Add(new Piece(mv.TargetLocation, mv.MovingPiece, mv.MoveColor));
+                    pieces.RemoveAll(p => p.Location == mv.SourceLocation);
+                }
             }
 
             if (colorToMove == PieceColor.WHITE)
@@ -223,6 +273,85 @@ namespace TuxedoCat
             {
                 colorToMove = PieceColor.WHITE;
                 fullMoveCounter++;
+            }
+        }
+
+        public void Unmake(Move mv)
+        {
+            pieces.Add(new Piece(mv.SourceLocation, mv.MovingPiece, mv.MoveColor));
+            pieces.RemoveAll(p => p.Location == mv.TargetLocation);
+
+            if (mv.MovingPiece == PieceRank.KING && Math.Abs((mv.TargetLocation % 8) - (mv.SourceLocation % 8)) > 1)
+            {
+                int oldRookLocation = -1;
+                int newRookLocation = -1;
+
+                if (mv.SourceLocation == 4 && mv.TargetLocation == 6)
+                {
+                    oldRookLocation = 5;
+                    newRookLocation = 7;
+                }
+                else if (mv.SourceLocation == 4 && mv.TargetLocation == 2)
+                {
+                    oldRookLocation = 3;
+                    newRookLocation = 0;
+                }
+                else if (mv.SourceLocation == 60 && mv.TargetLocation == 62)
+                {
+                    oldRookLocation = 61;
+                    newRookLocation = 63;
+                }
+                else if (mv.SourceLocation == 60 && mv.TargetLocation == 58)
+                {
+                    oldRookLocation = 59;
+                    newRookLocation = 56;
+                }
+
+                pieces.RemoveAll(p => p.Location == mv.TargetLocation);
+                pieces.RemoveAll(p => p.Location == oldRookLocation);
+
+                pieces.Add(new Piece(mv.SourceLocation, PieceRank.KING,
+                    mv.MoveColor == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK));
+
+                pieces.Add(new Piece(newRookLocation, PieceRank.ROOK,
+                    mv.MoveColor == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK));
+            }
+
+            if (mv.CapturedPiece.HasValue)
+            {
+                if (mv.CurrentEnPassant.HasValue && mv.MovingPiece == PieceRank.PAWN
+                    && mv.TargetLocation == mv.CurrentEnPassant)
+                {
+                    if (mv.MoveColor == PieceColor.WHITE)
+                    {
+                        pieces.Add(new Piece(mv.TargetLocation - 8, mv.CapturedPiece.Value, PieceColor.BLACK));
+                    }
+                    else
+                    {
+                        pieces.Add(new Piece(mv.TargetLocation + 8, mv.CapturedPiece.Value, PieceColor.WHITE));
+                    }
+                }
+                else
+                {
+                    if (mv.MoveColor == PieceColor.WHITE)
+                    {
+                        pieces.Add(new Piece(mv.TargetLocation, mv.CapturedPiece.Value, PieceColor.BLACK));
+                    }
+                    else
+                    {
+                        pieces.Add(new Piece(mv.TargetLocation, mv.CapturedPiece.Value, PieceColor.WHITE));
+                    }
+                }
+            }
+
+            colorToMove = mv.MoveColor;
+            castlingInfo = mv.CurrentCastlingInfo;
+            enPassantTarget = mv.CurrentEnPassant;
+            halfMoveCounter = mv.CurrentHalfMoves;
+
+            if (mv.MoveColor == PieceColor.BLACK)
+            {
+                fullMoveCounter--;
             }
         }
 

@@ -99,10 +99,7 @@ namespace TuxedoCat.Tests
 
             CastlingInfo ci = parser.ReadCastlingInfoFromFEN("-");
 
-            Assert.IsFalse(ci.BlackCanCastleLong);
-            Assert.IsFalse(ci.BlackCanCastleShort);
-            Assert.IsFalse(ci.WhiteCanCastleLong);
-            Assert.IsFalse(ci.WhiteCanCastleShort);
+            Assert.AreEqual(ci, CastlingInfo.NONE);
         }
 
         [TestMethod()]
@@ -112,10 +109,10 @@ namespace TuxedoCat.Tests
 
             CastlingInfo ci = parser.ReadCastlingInfoFromFEN("KQkq");
 
-            Assert.IsTrue(ci.BlackCanCastleLong);
-            Assert.IsTrue(ci.BlackCanCastleShort);
-            Assert.IsTrue(ci.WhiteCanCastleLong);
-            Assert.IsTrue(ci.WhiteCanCastleShort);
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.WHITE_SHORT));
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.WHITE_LONG));
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.BLACK_SHORT));
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.BLACK_LONG));
         }
 
         [TestMethod()]
@@ -125,10 +122,10 @@ namespace TuxedoCat.Tests
 
             CastlingInfo ci = parser.ReadCastlingInfoFromFEN("Kq");
 
-            Assert.IsTrue(ci.BlackCanCastleLong);
-            Assert.IsFalse(ci.BlackCanCastleShort);
-            Assert.IsFalse(ci.WhiteCanCastleLong);
-            Assert.IsTrue(ci.WhiteCanCastleShort);
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.WHITE_SHORT));
+            Assert.IsFalse(ci.HasFlag(CastlingInfo.WHITE_LONG));
+            Assert.IsFalse(ci.HasFlag(CastlingInfo.BLACK_SHORT));
+            Assert.IsTrue(ci.HasFlag(CastlingInfo.BLACK_LONG));
         }
 
         [TestMethod()]
@@ -138,10 +135,7 @@ namespace TuxedoCat.Tests
 
             CastlingInfo ci = parser.ReadCastlingInfoFromFEN("sdes");
 
-            Assert.IsFalse(ci.BlackCanCastleLong);
-            Assert.IsFalse(ci.BlackCanCastleShort);
-            Assert.IsFalse(ci.WhiteCanCastleLong);
-            Assert.IsFalse(ci.WhiteCanCastleShort);
+            Assert.AreEqual(ci, CastlingInfo.NONE);
         }
 
         [TestMethod()]

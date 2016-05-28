@@ -7,43 +7,51 @@ namespace TuxedoCat
     {
         private int sourceLocation;
         private int targetLocation;
-        private Piece movingPiece;
-        private Piece? capturedPiece;
+        private PieceRank movingPiece;
+        private PieceColor moveColor;
+        private int currentHalfMoves;
+        private PieceRank? capturedPiece;
         private PieceRank? promotedPiece;
+        private int? currentEnPassant;
+        private CastlingInfo currentCastlingInfo;
 
-        public Move(int src, int tgt, Piece m, Piece? c, PieceRank? p = null)
+        public Move(int src, int tgt, PieceRank m, PieceColor pc, int hm, CastlingInfo ci, PieceRank? c = null, PieceRank? p = null, int? ep = null)
         {
             Debug.Assert(src >= 0 && src < 64);
             Debug.Assert(tgt >= 0 && tgt < 64);
 
             if (src >= 0 && src < 64)
             {
-                this.sourceLocation = src;
+                sourceLocation = src;
             }
             else
             {
-                this.sourceLocation = 0;
+                sourceLocation = 0;
             }
 
             if (tgt >= 0 && tgt < 64)
             {
-                this.targetLocation = tgt;
+                targetLocation = tgt;
             }
             else
             {
-                this.targetLocation = 0;
+                targetLocation = 0;
             }
 
-            this.movingPiece = m;
+            movingPiece = m;
+            moveColor = pc;
+            currentHalfMoves = hm;
             capturedPiece = c;
             promotedPiece = p;
+            currentEnPassant = ep;
+            currentCastlingInfo = ci;
         }
 
         public int SourceLocation
         {
             get
             {
-                return this.sourceLocation;
+                return sourceLocation;
             }
         }
 
@@ -51,19 +59,35 @@ namespace TuxedoCat
         {
             get
             {
-                return this.targetLocation;
+                return targetLocation;
             }
         }
 
-        public Piece MovingPiece
+        public PieceRank MovingPiece
         {
             get
             {
-                return this.movingPiece;
+                return movingPiece;
             }
         }
 
-        public Piece? CapturedPiece
+        public int CurrentHalfMoves
+        {
+            get
+            {
+                return currentHalfMoves;
+            }
+        }
+
+        public PieceColor MoveColor
+        {
+            get
+            {
+                return moveColor;
+            }
+        }
+
+        public PieceRank? CapturedPiece
         {
             get
             {
@@ -76,6 +100,22 @@ namespace TuxedoCat
             get
             {
                 return promotedPiece;
+            }
+        }
+
+        public int? CurrentEnPassant
+        {
+            get
+            {
+                return currentEnPassant;
+            }
+        }
+
+        public CastlingInfo CurrentCastlingInfo
+        {
+            get
+            {
+                return currentCastlingInfo;
             }
         }
     }

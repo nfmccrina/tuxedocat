@@ -51,6 +51,8 @@
   </Choose>
   <ItemGroup>
     <Compile Include="FENParserTests.cs" />
+    <Compile Include="MoveGeneratorTests.cs" />
+    <Compile Include="PositionTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="TuxedoCatUtilityTests.cs" />
   </ItemGroup>

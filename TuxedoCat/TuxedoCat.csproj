@@ -40,6 +40,7 @@
     <Compile Include="CastlingInfo.cs" />
     <Compile Include="FENParser.cs" />
     <Compile Include="Move.cs" />
+    <Compile Include="MoveGenerationType.cs" />
     <Compile Include="MoveGenerator.cs" />
     <Compile Include="Piece.cs" />
     <Compile Include="PieceColor.cs" />
