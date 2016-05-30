@@ -94,5 +94,12 @@ namespace TuxedoCat
 
             return (rank * 8) + file;
         }
+
+        public string GetFileFromLocation(int location)
+        {
+            char file = (char)((location % 8) + 97);
+
+            return file.ToString();
+        }
     }
 }

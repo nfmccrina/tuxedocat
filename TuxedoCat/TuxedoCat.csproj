@@ -38,6 +38,7 @@
   <ItemGroup>
     <Compile Include="AppMain.cs" />
     <Compile Include="CastlingInfo.cs" />
+    <Compile Include="Controller.cs" />
     <Compile Include="FENParser.cs" />
     <Compile Include="Move.cs" />
     <Compile Include="MoveGenerationType.cs" />
@@ -46,6 +47,7 @@
     <Compile Include="PieceColor.cs" />
     <Compile Include="PieceRank.cs" />
     <Compile Include="Position.cs" />
+    <Compile Include="SANParser.cs" />
     <Compile Include="TuxedoCatUtility.cs" />
   </ItemGroup>
   <ItemGroup>

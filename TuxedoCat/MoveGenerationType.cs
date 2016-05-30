@@ -5,8 +5,7 @@ namespace TuxedoCat
     [Flags]
     public enum MoveGenerationType
     {
-        Legal = 1,
-        Captures = 2,
-        NonCaptures = 4
+        Captures = 1,
+        NonCaptures = 2
     }
 }

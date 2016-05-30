@@ -6,7 +6,9 @@ namespace TuxedoCat
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Welcome to TuxedoCat!");
+            Controller controller = new Controller();
+
+            controller.Run();
         }
     }
 }
