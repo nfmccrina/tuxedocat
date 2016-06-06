@@ -899,13 +899,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc + 8)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if (loc < 56)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc + 8) && p.Color == attackColor
+                    && p.Rank == PieceRank.KING))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -927,13 +931,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc + 9)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 7 && loc < 56)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc + 9) && p.Color == attackColor
+                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.BLACK))))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -955,13 +963,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc + 1)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 7)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc + 1) && p.Color == attackColor
+                    && p.Rank == PieceRank.KING))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -983,13 +995,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc - 7)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 7 && loc > 7)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc - 7) && p.Color == attackColor
+                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.WHITE))))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -1011,13 +1027,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc - 8)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if (loc > 7)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc - 8) && p.Color == attackColor
+                    && p.Rank == PieceRank.KING))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -1039,13 +1059,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc - 9)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 0 && loc > 7)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc - 9) && p.Color == attackColor
+                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.WHITE))))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -1067,13 +1091,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc -1)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 0)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc - 1) && p.Color == attackColor
+                    && p.Rank == PieceRank.KING))
+                {
+                    isAttacked = true;
                 }
             }
 
@@ -1095,13 +1123,17 @@ namespace TuxedoCat
                     {
                         isAttacked = true;
                     }
-                    else if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && p.Rank == PieceRank.KING && tmp_loc == (loc + 7)))
-                    {
-                        isAttacked = true;
-                    }
 
                     break;
+                }
+            }
+
+            if ((loc % 8) != 0 && loc < 56)
+            {
+                if (pos.Pieces.Any(p => p.Location == (loc + 7) && p.Color == attackColor
+                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.BLACK))))
+                {
+                    isAttacked = true;
                 }
             }
 

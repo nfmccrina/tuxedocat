@@ -57,6 +57,15 @@ namespace TuxedoCat.Tests
         }
 
         [TestMethod()]
+        public void IsSquareAttacked_position4()
+        {
+            MoveGenerator mg = new MoveGenerator();
+            Position p = new Position("rnbqkbnr/p1pppppp/8/8/1p6/3P4/PPPKPPPP/RNBQ1BNR w KQkq - 0 1");
+
+            Assert.IsTrue(mg.IsSquareAttacked(18, p, PieceColor.BLACK));
+        }
+
+        [TestMethod()]
         public void BishopMovesTest_position1()
         {
             MoveGenerator mg = new MoveGenerator();

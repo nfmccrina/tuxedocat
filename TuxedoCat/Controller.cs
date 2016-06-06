@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Diagnostics;
 
 namespace TuxedoCat
 {
@@ -26,6 +27,8 @@ namespace TuxedoCat
                     }
                     else if (inputTokens[0].ToLower() == "perft")
                     {
+                        Stopwatch stopwatch = new Stopwatch();
+
                         if (inputTokens.Length < 3)
                         {
                             Console.WriteLine("Usage: perft <depth> <FEN>");
@@ -40,9 +43,14 @@ namespace TuxedoCat
                             Position position = new Position(fen);
                             MoveGenerator moveGenerator = new MoveGenerator();
 
+                            stopwatch.Reset();
+                            stopwatch.Start();
                             int result = moveGenerator.Perft(depth, position);
+                            stopwatch.Stop();
 
-                            Console.WriteLine(result.ToString());
+
+                            Console.WriteLine("Elapsed time: " + (stopwatch.ElapsedMilliseconds / 1000.0).ToString("N1"));
+                            Console.WriteLine("perft (" + depth + "): " + result.ToString());
                         }
                         else
                         {
