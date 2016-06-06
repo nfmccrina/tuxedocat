@@ -40,12 +40,12 @@ namespace TuxedoCat
                         if (Int32.TryParse(inputTokens[1], out depth))
                         {
                             string fen = string.Join(" ", inputTokens, 2, inputTokens.Length - 2);
-                            Position position = new Position(fen);
+                            Position.CurrentPosition.SetPosition(fen);
                             MoveGenerator moveGenerator = new MoveGenerator();
 
                             stopwatch.Reset();
                             stopwatch.Start();
-                            int result = moveGenerator.Perft(depth, position);
+                            int result = moveGenerator.Perft(depth, Position.CurrentPosition);
                             stopwatch.Stop();
 
 
@@ -71,10 +71,10 @@ namespace TuxedoCat
                         if (Int32.TryParse(inputTokens[1], out depth))
                         {
                             string fen = string.Join(" ", inputTokens, 2, inputTokens.Length - 2);
-                            Position position = new Position(fen);
+                            Position.CurrentPosition.SetPosition(fen);
                             MoveGenerator moveGenerator = new MoveGenerator();
 
-                            moveGenerator.Divide(depth, position);
+                            moveGenerator.Divide(depth, Position.CurrentPosition);
                         }
                         else
                         {

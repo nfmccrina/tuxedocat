@@ -6,7 +6,38 @@ namespace TuxedoCat
 {
     public class Position
     {
-        public Position(string fen)
+        private static Position instance = null;
+        private static Position testInstance = null;
+
+        public static Position CurrentPosition
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    instance = new Position();
+                    instance.SetPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                }
+
+                return instance;
+            }
+        }
+
+        public static Position TestPosition
+        {
+            get
+            {
+                if (testInstance == null)
+                {
+                    testInstance = new Position();
+                    testInstance.SetPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                }
+
+                return testInstance;
+            }
+        }
+
+        public void SetPosition(string fen)
         {
             FENParser parser = new FENParser();
 
@@ -23,6 +54,10 @@ namespace TuxedoCat
             enPassantTarget = parser.ReadEnPassantTargetFromFEN(fenParts[3]);
             halfMoveCounter = parser.ReadHalfMovesFromFEN(fenParts[4]);
             fullMoveCounter = parser.ReadFullMovesFromFEN(fenParts[5]);
+        }
+
+        private Position()
+        {   
         }
 
         public override int GetHashCode()
@@ -63,16 +98,6 @@ namespace TuxedoCat
                 && (EnPassantTarget == pos2.EnPassantTarget)
                 && (FullMoveCounter == pos2.FullMoveCounter)
                 && (HalfMoveCounter == pos2.HalfMoveCounter);
-        }
-
-        public static bool operator ==(Position pos1, Position pos2)
-        {
-            return pos1.Equals(pos2);
-        }
-
-        public static bool operator !=(Position pos1, Position pos2)
-        {
-            return !(pos1 == pos2);
         }
 
         public IReadOnlyList<Piece> Pieces
