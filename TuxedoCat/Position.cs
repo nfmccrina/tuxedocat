@@ -6,40 +6,20 @@ namespace TuxedoCat
 {
     public class Position
     {
-        private static Position instance = null;
-        private static Position testInstance = null;
-
-        public static Position CurrentPosition
+        public Position()
         {
-            get
-            {
-                if (instance == null)
-                {
-                    instance = new Position();
-                    instance.SetPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-                }
-
-                return instance;
-            }
+            SetPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
         }
 
-        public static Position TestPosition
+        public Position(string fen)
         {
-            get
-            {
-                if (testInstance == null)
-                {
-                    testInstance = new Position();
-                    testInstance.SetPosition("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-                }
-
-                return testInstance;
-            }
+            SetPosition(fen);
         }
 
         public void SetPosition(string fen)
         {
             FENParser parser = new FENParser();
+            List<UInt64> pieceInfo;
 
             string[] fenParts = fen.Split(new char[] { ' ' });
 
@@ -48,23 +28,35 @@ namespace TuxedoCat
                 throw new ArgumentException("Invalid FEN; could not parse all sections.");
             }
 
-            pieces = parser.ReadPieceInfoFromFEN(fenParts[0]);
+            pieceInfo = parser.ReadPieceInfoFromFEN(fenParts[0]);
             colorToMove = parser.ReadColorToMoveFromFEN(fenParts[1]);
             castlingInfo = parser.ReadCastlingInfoFromFEN(fenParts[2]);
             enPassantTarget = parser.ReadEnPassantTargetFromFEN(fenParts[3]);
             halfMoveCounter = parser.ReadHalfMovesFromFEN(fenParts[4]);
             fullMoveCounter = parser.ReadFullMovesFromFEN(fenParts[5]);
-        }
 
-        private Position()
-        {   
+            WhitePawns = pieceInfo[0];
+            WhiteKnights = pieceInfo[1];
+            WhiteBishops = pieceInfo[2];
+            WhiteRooks = pieceInfo[3];
+            WhiteQueens = pieceInfo[4];
+            WhiteKing = pieceInfo[5];
+            WhitePieces = pieceInfo[6];
+            BlackPawns = pieceInfo[7];
+            BlackKnights = pieceInfo[8];
+            BlackBishops = pieceInfo[9];
+            BlackRooks = pieceInfo[10];
+            BlackQueens = pieceInfo[11];
+            BlackKing = pieceInfo[12];
+            BlackPieces = pieceInfo[13];
         }
 
         public override int GetHashCode()
         {
             int hash = 17;
 
-            hash = (hash * 23) + pieces.GetHashCode();
+            hash = (hash * 23) + WhitePieces.GetHashCode();
+            hash = (hash * 23) + BlackPieces.GetHashCode();
             hash = (hash * 23) + castlingInfo.GetHashCode();
             hash = (hash * 23) + fullMoveCounter.GetHashCode();
 
@@ -83,14 +75,20 @@ namespace TuxedoCat
 
             bool piecesAreEqual = true;
 
-            foreach (Piece p in Pieces)
-            {
-                if (!pos2.Pieces.Contains(p))
-                {
-                    piecesAreEqual = false;
-                    break;
-                }
-            }
+            piecesAreEqual = (WhitePawns == pos2.WhitePawns
+                && WhiteKnights == pos2.WhiteKnights
+                && WhiteBishops == pos2.WhiteBishops
+                && WhiteRooks == pos2.WhiteRooks
+                && WhiteQueens == pos2.WhiteQueens
+                && WhiteKing == pos2.WhiteKing
+                && WhitePieces == pos2.WhitePieces
+                && BlackPawns == pos2.BlackPawns
+                && BlackKnights == pos2.BlackKnights
+                && BlackBishops == pos2.BlackBishops
+                && BlackRooks == pos2.BlackRooks
+                && BlackQueens == pos2.BlackQueens
+                && BlackKing == pos2.BlackKing
+                && BlackPieces == pos2.BlackPieces);
 
             return piecesAreEqual
                 && (CastlingInfo == pos2.CastlingInfo)
@@ -100,12 +98,388 @@ namespace TuxedoCat
                 && (HalfMoveCounter == pos2.HalfMoveCounter);
         }
 
-        public IReadOnlyList<Piece> Pieces
+        public void Make(Move mv)
         {
-            get
+            if (mv.SourceLocation == 0x0000000000000000UL)
             {
-                return pieces.AsReadOnly();
+                if (colorToMove == PieceColor.WHITE)
+                {
+                    colorToMove = PieceColor.BLACK;
+                }
+                else
+                {
+                    colorToMove = PieceColor.WHITE;
+                    fullMoveCounter++;
+                }
             }
+            else
+            {
+                enPassantTarget = 0x00000000000000UL;
+                halfMoveCounter = mv.CurrentHalfMoves + 1;
+
+                if (((mv.SourceLocation & WhiteKing) != 0x00000000000000UL
+                    || (mv.SourceLocation & BlackKing) != 0x00000000000000UL)
+                    && ((mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000004UL)
+                        || (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000040UL)
+                        || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x0400000000000000UL)
+                        || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x4000000000000000UL)))
+                {
+                    // castle
+
+                    halfMoveCounter = 0;
+
+                    if (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000004UL)
+                    {
+                        // white queen-side
+                        AddPieceAt(0x0000000000000004UL, PieceColor.WHITE, PieceRank.KING);
+                        AddPieceAt(0x0000000000000008UL, PieceColor.WHITE, PieceRank.ROOK);
+                        RemovePieceAt(0x0000000000000010UL);
+                        RemovePieceAt(0x0000000000000001UL);
+
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                    }
+                    else if (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000040UL)
+                    {
+                        // white king-side
+                        AddPieceAt(0x0000000000000040UL, PieceColor.WHITE, PieceRank.KING);
+                        AddPieceAt(0x0000000000000020UL, PieceColor.WHITE, PieceRank.ROOK);
+                        RemovePieceAt(0x0000000000000010UL);
+                        RemovePieceAt(0x0000000000000080UL);
+
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                    }
+                    else if (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x0400000000000000UL)
+                    {
+                        // black queen-side
+                        AddPieceAt(0x0400000000000000UL, PieceColor.BLACK, PieceRank.KING);
+                        AddPieceAt(0x0800000000000000UL, PieceColor.BLACK, PieceRank.ROOK);
+                        RemovePieceAt(0x1000000000000000UL);
+                        RemovePieceAt(0x0100000000000000UL);
+
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                    }
+                    else if (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x4000000000000000UL)
+                    {
+                        // black king-side
+                        AddPieceAt(0x4000000000000000UL, PieceColor.BLACK, PieceRank.KING);
+                        AddPieceAt(0x2000000000000000UL, PieceColor.BLACK, PieceRank.ROOK);
+                        RemovePieceAt(0x1000000000000000UL);
+                        RemovePieceAt(0x8000000000000000UL);
+
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                    }
+                }
+                else
+                {
+                    // not a castle
+
+                    if (mv.MovingPiece == PieceRank.PAWN)
+                    {
+                        // pawn move
+
+                        halfMoveCounter = 0;
+
+                        if (mv.CapturedPiece.HasValue)
+                        {
+                            if (mv.TargetLocation == mv.CurrentEnPassant)
+                            {
+                                if (mv.MoveColor == PieceColor.WHITE)
+                                {
+                                    RemovePieceAt((UInt64)(mv.TargetLocation >> 8));
+                                }
+                                else
+                                {
+                                    RemovePieceAt((UInt64)(mv.TargetLocation << 8));
+                                }
+                            }
+                            else
+                            {
+                                if (mv.CapturedPiece == PieceRank.ROOK)
+                                {
+                                    if (mv.TargetLocation == 0x0000000000000001UL)
+                                    {
+                                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                                    }
+                                    else if (mv.TargetLocation == 0x0000000000000080UL)
+                                    {
+                                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                                    }
+                                    else if (mv.TargetLocation == 0x0100000000000000UL)
+                                    {
+                                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                                    }
+                                    else if (mv.TargetLocation == 0x8000000000000000UL)
+                                    {
+                                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                                    }
+                                }
+
+                                RemovePieceAt(mv.TargetLocation);
+                            }
+                        }
+                        else
+                        {
+                            if (mv.TargetLocation == (mv.SourceLocation << 16))
+                            {
+                                enPassantTarget = mv.SourceLocation << 8;
+                            }
+                            else if (mv.TargetLocation == (mv.SourceLocation >> 16))
+                            {
+                                enPassantTarget = mv.SourceLocation >> 8;
+                            }
+                        }
+
+                        if (mv.PromotedRank.HasValue)
+                        {
+                            AddPieceAt(mv.TargetLocation, mv.MoveColor, mv.PromotedRank.Value);
+                        }
+                        else
+                        {
+                            AddPieceAt(mv.TargetLocation, mv.MoveColor, PieceRank.PAWN);
+                        }
+
+                        RemovePieceAt(mv.SourceLocation);
+                    }
+                    else
+                    {
+                        if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
+                            && mv.SourceLocation == 0x0000000000000001UL)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                        }
+                        else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
+                            && mv.SourceLocation == 0x0000000000000080UL)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                        }
+                        else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
+                            && mv.SourceLocation == 0x0100000000000000UL)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                        }
+                        else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
+                            && mv.SourceLocation == 0x8000000000000000UL)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                        }
+
+                        if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.WHITE)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                            castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                        }
+                        else if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.BLACK)
+                        {
+                            castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                            castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                        }
+
+                        if (mv.CapturedPiece.HasValue)
+                        {
+                            if (mv.CapturedPiece == PieceRank.ROOK)
+                            {
+                                if (mv.TargetLocation == 0x0000000000000001UL)
+                                {
+                                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
+                                }
+                                else if (mv.TargetLocation == 0x0000000000000080UL)
+                                {
+                                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
+                                }
+                                else if (mv.TargetLocation == 0x0100000000000000UL)
+                                {
+                                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
+                                }
+                                else if (mv.TargetLocation == 0x8000000000000000UL)
+                                {
+                                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
+                                }
+                            }
+                            // a capture!
+                            RemovePieceAt(mv.TargetLocation); // he gone
+                            halfMoveCounter = 0;
+                        }
+
+                        AddPieceAt(mv.TargetLocation, mv.MoveColor, mv.MovingPiece);
+                        RemovePieceAt(mv.SourceLocation);
+                    }
+                }
+
+                if (colorToMove == PieceColor.WHITE)
+                {
+                    colorToMove = PieceColor.BLACK;
+                }
+                else
+                {
+                    colorToMove = PieceColor.WHITE;
+                    fullMoveCounter++;
+                }
+            }
+        }
+
+        public void Unmake(Move mv)
+        {
+            if (mv.SourceLocation == 0x0000000000000000UL)
+            {
+                if (colorToMove == PieceColor.WHITE)
+                {
+                    colorToMove = PieceColor.BLACK;
+                    fullMoveCounter--;
+                }
+                else
+                {
+                    colorToMove = PieceColor.WHITE;
+                }
+            }
+            else
+            {
+                AddPieceAt(mv.SourceLocation, mv.MoveColor, mv.MovingPiece);
+                RemovePieceAt(mv.TargetLocation);
+
+                if (((mv.SourceLocation & WhiteKing) != 0x0000000000000000UL
+                    || (mv.SourceLocation & BlackKing) != 0x0000000000000000UL)
+                    && ((mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000004UL)
+                        || (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000040UL)
+                        || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x0400000000000000UL)
+                        || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x4000000000000000UL)))
+                {
+                    UInt64 oldRookLocation = 0x0000000000000000UL;
+                    UInt64 newRookLocation = 0x0000000000000000UL;
+
+                    if (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000040UL)
+                    {
+                        oldRookLocation = 0x0000000000000020UL;
+                        newRookLocation = 0x0000000000000080UL;
+                    }
+                    else if (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000004UL)
+                    {
+                        oldRookLocation = 0x0000000000000008UL;
+                        newRookLocation = 0x0000000000000001UL;
+                    }
+                    else if (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x4000000000000000UL)
+                    {
+                        oldRookLocation = 0x2000000000000000UL;
+                        newRookLocation = 0x8000000000000000UL;
+                    }
+                    else if (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x0400000000000000UL)
+                    {
+                        oldRookLocation = 0x0800000000000000UL;
+                        newRookLocation = 0x0100000000000000UL;
+                    }
+
+                    RemovePieceAt(mv.TargetLocation);
+                    RemovePieceAt(oldRookLocation);
+                    AddPieceAt(mv.SourceLocation, mv.MoveColor, PieceRank.KING);
+                    AddPieceAt(newRookLocation, mv.MoveColor, PieceRank.ROOK);
+                }
+
+                if (mv.CapturedPiece.HasValue)
+                {
+                    if (mv.CurrentEnPassant != 0x0000000000000000UL && mv.MovingPiece == PieceRank.PAWN
+                        && mv.TargetLocation == mv.CurrentEnPassant)
+                    {
+                        if (mv.MoveColor == PieceColor.WHITE)
+                        {
+                            AddPieceAt(mv.TargetLocation >> 8, PieceColor.BLACK, mv.CapturedPiece.Value);
+                        }
+                        else
+                        {
+                            AddPieceAt(mv.TargetLocation << 8, PieceColor.WHITE, mv.CapturedPiece.Value);
+                        }
+                    }
+                    else
+                    {
+                        AddPieceAt(mv.TargetLocation,
+                            mv.MoveColor == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE,
+                            mv.CapturedPiece.Value);
+                    }
+                }
+
+                colorToMove = mv.MoveColor;
+                castlingInfo = mv.CurrentCastlingInfo;
+                enPassantTarget = mv.CurrentEnPassant;
+                halfMoveCounter = mv.CurrentHalfMoves;
+
+                if (mv.MoveColor == PieceColor.BLACK)
+                {
+                    fullMoveCounter--;
+                }
+            }
+        }
+
+        public UInt64 WhitePawns
+        {
+            get; set;
+        }
+
+        public UInt64 WhiteKnights
+        {
+            get; set;
+        }
+
+        public UInt64 WhiteBishops
+        {
+            get; set;
+        }
+
+        public UInt64 WhiteRooks
+        {
+            get; set;
+        }
+
+        public UInt64 WhiteQueens
+        {
+            get; set;
+        }
+
+        public UInt64 WhiteKing
+        {
+            get; set;
+        }
+
+        public UInt64 WhitePieces
+        {
+            get; set;
+        }
+
+
+        public UInt64 BlackPawns
+        {
+            get; set;
+        }
+
+        public UInt64 BlackKnights
+        {
+            get; set;
+        }
+
+        public UInt64 BlackBishops
+        {
+            get; set;
+        }
+
+        public UInt64 BlackRooks
+        {
+            get; set;
+        }
+
+        public UInt64 BlackQueens
+        {
+            get; set;
+        }
+
+        public UInt64 BlackKing
+        {
+            get; set;
+        }
+
+        public UInt64 BlackPieces
+        {
+            get; set;
         }
 
         public CastlingInfo CastlingInfo
@@ -124,7 +498,7 @@ namespace TuxedoCat
             }
         }
 
-        public int? EnPassantTarget
+        public UInt64 EnPassantTarget
         {
             get
             {
@@ -148,242 +522,177 @@ namespace TuxedoCat
             }
         }
 
-        public void Make(Move mv)
+        public void AddPieceAt(UInt64 loc, PieceColor color, PieceRank rank)
         {
-            enPassantTarget = null;
-            halfMoveCounter = mv.CurrentHalfMoves + 1;
-
-            if (pieces.Find(p => p.Location == mv.SourceLocation).Rank == PieceRank.KING && Math.Abs((mv.SourceLocation % 8) - (mv.TargetLocation % 8)) > 1)
+            if (rank == PieceRank.QUEEN)
             {
-                // castle
-
-                halfMoveCounter = 0;
-
-                if (mv.SourceLocation == 4 && mv.TargetLocation == 2)
+                if (color == PieceColor.WHITE)
                 {
-                    // white queen-side
-
-                    pieces.Add(new Piece(3, PieceRank.ROOK, PieceColor.WHITE));
-                    pieces.Add(new Piece(2, PieceRank.KING, PieceColor.WHITE));
-
-                    pieces.RemoveAll(p => p.Location == 0 || p.Location == 4);
-
-                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
-                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
-                }
-                else if(mv.SourceLocation == 4 && mv.TargetLocation == 6)
-                {
-                    // white king-side
-
-                    pieces.Add(new Piece(5, PieceRank.ROOK, PieceColor.WHITE));
-                    pieces.Add(new Piece(6, PieceRank.KING, PieceColor.WHITE));
-
-                    pieces.RemoveAll(p => p.Location == 7 || p.Location == 4);
-
-                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
-                    castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
-                }
-                else if(mv.SourceLocation == 60 && mv.TargetLocation == 58)
-                {
-                    // black queen-side
-
-                    pieces.Add(new Piece(59, PieceRank.ROOK, PieceColor.BLACK));
-                    pieces.Add(new Piece(58, PieceRank.KING, PieceColor.BLACK));
-
-                    pieces.RemoveAll(p => p.Location == 56 || p.Location == 60);
-
-                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
-                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
-                }
-                else if(mv.SourceLocation == 60 && mv.TargetLocation == 62)
-                {
-                    // black king-side
-
-                    pieces.Add(new Piece(61, PieceRank.ROOK, PieceColor.BLACK));
-                    pieces.Add(new Piece(62, PieceRank.KING, PieceColor.BLACK));
-
-                    pieces.RemoveAll(p => p.Location == 63 || p.Location == 60);
-
-                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
-                    castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
-                }
-            }
-            else
-            {
-                // not a castle
-
-                if (mv.MovingPiece == PieceRank.PAWN)
-                {
-                    // pawn move
-
-                    halfMoveCounter = 0;
-
-                    if (mv.CapturedPiece.HasValue)
-                    {
-                        if (mv.TargetLocation == mv.CurrentEnPassant)
-                        {
-                            pieces.RemoveAll(p => p.Location == (mv.MoveColor == PieceColor.WHITE ? (mv.TargetLocation - 8) : (mv.TargetLocation + 8)));
-                        }
-                        else
-                        {
-                            pieces.RemoveAll(p => p.Location == mv.TargetLocation);
-                        }
-                    }
-                    else
-                    {
-                        if (mv.TargetLocation == (mv.SourceLocation + 16))
-                        {
-                            enPassantTarget = mv.SourceLocation + 8;
-                        }
-                        else if (mv.TargetLocation == (mv.SourceLocation - 16))
-                        {
-                            enPassantTarget = mv.SourceLocation - 8;
-                        }
-                    }
-
-                    pieces.Add(new Piece(mv.TargetLocation, mv.PromotedRank.HasValue ? mv.PromotedRank.Value : mv.MovingPiece, mv.MoveColor));
-                    pieces.RemoveAll(p => p.Location == mv.SourceLocation);
+                    WhiteQueens = WhiteQueens | loc;
                 }
                 else
                 {
-                    if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
-                        && mv.SourceLocation == 0)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
-                    }
-                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.WHITE
-                        && mv.SourceLocation == 7)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
-                    }
-                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
-                        && mv.SourceLocation == 56)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
-                    }
-                    else if (mv.MovingPiece == PieceRank.ROOK && mv.MoveColor == PieceColor.BLACK
-                        && mv.SourceLocation == 63)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
-                    }
-
-                    if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.WHITE)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_LONG);
-                        castlingInfo = castlingInfo & (~CastlingInfo.WHITE_SHORT);
-                    }
-                    else if (mv.MovingPiece == PieceRank.KING && mv.MoveColor == PieceColor.BLACK)
-                    {
-                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_LONG);
-                        castlingInfo = castlingInfo & (~CastlingInfo.BLACK_SHORT);
-                    }
-
-                    if (mv.CapturedPiece.HasValue)
-                    {
-                        // a capture!
-                        pieces.RemoveAll(p => p.Location == mv.TargetLocation); // he gone
-                        halfMoveCounter = 0;
-                    }
-
-                    pieces.Add(new Piece(mv.TargetLocation, mv.MovingPiece, mv.MoveColor));
-                    pieces.RemoveAll(p => p.Location == mv.SourceLocation);
+                    BlackQueens = BlackQueens | loc;
                 }
             }
-
-            if (colorToMove == PieceColor.WHITE)
+            else if (rank == PieceRank.ROOK)
             {
-                colorToMove = PieceColor.BLACK;
-            }
-            else
-            {
-                colorToMove = PieceColor.WHITE;
-                fullMoveCounter++;
-            }
-        }
-
-        public void Unmake(Move mv)
-        {
-            pieces.Add(new Piece(mv.SourceLocation, mv.MovingPiece, mv.MoveColor));
-            pieces.RemoveAll(p => p.Location == mv.TargetLocation);
-
-            if (mv.MovingPiece == PieceRank.KING && Math.Abs((mv.TargetLocation % 8) - (mv.SourceLocation % 8)) > 1)
-            {
-                int oldRookLocation = -1;
-                int newRookLocation = -1;
-
-                if (mv.SourceLocation == 4 && mv.TargetLocation == 6)
+                if (color == PieceColor.WHITE)
                 {
-                    oldRookLocation = 5;
-                    newRookLocation = 7;
-                }
-                else if (mv.SourceLocation == 4 && mv.TargetLocation == 2)
-                {
-                    oldRookLocation = 3;
-                    newRookLocation = 0;
-                }
-                else if (mv.SourceLocation == 60 && mv.TargetLocation == 62)
-                {
-                    oldRookLocation = 61;
-                    newRookLocation = 63;
-                }
-                else if (mv.SourceLocation == 60 && mv.TargetLocation == 58)
-                {
-                    oldRookLocation = 59;
-                    newRookLocation = 56;
-                }
-
-                pieces.RemoveAll(p => p.Location == mv.TargetLocation);
-                pieces.RemoveAll(p => p.Location == oldRookLocation);
-
-                pieces.Add(new Piece(mv.SourceLocation, PieceRank.KING,
-                    mv.MoveColor == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK));
-
-                pieces.Add(new Piece(newRookLocation, PieceRank.ROOK,
-                    mv.MoveColor == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK));
-            }
-
-            if (mv.CapturedPiece.HasValue)
-            {
-                if (mv.CurrentEnPassant.HasValue && mv.MovingPiece == PieceRank.PAWN
-                    && mv.TargetLocation == mv.CurrentEnPassant)
-                {
-                    if (mv.MoveColor == PieceColor.WHITE)
-                    {
-                        pieces.Add(new Piece(mv.TargetLocation - 8, mv.CapturedPiece.Value, PieceColor.BLACK));
-                    }
-                    else
-                    {
-                        pieces.Add(new Piece(mv.TargetLocation + 8, mv.CapturedPiece.Value, PieceColor.WHITE));
-                    }
+                    WhiteRooks = WhiteRooks | loc;
                 }
                 else
                 {
-                    if (mv.MoveColor == PieceColor.WHITE)
-                    {
-                        pieces.Add(new Piece(mv.TargetLocation, mv.CapturedPiece.Value, PieceColor.BLACK));
-                    }
-                    else
-                    {
-                        pieces.Add(new Piece(mv.TargetLocation, mv.CapturedPiece.Value, PieceColor.WHITE));
-                    }
+                    BlackRooks = BlackRooks | loc;
+                }
+            }
+            else if (rank == PieceRank.BISHOP)
+            {
+                if (color == PieceColor.WHITE)
+                {
+                    WhiteBishops = WhiteBishops | loc;
+                }
+                else
+                {
+                    BlackBishops = BlackBishops | loc;
+                }
+            }
+            else if (rank == PieceRank.KNIGHT)
+            {
+                if (color == PieceColor.WHITE)
+                {
+                    WhiteKnights = WhiteKnights | loc;
+                }
+                else
+                {
+                    BlackKnights = BlackKnights | loc;
+                }
+            }
+            else if (rank == PieceRank.PAWN)
+            {
+                if (color == PieceColor.WHITE)
+                {
+                    WhitePawns = WhitePawns | loc;
+                }
+                else
+                {
+                    BlackPawns = BlackPawns | loc;
+                }
+            }
+            else if (rank == PieceRank.KING)
+            {
+                if (color == PieceColor.WHITE)
+                {
+                    WhiteKing = loc;
+                }
+                else
+                {
+                    BlackKing = loc;
                 }
             }
 
-            colorToMove = mv.MoveColor;
-            castlingInfo = mv.CurrentCastlingInfo;
-            enPassantTarget = mv.CurrentEnPassant;
-            halfMoveCounter = mv.CurrentHalfMoves;
-
-            if (mv.MoveColor == PieceColor.BLACK)
-            {
-                fullMoveCounter--;
-            }
+            UpdatePieces();
         }
 
-        private List<Piece> pieces;
+        public void RemovePieceAt(UInt64 loc)
+        {
+            WhitePawns = WhitePawns & (~loc);
+            WhiteKnights = WhiteKnights & (~loc);
+            WhiteBishops = WhiteBishops & (~loc);
+            WhiteRooks = WhiteRooks & (~loc);
+            WhiteQueens = WhiteQueens & (~loc);
+            WhiteKing = WhiteKing & (~loc);
+
+            BlackPawns = BlackPawns & (~loc);
+            BlackKnights = BlackKnights & (~loc);
+            BlackBishops = BlackBishops & (~loc);
+            BlackRooks = BlackRooks & (~loc);
+            BlackQueens = BlackQueens & (~loc);
+            BlackKing = BlackKing & (~loc);
+
+            UpdatePieces();
+        }
+
+        public void UpdatePieces()
+        {
+            WhitePieces = (WhitePawns
+                | WhiteKnights
+                | WhiteBishops
+                | WhiteRooks
+                | WhiteQueens
+                | WhiteKing);
+
+            BlackPieces = (BlackPawns
+                | BlackKnights
+                | BlackBishops
+                | BlackRooks
+                | BlackQueens
+                | BlackKing);
+        }
+
+        public PieceRank? GetRankAt(UInt64 loc)
+        {
+            PieceRank? rank = null;
+
+            if ((WhitePawns & loc) != 0x0000000000000000UL
+                || (BlackPawns & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.PAWN;
+            }
+
+            if ((WhiteKnights & loc) != 0x0000000000000000UL
+                || (BlackKnights & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.KNIGHT;
+            }
+
+            if ((WhiteBishops & loc) != 0x0000000000000000UL
+                || (BlackBishops & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.BISHOP;
+            }
+
+            if ((WhiteRooks & loc) != 0x0000000000000000UL
+                || (BlackRooks & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.ROOK;
+            }
+
+            if ((WhiteQueens & loc) != 0x0000000000000000UL
+                || (BlackQueens & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.QUEEN;
+            }
+
+            if ((WhiteKing & loc) != 0x0000000000000000UL
+                || (BlackKing & loc) != 0x0000000000000000UL)
+            {
+                rank = PieceRank.KING;
+            }
+
+            return rank;
+        }
+
+        public PieceColor? GetColorAt(UInt64 loc)
+        {
+            PieceColor? color = null;
+
+            if ((WhitePieces & loc) != 0x0000000000000000UL)
+            {
+                color = PieceColor.WHITE;
+            }
+
+            if ((BlackPieces & loc) != 0x0000000000000000UL)
+            {
+                color = PieceColor.BLACK;
+            }
+
+            return color;
+        }
+
         private PieceColor colorToMove;
         private CastlingInfo castlingInfo;
-        private int? enPassantTarget;
+        private UInt64 enPassantTarget;
         private int fullMoveCounter;
         private int halfMoveCounter;
     }

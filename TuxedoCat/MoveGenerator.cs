@@ -6,1237 +6,1345 @@ namespace TuxedoCat
 {
     public class MoveGenerator
     {
-        public int Perft(int depth, Position position)
-        {
-            if (depth <= 1)
-            {
-                return AllLegalMoves(position).Count;
-            }
-            else
-            {
-                int count = 0;
+        private static UInt64[] FileMask;
+        private static UInt64[] RankMask;
+        private static UInt64[] SWNEMask;
+        private static UInt64[] NWSEMask;
 
-                foreach (Move move in AllLegalMoves(position))
+        private static UInt64[] KnightAttacks;
+        private static UInt64[] KingAttacks;
+        private static UInt64[] RayAttacksN;
+        private static UInt64[] RayAttacksS;
+        private static UInt64[] RayAttacksE;
+        private static UInt64[] RayAttacksW;
+        private static UInt64[] RayAttacksNE;
+        private static UInt64[] RayAttacksNW;
+        private static UInt64[] RayAttacksSE;
+        private static UInt64[] RayAttacksSW;
+
+        private static TuxedoCatUtility util;
+        private MoveList moveList;
+
+        public MoveGenerator()
+        {
+            InitializeFileMask();
+            InitializeRankMask();
+            InitializeNWSEMask();
+            InitializeSWNEMask();
+            InitializeKnightAttacks();
+            InitializeKingAttacks();
+            InitializeRayAttacksN();
+            InitializeRayAttacksS();
+            InitializeRayAttacksE();
+            InitializeRayAttacksW();
+            InitializeRayAttacksNE();
+            InitializeRayAttacksNW();
+            InitializeRayAttacksSE();
+            InitializeRayAttacksSW();
+
+            moveList = new MoveList();
+            util = new TuxedoCatUtility();
+        }
+
+        public Move[] GenerateMoves(ref Position position)
+        {
+            UInt64 pieces = position.ColorToMove == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            UInt64 currentPiece;
+            PieceRank rank;
+            bool inCheck = false;
+
+            moveList.clear();
+
+            if (IsSquareAttacked(position.ColorToMove ==
+                PieceColor.WHITE ? position.WhiteKing : position.BlackKing, ref position))
+            {
+                inCheck = true;
+            }
+
+            while (pieces != 0x0000000000000000UL)
+            {
+                currentPiece = 0x0000000000000001UL << util.GetLSB(pieces);
+                rank = position.GetRankAt(currentPiece).Value;
+
+                if (rank == PieceRank.KNIGHT)
                 {
-                    position.Make(move);
-                    count += Perft(depth - 1, position);
-                    position.Unmake(move);
+                    if (!IsPiecePinnedFile(currentPiece, ref position)
+                        && !IsPiecePinnedRank(currentPiece, ref position)
+                        && !IsPiecePinnedNWSE(currentPiece, ref position)
+                        && !IsPiecePinnedSWNE(currentPiece, ref position))
+                    {
+                        GenerateKnightMovesAt(currentPiece, ref position, inCheck);
+                    }
+                }
+                else if (rank == PieceRank.BISHOP)
+                {
+                    if (!IsPiecePinnedFile(currentPiece, ref position)
+                        && !IsPiecePinnedRank(currentPiece, ref position))
+                    {
+                        if (!IsPiecePinnedNWSE(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x02, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x20, inCheck);
+                        }
+
+                        if (!IsPiecePinnedSWNE(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x08, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x80, inCheck);
+                        }
+                    }
+                }
+                else if (rank == PieceRank.ROOK)
+                {
+                    if (!IsPiecePinnedNWSE(currentPiece, ref position)
+                        && !IsPiecePinnedSWNE(currentPiece, ref position))
+                    {
+                        if (!IsPiecePinnedRank(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x01, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x10, inCheck);
+                        }
+
+                        if (!IsPiecePinnedFile(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x04, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x40, inCheck);
+                        }
+                    }
+                }
+                else if (rank == PieceRank.QUEEN)
+                {
+                    if (!IsPiecePinnedNWSE(currentPiece, ref position)
+                        && !IsPiecePinnedSWNE(currentPiece, ref position))
+                    {
+                        if (!IsPiecePinnedRank(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x01, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x10, inCheck);
+                        }
+
+                        if (!IsPiecePinnedFile(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x04, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x40, inCheck);
+                        }
+                    }
+
+                    if (!IsPiecePinnedFile(currentPiece, ref position)
+                        && !IsPiecePinnedRank(currentPiece, ref position))
+                    {
+                        if (!IsPiecePinnedNWSE(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x02, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x20, inCheck);
+                        }
+
+                        if (!IsPiecePinnedSWNE(currentPiece, ref position))
+                        {
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x08, inCheck);
+                            GenerateSlidingMovesAt(currentPiece, ref position, 0x80, inCheck);
+                        }
+                    }
+                }
+                else if (rank == PieceRank.KING)
+                {
+                    GenerateKingMovesAt(currentPiece, ref position, inCheck);
+                }
+                else if (rank == PieceRank.PAWN)
+                {
+                    GeneratePawnMovesAt(currentPiece, ref position, inCheck);
                 }
 
-                return count;
+                pieces = pieces & ~currentPiece;
+            }
+
+            return moveList.getSlice(moveList.Count);
+        }
+
+        private bool IsPiecePinnedNWSE(UInt64 location, ref Position position)
+        {
+            return IsPiecePinned(location, ref position, 7);
+        }
+
+        private bool IsPiecePinnedSWNE(UInt64 location, ref Position position)
+        {
+            return IsPiecePinned(location, ref position, 9);
+        }
+
+        private bool IsPiecePinnedRank(UInt64 location, ref Position position)
+        {
+            return IsPiecePinned(location, ref position, 1);
+        }
+
+        private bool IsPiecePinnedFile(UInt64 location, ref Position position)
+        {
+            return IsPiecePinned(location, ref position, 8);
+        }
+
+        private void InitializeFileMask()
+        {
+            FileMask = new UInt64[64];
+            UInt64 currentMask;
+            UInt64 currentSquare = 0x0000000000000001UL;
+
+            for (int index = 0; index < 64; index++)
+            {
+                currentMask = 0x0101010101010101UL;
+
+                for (int shiftIndex = 0; shiftIndex < 8; shiftIndex++)
+                {
+                    if ((currentSquare & currentMask) != 0x0000000000000000UL)
+                    {
+                        FileMask[index] = currentMask;
+                        break;
+                    }
+
+                    currentMask = currentMask << 1;
+                }
+
+                currentSquare = currentSquare << 1;
             }
         }
 
-        public void Divide(int depth, Position position)
+        private void InitializeRankMask()
         {
-            SANParser sanParser = new SANParser();
+            RankMask = new UInt64[64];
+            UInt64 currentMask;
+            UInt64 currentSquare = 0x0000000000000001UL;
 
-            if (depth <= 1)
+            for (int index = 0; index < 64; index++)
             {
-                foreach(Move move in AllLegalMoves(position))
+                currentMask = 0x00000000000000FFUL;
+
+                for (int shiftIndex = 0; shiftIndex < 8; shiftIndex++)
                 {
-                    string moveSAN = sanParser.GenerateSAN(position, move);
+                    if ((currentSquare & currentMask) != 0x0000000000000000UL)
+                    {
+                        RankMask[index] = currentMask;
+                        break;
+                    }
 
-                    Console.WriteLine(moveSAN + ": 1");
+                    currentMask = currentMask << 8;
                 }
-            }
-            else
-            {
-                foreach (Move move in AllLegalMoves(position))
-                {
-                    string moveSAN = sanParser.GenerateSAN(position, move);
 
-                    position.Make(move);
-
-                    int count = Perft(depth - 1, position);
-
-                    Console.WriteLine(moveSAN + ": " + count.ToString());
-                    position.Unmake(move);
-                }
+                currentSquare = currentSquare << 1;
             }
         }
 
-        public bool IsLegalMove(Move move, Position position)
+        private void InitializeSWNEMask()
         {
-            bool result;
+            SWNEMask = new UInt64[64];
+            UInt64 currentMask;
+            UInt64 currentSquare = 0x0000000000000001UL;
 
-            position.Make(move);
+            for (int index = 0; index < 64; index++)
+            {
+                currentMask = 0x0000000000000080UL;
 
-            result = !IsSquareAttacked(position.Pieces.First(
-                piece => piece.Rank == PieceRank.KING && piece.Color == move.MoveColor).Location, position,
-                position.ColorToMove);
+                for (int shiftIndex = 0; shiftIndex < 16; shiftIndex++)
+                {
+                    if ((currentSquare & currentMask) != 0x0000000000000000UL)
+                    {
+                        SWNEMask[index] = currentMask;
+                        break;
+                    }
 
-            position.Unmake(move);
+                    currentMask = currentMask << 8;
 
-            return result;
+                    if (shiftIndex < 7)
+                    {
+                        currentMask = currentMask | ((0x0000000000000001UL) << (6 - shiftIndex));
+                    }
+                }
+
+                currentSquare = currentSquare << 1;
+            }
         }
 
-        public List<Move> AllMoves(Position position,
-            MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeNWSEMask()
         {
-            List<Move> moves = new List<Move>();
+            NWSEMask = new UInt64[64];
+            UInt64 currentMask;
+            UInt64 currentSquare = 0x0000000000000001UL;
 
-            moves.AddRange(PawnMoves(position, mgt));
-            moves.AddRange(KnightMoves(position, mgt));
-            moves.AddRange(BishopMoves(position, mgt));
-            moves.AddRange(RookMoves(position, mgt));
-            moves.AddRange(QueenMoves(position, mgt));
-            moves.AddRange(KingMoves(position, mgt));
+            for (int index = 0; index < 64; index++)
+            {
+                currentMask = 0x0000000000000001UL;
 
-            return moves;
+                for (int shiftIndex = 0; shiftIndex < 16; shiftIndex++)
+                {
+                    if ((currentSquare & currentMask) != 0x0000000000000000UL)
+                    {
+                        NWSEMask[index] = currentMask;
+                        break;
+                    }
+
+                    currentMask = currentMask << 8;
+
+                    if (shiftIndex < 7)
+                    {
+                        currentMask = currentMask | ((0x0000000000000001UL) << (shiftIndex + 1));
+                    }
+                }
+
+                currentSquare = currentSquare << 1;
+            }
         }
 
-        public List<Move> AllLegalMoves(Position position,
-            MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeKnightAttacks()
         {
-            return AllMoves(position, mgt).Where(move => IsLegalMove(move, position)).ToList();
+            KnightAttacks = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 moves;
+
+            for (int i = 0; i < 64; i++)
+            {
+                moves = 0x0000000000000000UL;
+                moves = moves | ((currentSquare & 0x0000FEFEFEFEFEFEUL) << 15);
+                moves = moves | ((currentSquare & 0x00007F7F7F7F7F7FUL) << 17);
+                moves = moves | ((currentSquare & 0x003F3F3F3F3F3F3FUL) << 10);
+                moves = moves | ((currentSquare & 0x3F3F3F3F3F3F3F00UL) >> 6);
+                moves = moves | ((currentSquare & 0x7F7F7F7F7F7F0000UL) >> 15);
+                moves = moves | ((currentSquare & 0xFEFEFEFEFEFE0000UL) >> 17);
+                moves = moves | ((currentSquare & 0xFCFCFCFCFCFCFC00UL) >> 10);
+                moves = moves | ((currentSquare & 0x00FCFCFCFCFCFCFCUL) << 6);
+
+                KnightAttacks[i] = moves;
+                currentSquare = currentSquare << 1;
+            }
         }
 
-        public List<Move> Moves(PieceRank rank, Position pos,
-            MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeKingAttacks()
         {
-            List<Move> moves;
+            KingAttacks = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 moves;
 
-            switch (rank)
+            for (int i = 0; i < 64; i++)
             {
-                case PieceRank.PAWN:
-                    {
-                        moves = PawnMoves(pos, mgt);
-                    }
-                    break;
-                case PieceRank.KNIGHT:
-                    {
-                        moves = KnightMoves(pos, mgt);
-                    }
-                    break;
-                case PieceRank.BISHOP:
-                    {
-                        moves = BishopMoves(pos, mgt);
-                    }
-                    break;
-                case PieceRank.ROOK:
-                    {
-                        moves = RookMoves(pos, mgt);
-                    }
-                    break;
-                case PieceRank.QUEEN:
-                    {
-                        moves = QueenMoves(pos, mgt);
-                    }
-                    break;
-                case PieceRank.KING:
-                    {
-                        moves = KingMoves(pos, mgt);
-                    }
-                    break;
-                default:
-                    {
-                        moves = new List<Move>();
-                    }
-                    break;
-            }
+                moves = 0x0000000000000000UL;
+                moves = moves | ((currentSquare & 0x00FFFFFFFFFFFFFFUL) << 8);
+                moves = moves | ((currentSquare & 0x007F7F7F7F7F7F7FUL) << 9);
+                moves = moves | ((currentSquare & 0x7F7F7F7F7F7F7F7FUL) << 1);
+                moves = moves | ((currentSquare & 0x7F7F7F7F7F7F7F7FUL) >> 7);
+                moves = moves | ((currentSquare & 0xFFFFFFFFFFFFFF00UL) >> 8);
+                moves = moves | ((currentSquare & 0xFEFEFEFEFEFEFE00UL) >> 9);
+                moves = moves | ((currentSquare & 0xFEFEFEFEFEFEFEFEUL) >> 1);
+                moves = moves | ((currentSquare & 0x00FEFEFEFEFEFEFEUL) << 7);
 
-            return moves;
+                KingAttacks[i] = moves;
+                currentSquare = currentSquare << 1;
+            }
         }
 
-        public List<Move> KingMoves(Position pos,
-            MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksN()
         {
-            List<int> targets = new List<int>();
-            List<Move> moves = new List<Move>();
+            RayAttacksN = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            int currentKingLocation = pos.Pieces.First(p => p.Color == pos.ColorToMove && p.Rank == PieceRank.KING)
-                .Location;
-
-            if ((currentKingLocation % 8) != 0 && currentKingLocation < 56)
+            for (int i = 0; i < 64; i++)
             {
-                targets.Add(currentKingLocation + 7);
-            }
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-            if (currentKingLocation < 56)
-            {
-                targets.Add(currentKingLocation + 8);
-            }
-
-            if ((currentKingLocation % 8) != 7 && currentKingLocation < 56)
-            {
-                targets.Add(currentKingLocation + 9);
-            }
-
-            if ((currentKingLocation % 8) != 7)
-            {
-                targets.Add(currentKingLocation + 1);
-            }
-
-            if ((currentKingLocation % 8) != 7 && currentKingLocation > 7)
-            {
-                targets.Add(currentKingLocation - 7);
-            }
-
-            if (currentKingLocation > 7)
-            {
-                targets.Add(currentKingLocation - 8);
-            }
-
-            if ((currentKingLocation % 8) != 0 && currentKingLocation > 7)
-            {
-                targets.Add(currentKingLocation - 9);
-            }
-
-            if ((currentKingLocation % 8) != 0)
-            {
-                targets.Add(currentKingLocation - 1);
-            }
-
-            if (mgt.HasFlag(MoveGenerationType.NonCaptures))
-            {
-                if (pos.ColorToMove == PieceColor.WHITE
-                    && pos.CastlingInfo.HasFlag(CastlingInfo.WHITE_SHORT)
-                    && pos.Pieces.All(p => p.Location != 5)
-                    && pos.Pieces.All(p => p.Location != 6)
-                    && !IsSquareAttacked(4, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(5, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(6, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK))
+                while ((tmpSquare & 0x00FFFFFFFFFFFFFFUL) != 0x0000000000000000UL)
                 {
-                    moves.Add(new Move(4, 6, PieceRank.KING, pos.ColorToMove, pos.HalfMoveCounter, pos.CastlingInfo, null, null, pos.EnPassantTarget));
+                    tmpSquare = tmpSquare << 8;
+                    moves = moves | tmpSquare;
                 }
 
-                if (pos.ColorToMove == PieceColor.WHITE
-                    && pos.CastlingInfo.HasFlag(CastlingInfo.WHITE_LONG)
-                    && pos.Pieces.All(p => p.Location != 1)
-                    && pos.Pieces.All(p => p.Location != 2)
-                    && pos.Pieces.All(p => p.Location != 3)
-                    && !IsSquareAttacked(4, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(3, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(2, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK))
-                {
-                    moves.Add(new Move(4, 2, PieceRank.KING, pos.ColorToMove, pos.HalfMoveCounter, pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                }
-
-                if (pos.ColorToMove == PieceColor.BLACK
-                    && pos.CastlingInfo.HasFlag(CastlingInfo.BLACK_LONG)
-                    && pos.Pieces.All(p => p.Location != 57)
-                    && pos.Pieces.All(p => p.Location != 58)
-                    && pos.Pieces.All(p => p.Location != 59)
-                    && !IsSquareAttacked(60, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(59, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(58, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK))
-                {
-                    moves.Add(new Move(60, 58, PieceRank.KING, pos.ColorToMove, pos.HalfMoveCounter, pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                }
-
-                if (pos.ColorToMove == PieceColor.BLACK
-                    && pos.CastlingInfo.HasFlag(CastlingInfo.BLACK_SHORT)
-                    && pos.Pieces.All(p => p.Location != 61)
-                    && pos.Pieces.All(p => p.Location != 62)
-                    && !IsSquareAttacked(60, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(61, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK)
-                    && !IsSquareAttacked(62, pos,
-                        pos.ColorToMove == PieceColor.WHITE ? PieceColor.WHITE : PieceColor.BLACK))
-                {
-                    moves.Add(new Move(4, 6, PieceRank.KING, pos.ColorToMove, pos.HalfMoveCounter, pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                }
+                RayAttacksN[i] = moves;
+                currentSquare = currentSquare << 1;
             }
-
-            foreach (int l in targets)
-            {
-                if (pos.Pieces.Any(p => p.Location == l && p.Color != pos.ColorToMove)
-                    && mgt.HasFlag(MoveGenerationType.Captures))
-                {
-                    moves.Add(new Move(currentKingLocation, l, PieceRank.KING, pos.ColorToMove,
-                        pos.HalfMoveCounter, pos.CastlingInfo, pos.Pieces.First(p => p.Location == l).Rank, null, pos.EnPassantTarget));
-                }
-                else if (pos.Pieces.All(p => p.Location != l) && mgt.HasFlag(MoveGenerationType.NonCaptures))
-                {
-                    moves.Add(new Move(currentKingLocation, l, PieceRank.KING, pos.ColorToMove, pos.HalfMoveCounter,
-                        pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                }
-            }
-
-            return moves;
         }
 
-        public List<Move> KnightMoves(Position pos, MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksS()
         {
-            List<Move> moves = new List<Move>();
+            RayAttacksS = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            foreach (Piece knight in pos.Pieces.Where(p => p.Rank == PieceRank.KNIGHT && p.Color == pos.ColorToMove))
+            for (int i = 0; i < 64; i++)
             {
-                List<int> targets = new List<int>();
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-                if (knight.Location < 56 && (knight.Location % 8) > 1)
+                while ((tmpSquare & 0xFFFFFFFFFFFFFF00UL) != 0x0000000000000000UL)
                 {
-                    targets.Add(knight.Location + 6);
+                    tmpSquare = tmpSquare >> 8;
+                    moves = moves | tmpSquare;
                 }
 
-                if (knight.Location < 48 && (knight.Location % 8) > 0)
-                {
-                    targets.Add(knight.Location + 15);
-                }
-
-                if (knight.Location < 48 && (knight.Location % 8) < 7)
-                {
-                    targets.Add(knight.Location + 17);
-                }
-
-                if (knight.Location < 56 && (knight.Location % 8) < 6)
-                {
-                    targets.Add(knight.Location + 10);
-                }
-
-                if (knight.Location > 7 && (knight.Location % 8) < 6)
-                {
-                    targets.Add(knight.Location - 6);
-                }
-
-                if (knight.Location > 15 && (knight.Location % 8) < 7)
-                {
-                    targets.Add(knight.Location - 15);
-                }
-
-                if (knight.Location > 15 && (knight.Location % 8) > 0)
-                {
-                    targets.Add(knight.Location - 17);
-                }
-
-                if (knight.Location > 7 && (knight.Location % 8) > 1)
-                {
-                    targets.Add(knight.Location - 10);
-                }
-
-                foreach (int target in targets)
-                {
-                    if (pos.Pieces.Any(p => p.Location == target && p.Color != pos.ColorToMove)
-                    && mgt.HasFlag(MoveGenerationType.Captures))
-                    {
-                        moves.Add(new Move(knight.Location, target, PieceRank.KNIGHT, pos.ColorToMove,
-                            pos.HalfMoveCounter, pos.CastlingInfo,
-                            pos.Pieces.First(p => p.Location == target).Rank, null, pos.EnPassantTarget));
-                    }
-                    else if (pos.Pieces.All(p => p.Location != target) && mgt.HasFlag(MoveGenerationType.NonCaptures))
-                    {
-                        moves.Add(new Move(knight.Location, target, PieceRank.KNIGHT, pos.ColorToMove, pos.HalfMoveCounter,
-                            pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                    }
-                }
+                RayAttacksS[i] = moves;
+                currentSquare = currentSquare << 1;
             }
-
-            return moves;
         }
 
-        public List<Move> BishopMoves(Position pos, MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksE()
         {
-            List<Move> moves = new List<Move>();
-            int tmp_loc;
+            RayAttacksE = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            foreach (Piece bishop in pos.Pieces.Where(p => p.Rank == PieceRank.BISHOP && p.Color == pos.ColorToMove))
+            for (int i = 0; i < 64; i++)
             {
-                List<int> targets = new List<int>();
-                tmp_loc = bishop.Location;
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-                while (tmp_loc < 56 && (tmp_loc % 8) != 7)
+                while ((tmpSquare & 0x7F7F7F7F7F7F7F7FUL) != 0x0000000000000000UL)
                 {
-                    tmp_loc += 9;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
+                    tmpSquare = tmpSquare << 1;
+                    moves = moves | tmpSquare;
                 }
 
-                tmp_loc = bishop.Location;
-
-                while (tmp_loc < 56 && (tmp_loc % 8) != 0)
-                {
-                    tmp_loc += 7;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = bishop.Location;
-
-                while (tmp_loc >7 && (tmp_loc % 8) != 0)
-                {
-                    tmp_loc -= 9;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = bishop.Location;
-
-                while (tmp_loc > 7 && (tmp_loc % 8) != 7)
-                {
-                    tmp_loc -= 7;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                foreach (int target in targets)
-                {
-                    if (pos.Pieces.Any(p => p.Location == target && p.Color != pos.ColorToMove)
-                    && mgt.HasFlag(MoveGenerationType.Captures))
-                    {
-                        moves.Add(new Move(bishop.Location, target, PieceRank.BISHOP, pos.ColorToMove,
-                            pos.HalfMoveCounter, pos.CastlingInfo,
-                            pos.Pieces.First(p => p.Location == target).Rank, null, pos.EnPassantTarget));
-                    }
-                    else if (pos.Pieces.All(p => p.Location != target) && mgt.HasFlag(MoveGenerationType.NonCaptures))
-                    {
-                        moves.Add(new Move(bishop.Location, target, PieceRank.BISHOP, pos.ColorToMove, pos.HalfMoveCounter,
-                            pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                    }
-                }
+                RayAttacksE[i] = moves;
+                currentSquare = currentSquare << 1;
             }
-
-            return moves;
         }
 
-        public List<Move> RookMoves(Position pos, MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksW()
         {
-            List<Move> moves = new List<Move>();
-            int tmp_loc;
+            RayAttacksW = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            foreach (Piece rook in pos.Pieces.Where(p => p.Rank == PieceRank.ROOK && p.Color == pos.ColorToMove))
+            for (int i = 0; i < 64; i++)
             {
-                List<int> targets = new List<int>();
-                tmp_loc = rook.Location;
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-                while (tmp_loc < 56)
+                while ((tmpSquare & 0xFEFEFEFEFEFEFEFEUL) != 0x0000000000000000UL)
                 {
-                    tmp_loc += 8;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
+                    tmpSquare = tmpSquare >> 1;
+                    moves = moves | tmpSquare;
                 }
 
-                tmp_loc = rook.Location;
-
-                while ((tmp_loc % 8) != 7)
-                {
-                    tmp_loc += 1;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = rook.Location;
-
-                while ((tmp_loc % 8) != 0)
-                {
-                    tmp_loc -= 1;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = rook.Location;
-
-                while (tmp_loc > 7)
-                {
-                    tmp_loc -= 8;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = rook.Location;
-
-                foreach (int target in targets)
-                {
-                    if (pos.Pieces.Any(p => p.Location == target && p.Color != pos.ColorToMove)
-                    && mgt.HasFlag(MoveGenerationType.Captures))
-                    {
-                        moves.Add(new Move(rook.Location, target, PieceRank.ROOK, pos.ColorToMove,
-                            pos.HalfMoveCounter, pos.CastlingInfo,
-                            pos.Pieces.First(p => p.Location == target).Rank, null, pos.EnPassantTarget));
-                    }
-                    else if (pos.Pieces.All(p => p.Location != target) && mgt.HasFlag(MoveGenerationType.NonCaptures))
-                    {
-                        moves.Add(new Move(rook.Location, target, PieceRank.ROOK, pos.ColorToMove, pos.HalfMoveCounter,
-                            pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                    }
-                }
+                RayAttacksW[i] = moves;
+                currentSquare = currentSquare << 1;
             }
-
-            return moves;
         }
 
-        public List<Move> QueenMoves(Position pos, MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksNE()
         {
-            List<Move> moves = new List<Move>();
-            int tmp_loc;
+            RayAttacksNE = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            foreach (Piece queen in pos.Pieces.Where(p => p.Rank == PieceRank.QUEEN && p.Color == pos.ColorToMove))
+            for (int i = 0; i < 64; i++)
             {
-                List<int> targets = new List<int>();
-                tmp_loc = queen.Location;
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-                while (tmp_loc < 56 && (tmp_loc % 8) != 7)
+                while ((tmpSquare & 0x007F7F7F7F7F7F7FUL) != 0x0000000000000000UL)
                 {
-                    tmp_loc += 9;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
+                    tmpSquare = tmpSquare << 9;
+                    moves = moves | tmpSquare;
                 }
 
-                tmp_loc = queen.Location;
-
-                while (tmp_loc < 56 && (tmp_loc % 8) != 0)
-                {
-                    tmp_loc += 7;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while (tmp_loc > 7 && (tmp_loc % 8) != 0)
-                {
-                    tmp_loc -= 9;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while (tmp_loc > 7 && (tmp_loc % 8) != 7)
-                {
-                    tmp_loc -= 7;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while (tmp_loc < 56)
-                {
-                    tmp_loc += 8;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while ((tmp_loc % 8) != 7)
-                {
-                    tmp_loc += 1;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while ((tmp_loc % 8) != 0)
-                {
-                    tmp_loc -= 1;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                while (tmp_loc > 7)
-                {
-                    tmp_loc -= 8;
-
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                    {
-                        if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color != pos.ColorToMove))
-                        {
-                            targets.Add(tmp_loc);
-                        }
-
-                        break;
-                    }
-
-                    targets.Add(tmp_loc);
-                }
-
-                tmp_loc = queen.Location;
-
-                foreach (int target in targets)
-                {
-                    if (pos.Pieces.Any(p => p.Location == target && p.Color != pos.ColorToMove)
-                    && mgt.HasFlag(MoveGenerationType.Captures))
-                    {
-                        moves.Add(new Move(queen.Location, target, PieceRank.QUEEN, pos.ColorToMove,
-                            pos.HalfMoveCounter, pos.CastlingInfo,
-                            pos.Pieces.First(p => p.Location == target).Rank, null, pos.EnPassantTarget));
-                    }
-                    else if (pos.Pieces.All(p => p.Location != target) && mgt.HasFlag(MoveGenerationType.NonCaptures))
-                    {
-                        moves.Add(new Move(queen.Location, target, PieceRank.QUEEN, pos.ColorToMove, pos.HalfMoveCounter,
-                            pos.CastlingInfo, null, null, pos.EnPassantTarget));
-                    }
-                }
+                RayAttacksNE[i] = moves;
+                currentSquare = currentSquare << 1;
             }
-
-            return moves;
         }
 
-        public List<Move> PawnMoves(Position pos, MoveGenerationType mgt = (MoveGenerationType.Captures | MoveGenerationType.NonCaptures))
+        private void InitializeRayAttacksNW()
         {
-            List<Move> moves = new List<Move>();
+            RayAttacksNW = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
 
-            foreach (Piece pawn in pos.Pieces.Where(piece => piece.Color == pos.ColorToMove
-                && piece.Rank == PieceRank.PAWN))
+            for (int i = 0; i < 64; i++)
             {
-                List<int> targets = new List<int>();
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
 
-                if (pos.ColorToMove == PieceColor.WHITE)
+                while ((tmpSquare & 0x00FEFEFEFEFEFEFEUL) != 0x0000000000000000UL)
                 {
-                    if (pawn.Location < 56 && !pos.Pieces.Any(piece => piece.Location == (pawn.Location + 8)))
+                    tmpSquare = tmpSquare << 7;
+                    moves = moves | tmpSquare;
+                }
+
+                RayAttacksNW[i] = moves;
+                currentSquare = currentSquare << 1;
+            }
+        }
+
+        private void InitializeRayAttacksSE()
+        {
+            RayAttacksSE = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
+
+            for (int i = 0; i < 64; i++)
+            {
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
+
+                while ((tmpSquare & 0x7F7F7F7F7F7F7F00UL) != 0x0000000000000000UL)
+                {
+                    tmpSquare = tmpSquare >> 7;
+                    moves = moves | tmpSquare;
+                }
+
+                RayAttacksSE[i] = moves;
+                currentSquare = currentSquare << 1;
+            }
+        }
+
+        private void InitializeRayAttacksSW()
+        {
+            RayAttacksSW = new UInt64[64];
+            UInt64 currentSquare = 0x0000000000000001UL;
+            UInt64 tmpSquare;
+            UInt64 moves;
+
+            for (int i = 0; i < 64; i++)
+            {
+                moves = 0x0000000000000000UL;
+                tmpSquare = currentSquare;
+
+                while ((tmpSquare & 0xFEFEFEFEFEFEFE00UL) != 0x0000000000000000UL)
+                {
+                    tmpSquare = tmpSquare >> 9;
+                    moves = moves | tmpSquare;
+                }
+
+                RayAttacksSW[i] = moves;
+                currentSquare = currentSquare << 1;
+            }
+        }
+
+        private bool IsPiecePinned(UInt64 location, ref Position position, int offset)
+        {
+            bool result = true;
+            int locationMaskIndex;
+            PieceColor pinningColor =
+                    position.GetColorAt(location) == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
+            UInt64 pinMask;
+            UInt64 pinnedKingLocation;
+            UInt64 mask;
+            UInt64 occupancy;
+            UInt64 tmpLocation;
+            UInt64 guard;
+            bool goUp;
+
+            if (util.PopCount(location) == 1)
+            {
+                if (pinningColor == PieceColor.WHITE)
+                {
+                    if (offset == 8 || offset == 1)
                     {
-                        targets.Add(pawn.Location + 8);
+                        pinMask = position.WhiteQueens | position.WhiteRooks;
+                    }
+                    else
+                    {
+                        pinMask = position.WhiteQueens | position.WhiteBishops;
                     }
 
-                    if (pawn.Location > 7
-                        && pawn.Location < 16
-                        && !pos.Pieces.Any(piece => piece.Location == (pawn.Location + 8))
-                        && !pos.Pieces.Any(piece => piece.Location == (pawn.Location + 16)))
+                    pinnedKingLocation = position.BlackKing;
+                }
+                else
+                {
+                    if (offset == 8 || offset == 1)
                     {
-                        targets.Add(pawn.Location + 16);
+                        pinMask = position.BlackQueens | position.BlackRooks;
+                    }
+                    else
+                    {
+                        pinMask = position.BlackQueens | position.BlackBishops;
                     }
 
-                    if (pawn.Location < 56
-                        && (pawn.Location % 8) != 0
-                        && (pos.Pieces.Any(piece => piece.Color != pos.ColorToMove
-                            && piece.Location == (pawn.Location + 7))
-                        || pos.EnPassantTarget == (pawn.Location + 7)))
+                    pinnedKingLocation = position.WhiteKing;
+                }
+
+                locationMaskIndex = util.GetLSB(location);
+
+                if (offset == 8)
+                {
+                    mask = FileMask[locationMaskIndex];
+                }
+                else if (offset == 1)
+                {
+                    mask = RankMask[locationMaskIndex];
+                }
+                else if (offset == 9)
+                {
+                    mask = SWNEMask[locationMaskIndex];
+                }
+                else if (offset == 7)
+                {
+                    mask = NWSEMask[locationMaskIndex];
+                }
+                else
+                {
+                    mask = 0x0000000000000000UL;
+                }
+
+                if ((position.GetColorAt(location) == PieceColor.WHITE
+                    && (mask & pinnedKingLocation) != 0x0000000000000000UL
+                    && (mask & pinMask) != 0x0000000000000000UL)
+                    || (position.GetColorAt(location) == PieceColor.BLACK
+                    && (mask & pinnedKingLocation) != 0x0000000000000000UL
+                    && (mask & pinMask) != 0x0000000000000000UL))
+                {
+
+                    occupancy = (position.WhitePieces | position.BlackPieces) & mask;
+
+                    if (pinnedKingLocation < location)
                     {
-                        targets.Add(pawn.Location + 7);
+                        goUp = true;
+
+                        if (offset == 9)
+                        {
+                            guard = 0x007F7F7F7F7F7F7FUL;
+                        }
+                        else if (offset == 1)
+                        {
+                            guard = 0x7F7F7F7F7F7F7F7FUL;
+                        }
+                        else if (offset == 8)
+                        {
+                            guard = 0x00FFFFFFFFFFFFFFUL;
+                        }
+                        else if (offset == 7)
+                        {
+                            guard = 0x00FEFEFEFEFEFEFEUL;
+                        }
+                        else
+                        {
+                            guard = 0x0000000000000000UL;
+                        }
+                    }
+                    else
+                    {
+                        goUp = false;
+
+                        if (offset == 9)
+                        {
+                            guard = 0xFEFEFEFEFEFEFE00UL;
+                        }
+                        else if (offset == 1)
+                        {
+                            guard = 0xFEFEFEFEFEFEFEFEUL;
+                        }
+                        else if (offset == 8)
+                        {
+                            guard = 0xFFFFFFFFFFFFFF00UL;
+                        }
+                        else if (offset == 7)
+                        {
+                            guard = 0x7F7F7F7F7F7F7F00UL;
+                        }
+                        else
+                        {
+                            guard = 0x0000000000000000UL;
+                        }
                     }
 
-                    if (pawn.Location < 56
-                        && (pawn.Location % 8) != 7
-                        && (pos.Pieces.Any(piece => piece.Color != pos.ColorToMove
-                            && piece.Location == (pawn.Location + 9))
-                        || pos.EnPassantTarget == (pawn.Location + 9)))
+                    if ((pinnedKingLocation & guard) != 0x0000000000000000UL)
                     {
-                        targets.Add(pawn.Location + 9);
+                        tmpLocation = goUp ? pinnedKingLocation << offset : pinnedKingLocation >> offset;
+
+                        while (tmpLocation != location)
+                        {
+                            if ((tmpLocation & occupancy) != 0x0000000000000000UL)
+                            {
+                                result = false;
+                                break;
+                            }
+
+                            tmpLocation = goUp ? tmpLocation << offset : tmpLocation >> offset;
+                        }
+
+                        if (result && (tmpLocation & guard) != 0x0000000000000000UL)
+                        {
+                            tmpLocation = goUp ? tmpLocation << offset : tmpLocation >> offset;
+
+                            while (true)
+                            {
+                                if ((tmpLocation & occupancy) != 0x0000000000000000UL)
+                                {
+                                    if ((tmpLocation & pinMask) == 0x0000000000000000UL)
+                                    {
+                                        result = false;
+                                        break;
+                                    }
+                                    else
+                                    {
+                                        break;
+                                    }
+                                }
+                                else
+                                {
+                                    if ((tmpLocation & guard) != 0x0000000000000000UL)
+                                    {
+                                        tmpLocation = goUp ? tmpLocation << offset : tmpLocation >> offset;
+                                    }
+                                    else
+                                    {
+                                        result = false;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            result = false;
+                        }
+                    }
+                    else
+                    {
+                        result = false;
                     }
                 }
                 else
                 {
-                    if (pawn.Location > 7 && !pos.Pieces.Any(piece => piece.Location == (pawn.Location - 8)))
-                    {
-                        targets.Add(pawn.Location - 8);
-                    }
+                    result = false;
+                }
+            }
+            else
+            {
+                result = false;
+            }
 
-                    if (pawn.Location > 47
-                        && pawn.Location < 56
-                        && !pos.Pieces.Any(piece => piece.Location == (pawn.Location - 8))
-                        && !pos.Pieces.Any(piece => piece.Location == (pawn.Location - 16)))
-                    {
-                        targets.Add(pawn.Location - 16);
-                    }
+            return result;
+        }
 
-                    if (pawn.Location > 7
-                        && (pawn.Location % 8) != 0
-                        && (pos.Pieces.Any(piece => piece.Color != pos.ColorToMove
-                            && piece.Location == (pawn.Location - 9))
-                        || pos.EnPassantTarget == (pawn.Location - 9)))
-                    {
-                        targets.Add(pawn.Location - 9);
-                    }
+        private void GenerateSlidingMovesAt(UInt64 location, ref Position position, UInt16 direction, bool evade)
+        {
+            int locationIndex;
+            UInt64 moveMask = 0x0000000000000000UL;
+            UInt64 currentMove;
+            PieceColor color = position.GetColorAt(location).Value;
+            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            UInt64 blocker;
+            int blockerIndex;
 
-                    if (pawn.Location > 7
-                        && (pawn.Location % 8) != 7
-                        && (pos.Pieces.Any(piece => piece.Color != pos.ColorToMove
-                            && piece.Location == (pawn.Location - 7))
-                        || pos.EnPassantTarget == (pawn.Location - 7)))
+            if (util.PopCount(location) == 1)
+            {
+                locationIndex = util.GetLSB(location);
+
+                if (direction == 0x01)
+                {
+                    moveMask = RayAttacksN[locationIndex];
+                    blockerIndex = util.GetLSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
                     {
-                        targets.Add(pawn.Location - 7);
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksN[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x02)
+                {
+                    moveMask = RayAttacksNE[locationIndex];
+                    blockerIndex = util.GetLSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksNE[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x04)
+                {
+                    moveMask = RayAttacksE[locationIndex];
+                    blockerIndex = util.GetLSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksE[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x08)
+                {
+                    moveMask = RayAttacksSE[locationIndex];
+                    blockerIndex = util.GetMSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksSE[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x10)
+                {
+                    moveMask = RayAttacksS[locationIndex];
+                    blockerIndex = util.GetMSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksS[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x20)
+                {
+                    moveMask = RayAttacksSW[locationIndex];
+                    blockerIndex = util.GetMSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksSW[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x40)
+                {
+                    moveMask = RayAttacksW[locationIndex];
+                    blockerIndex = util.GetMSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksW[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
+                    }
+                }
+                else if (direction == 0x80)
+                {
+                    moveMask = RayAttacksNW[locationIndex];
+                    blockerIndex = util.GetLSB(moveMask & (position.WhitePieces | position.BlackPieces));
+
+                    if (blockerIndex != -1)
+                    {
+                        blocker = 0x0000000000000001UL << blockerIndex;
+                        moveMask = moveMask & ~RayAttacksNW[blockerIndex];
+                        moveMask = moveMask & ~ownPieces;
                     }
                 }
 
-                foreach (int target in targets)
+
+            }
+
+            while (moveMask != 0x0000000000000000UL)
+            {
+                currentMove = 0x0000000000000001UL << util.GetLSB(moveMask);
+                PieceRank? captured = null;
+
+                if ((opposingPieces & currentMove) != 0x0000000000000000UL)
                 {
-                    if (pos.Pieces.Any(piece => piece.Location == target && piece.Color != pos.ColorToMove)
-                        && mgt.HasFlag(MoveGenerationType.Captures))
+                    captured = position.GetRankAt(currentMove);
+                }
+
+                AddMove(location, currentMove, position.GetRankAt(location).Value,
+                                    color, position.HalfMoveCounter, position.CastlingInfo,
+                                    position.EnPassantTarget, captured, null, evade, ref position);
+
+                moveMask = moveMask & ~currentMove;
+            }
+        }
+
+        private void GeneratePawnMovesAt(UInt64 location, ref Position position, bool evade)
+        {
+            UInt64 advancedLocation = position.ColorToMove == PieceColor.WHITE ? location << 8 : location >> 8;
+            UInt64 doubleAdvancedLocation =
+                position.ColorToMove == PieceColor.WHITE ? location << 16 : location >> 16;
+
+            UInt64 captureLeftLocation =
+                position.ColorToMove == PieceColor.WHITE ? location << 7 : location >> 7;
+
+            UInt64 captureRightLocation =
+                position.ColorToMove == PieceColor.WHITE ? location << 9 : location >> 9;
+
+            UInt64 startRankMask =
+                position.ColorToMove == PieceColor.WHITE ? 0x000000000000FF00UL : 0x00FF000000000000UL;
+
+            UInt64 backRankMask =
+                position.ColorToMove == PieceColor.WHITE ? 0xFF00000000000000UL : 0x00000000000000FFUL;
+
+            UInt64 leftEdgeMask =
+                position.ColorToMove == PieceColor.WHITE ? 0x0101010101010101UL : 0x8080808080808080UL;
+
+            UInt64 rightEdgeMask =
+                position.ColorToMove == PieceColor.WHITE ? 0x8080808080808080UL : 0x0101010101010101UL;
+
+            UInt64 opposingPieces =
+                position.ColorToMove == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+
+            if (!IsPiecePinnedRank(location, ref position))
+            {
+                if (!IsPiecePinnedNWSE(location, ref position)
+                    && !IsPiecePinnedSWNE(location, ref position))
+                {
+                    if (((advancedLocation & (position.WhitePieces | position.BlackPieces)) == 0x0000000000000000UL)
+                        && ((doubleAdvancedLocation & (position.WhitePieces | position.BlackPieces))
+                        == 0x0000000000000000UL)
+                        && (location & startRankMask) == location)
                     {
-                        if (target > 56 || target < 8)
+                        AddMove(location, doubleAdvancedLocation, PieceRank.PAWN, position.ColorToMove,
+                            position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null, null,
+                            evade, ref position);
+                    }
+
+                    if (((location & backRankMask) == 0x0000000000000000UL)
+                        && ((advancedLocation & (position.WhitePieces | position.BlackPieces)) == 0x0000000000000000UL))
+                    {
+                        if ((advancedLocation & backRankMask) == 0x0000000000000000UL)
                         {
-                            moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                pos.Pieces.First(piece => piece.Location == target).Rank,
-                                PieceRank.QUEEN,
-                                pos.EnPassantTarget));
-
-                            moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                pos.Pieces.First(piece => piece.Location == target).Rank,
-                                PieceRank.ROOK,
-                                pos.EnPassantTarget));
-
-                            moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                pos.Pieces.First(piece => piece.Location == target).Rank,
-                                PieceRank.BISHOP,
-                                pos.EnPassantTarget));
-
-                            moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                pos.Pieces.First(piece => piece.Location == target).Rank,
-                                PieceRank.KNIGHT,
-                                pos.EnPassantTarget));
+                            AddMove(location, advancedLocation, PieceRank.PAWN, position.ColorToMove,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null,
+                                null, evade, ref position);
                         }
                         else
                         {
-                            moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                pos.Pieces.First(piece => piece.Location == target).Rank,
-                                null,
-                                pos.EnPassantTarget));
+                            AddMove(location, advancedLocation, PieceRank.PAWN, position.ColorToMove,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null,
+                                PieceRank.QUEEN, evade, ref position);
+
+                            AddMove(location, advancedLocation, PieceRank.PAWN, position.ColorToMove,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null,
+                                PieceRank.ROOK, evade, ref position);
+
+                            AddMove(location, advancedLocation, PieceRank.PAWN, position.ColorToMove,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null,
+                                PieceRank.BISHOP, evade, ref position);
+
+                            AddMove(location, advancedLocation, PieceRank.PAWN, position.ColorToMove,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget, null,
+                                PieceRank.KNIGHT, evade, ref position);
                         }
                     }
-                    
-                    if (!pos.Pieces.Any(piece => piece.Location == target)
-                        && mgt.HasFlag(MoveGenerationType.NonCaptures))
+                }
+
+                if (!IsPiecePinnedFile(location, ref position))
+                {
+                    bool isPinned = false;
+
+                    if (position.ColorToMove == PieceColor.WHITE && IsPiecePinnedSWNE(location, ref position))
                     {
-                        moves.Add(new Move(pawn.Location,
-                                target,
-                                PieceRank.PAWN,
-                                pos.ColorToMove,
-                                pos.HalfMoveCounter,
-                                pos.CastlingInfo,
-                                null,
-                                null,
-                                pos.EnPassantTarget));
+                        isPinned = true;
+                    }
+
+                    if (position.ColorToMove == PieceColor.BLACK && IsPiecePinnedSWNE(location, ref position))
+                    {
+                        isPinned = true;
+                    }
+
+                    if (!isPinned)
+                    {
+                        if (((location & (leftEdgeMask | backRankMask)) == 0x0000000000000000UL)
+                            && ((captureLeftLocation & (opposingPieces | position.EnPassantTarget)) != 0x0000000000000000UL))
+                        {
+                            PieceRank? captured = position.GetRankAt(captureLeftLocation);
+
+                            if ((captureLeftLocation & position.EnPassantTarget) != 0x0000000000000000UL)
+                            {
+                                evade = true;
+                                captured = PieceRank.PAWN;
+                            }
+
+                            if ((captureLeftLocation & backRankMask) == 0x0000000000000000UL)
+                            {
+                                AddMove(location, captureLeftLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, null,
+                                        evade, ref position);
+                            }
+                            else
+                            {
+                                AddMove(location, captureLeftLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.QUEEN,
+                                        evade, ref position);
+
+                                AddMove(location, captureLeftLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.ROOK,
+                                        evade, ref position);
+
+                                AddMove(location, captureLeftLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.BISHOP,
+                                        evade, ref position);
+
+                                AddMove(location, captureLeftLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.KNIGHT,
+                                        evade, ref position);
+                            }
+                        }
+                    }
+
+                    isPinned = false;
+
+                    if (position.ColorToMove == PieceColor.WHITE && IsPiecePinnedNWSE(location, ref position))
+                    {
+                        isPinned = true;
+                    }
+
+                    if (position.ColorToMove == PieceColor.BLACK && IsPiecePinnedNWSE(location, ref position))
+                    {
+                        isPinned = true;
+                    }
+
+                    if (!isPinned)
+                    {
+                        if (((location & (rightEdgeMask | backRankMask)) == 0x0000000000000000UL)
+                            && ((captureRightLocation & (opposingPieces | position.EnPassantTarget)) != 0x0000000000000000UL))
+                        {
+                            PieceRank? captured = position.GetRankAt(captureRightLocation);
+
+                            if ((captureRightLocation & position.EnPassantTarget) != 0x0000000000000000UL)
+                            {
+                                evade = true;
+                                captured = PieceRank.PAWN;
+                            }
+
+                            if ((captureRightLocation & backRankMask) == 0x0000000000000000UL)
+                            {
+                                AddMove(location, captureRightLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, null,
+                                        evade, ref position);
+                            }
+                            else
+                            {
+                                AddMove(location, captureRightLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.QUEEN,
+                                        evade, ref position);
+
+                                AddMove(location, captureRightLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.ROOK,
+                                        evade, ref position);
+
+                                AddMove(location, captureRightLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.BISHOP,
+                                        evade, ref position);
+
+                                AddMove(location, captureRightLocation, PieceRank.PAWN,
+                                        position.ColorToMove, position.HalfMoveCounter, position.CastlingInfo,
+                                        position.EnPassantTarget, captured, PieceRank.KNIGHT,
+                                        evade, ref position);
+                            }
+                        }
                     }
                 }
             }
-
-            return moves;
         }
 
-        public bool IsSquareAttacked(int loc, Position pos, PieceColor attackColor)
+        private void AddMove(UInt64 src, UInt64 tgt, PieceRank rank, PieceColor color, int hm, CastlingInfo ci,
+            UInt64 ep, PieceRank? capture, PieceRank? promotion, bool evade, ref Position position)
         {
-            int tmp_loc = loc;
-            bool isAttacked = false;
-
-            while (tmp_loc < 56)
+            if (evade)
             {
-                tmp_loc += 8;
+                Move m = new Move(src, tgt, rank, color, hm, ci, ep, capture, promotion);
+                Move nullMove = new Move(0x0000000000000000UL, 0x0000000000000000UL, PieceRank.PAWN,
+                    PieceColor.BLACK, 0, CastlingInfo.NONE, 0x0000000000000000, null, null);
 
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
+                position.Make(m);
+                position.Make(nullMove);
+
+                if (!IsSquareAttacked(color == PieceColor.WHITE ? position.WhiteKing : position.BlackKing, ref position))
                 {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.ROOK)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
+                    moveList.pushMove(src, tgt, rank, color, hm, ci, ep, capture, promotion);
                 }
-            }
 
-            if (loc < 56)
+                position.Unmake(nullMove);
+                position.Unmake(m);
+            }
+            else
             {
-                if (pos.Pieces.Any(p => p.Location == (loc + 8) && p.Color == attackColor
-                    && p.Rank == PieceRank.KING))
-                {
-                    isAttacked = true;
-                }
+                moveList.pushMove(src, tgt, rank, color, hm, ci, ep, capture, promotion);
             }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while (tmp_loc < 56 && (tmp_loc % 8) != 7)
-            {
-                tmp_loc += 9;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.BISHOP)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 7 && loc < 56)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc + 9) && p.Color == attackColor
-                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.BLACK))))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while ((tmp_loc % 8) != 7)
-            {
-                tmp_loc += 1;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.ROOK)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 7)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc + 1) && p.Color == attackColor
-                    && p.Rank == PieceRank.KING))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while (tmp_loc > 7 && (tmp_loc % 8) != 7)
-            {
-                tmp_loc -= 7;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.BISHOP)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 7 && loc > 7)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc - 7) && p.Color == attackColor
-                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.WHITE))))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while (tmp_loc > 7)
-            {
-                tmp_loc -= 8;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.ROOK)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if (loc > 7)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc - 8) && p.Color == attackColor
-                    && p.Rank == PieceRank.KING))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while (tmp_loc > 7 && (tmp_loc % 8) != 0)
-            {
-                tmp_loc -= 9;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.BISHOP)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 0 && loc > 7)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc - 9) && p.Color == attackColor
-                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.WHITE))))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while ((tmp_loc % 8) != 0)
-            {
-                tmp_loc -= 1;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.ROOK)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 0)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc - 1) && p.Color == attackColor
-                    && p.Rank == PieceRank.KING))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            tmp_loc = loc;
-
-            while (tmp_loc < 56 && (tmp_loc % 8) != 0)
-            {
-                tmp_loc += 7;
-
-                if (pos.Pieces.Any(p => p.Location == tmp_loc))
-                {
-                    if (pos.Pieces.Any(p => p.Location == tmp_loc && p.Color == attackColor
-                        && (p.Rank == PieceRank.QUEEN || p.Rank == PieceRank.BISHOP)))
-                    {
-                        isAttacked = true;
-                    }
-
-                    break;
-                }
-            }
-
-            if ((loc % 8) != 0 && loc < 56)
-            {
-                if (pos.Pieces.Any(p => p.Location == (loc + 7) && p.Color == attackColor
-                    && (p.Rank == PieceRank.KING || (p.Rank == PieceRank.PAWN && attackColor == PieceColor.BLACK))))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            if (loc < 56 && (loc % 8) > 1)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc + 6)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc < 48 && (loc % 8) > 0)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc + 15)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc < 48 && (loc % 8) < 7)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc + 17)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc < 56 && (loc % 8) < 6)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc + 10)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc > 7 && (loc % 8) < 6)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc - 6)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc > 15 && (loc % 8) < 7)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc - 15)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc > 15 && (loc % 8) > 0)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc - 17)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (loc > 7 && (loc % 8) > 1)
-            {
-                if (pos.Pieces.Any(p => p.Color == attackColor && p.Location == (loc - 10)
-                    && p.Rank == PieceRank.KNIGHT))
-                {
-                    isAttacked = true;
-                }
-            }
-
-            if (isAttacked)
-            {
-                return true;
-            }
-
-            return false;
         }
 
-        public bool IsCapture(int loc, Position pos)
+        private void GenerateKnightMovesAt(UInt64 location, ref Position position, bool evade)
         {
-            return pos.Pieces.Any(p => p.Location == loc && p.Color == (pos.ColorToMove == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE));
+            int locationIndex;
+            UInt64 moveMask = 0x0000000000000000UL;
+            UInt64 currentMove;
+            PieceColor color = position.GetColorAt(location).Value;
+            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+
+
+            if (util.PopCount(location) == 1)
+            {
+                locationIndex = util.GetLSB(location);
+
+                moveMask = KnightAttacks[locationIndex] & ~ownPieces;
+            }
+
+            while (moveMask != 0x0000000000000000UL)
+            {
+                currentMove = 0x0000000000000001UL << util.GetLSB(moveMask);
+                PieceRank? captured = null;
+
+                if ((opposingPieces & currentMove) != 0x0000000000000000UL)
+                {
+                    captured = position.GetRankAt(currentMove);
+                }
+
+                AddMove(location, currentMove, PieceRank.KNIGHT, color, position.HalfMoveCounter,
+                        position.CastlingInfo, position.EnPassantTarget, captured, null, evade, ref position);
+
+                moveMask = moveMask & ~currentMove;
+            }
         }
 
-        public List<int> GetCaptures(List<int> locs, Position pos)
+        private void GenerateKingMovesAt(UInt64 location, ref Position position, bool evade)
         {
-            return locs.FindAll(l => IsCapture(l, pos));
+            int locationIndex;
+            UInt64 moveMask = 0x0000000000000000UL;
+            UInt64 currentMove;
+            PieceColor color = position.GetColorAt(location).Value;
+            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+
+
+            if (util.PopCount(location) == 1)
+            {
+                locationIndex = util.GetLSB(location);
+
+                moveMask = KingAttacks[locationIndex] & ~ownPieces;
+            }
+
+            while (moveMask != 0x0000000000000000UL)
+            {
+                currentMove = 0x0000000000000001UL << util.GetLSB(moveMask);
+
+                if (!IsSquareAttacked(currentMove, ref position))
+                {
+                    PieceRank? captured = null;
+
+                    if ((opposingPieces & currentMove) != 0x0000000000000000UL)
+                    {
+                        captured = position.GetRankAt(currentMove).Value;
+                    }
+
+                    AddMove(location, currentMove, PieceRank.KING, color, position.HalfMoveCounter,
+                        position.CastlingInfo, position.EnPassantTarget, captured, null, evade, ref position);
+                }
+
+                moveMask = moveMask & ~currentMove;
+            }
+
+            if (color == PieceColor.WHITE)
+            {
+                if (position.CastlingInfo.HasFlag(CastlingInfo.WHITE_SHORT))
+                {
+                    if (((position.WhitePieces | position.BlackPieces) & 0x0000000000000060UL)
+                        == 0x0000000000000000UL)
+                    {
+                        if (!IsSquareAttacked(0x0000000000000040UL, ref position)
+                            && !IsSquareAttacked(0x0000000000000020UL, ref position)
+                            && !IsSquareAttacked(0x0000000000000010UL, ref position))
+                        {
+                            AddMove(0x0000000000000010UL, 0x0000000000000040UL, PieceRank.KING, color,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget,
+                                null, null, evade, ref position);
+                        }
+                    }
+                }
+
+                if (position.CastlingInfo.HasFlag(CastlingInfo.WHITE_LONG))
+                {
+                    if (((position.WhitePieces | position.BlackPieces) & 0x000000000000000EUL)
+                        == 0x0000000000000000UL)
+                    {
+                        if (!IsSquareAttacked(0x0000000000000008UL, ref position)
+                            && !IsSquareAttacked(0x0000000000000004UL, ref position)
+                            && !IsSquareAttacked(0x0000000000000010UL, ref position))
+                        {
+                            AddMove(0x0000000000000010UL, 0x0000000000000004UL, PieceRank.KING, color,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget,
+                                null, null, evade, ref position);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                if (position.CastlingInfo.HasFlag(CastlingInfo.BLACK_SHORT))
+                {
+                    if (((position.WhitePieces | position.BlackPieces) & 0x6000000000000000UL)
+                        == 0x0000000000000000UL)
+                    {
+                        if (!IsSquareAttacked(0x4000000000000000UL, ref position)
+                            && !IsSquareAttacked(0x2000000000000000UL, ref position)
+                            && !IsSquareAttacked(0x1000000000000000UL, ref position))
+                        {
+                            AddMove(0x1000000000000000UL, 0x4000000000000000UL, PieceRank.KING, color,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget,
+                                null, null, evade, ref position);
+                        }
+                    }
+                }
+
+                if (position.CastlingInfo.HasFlag(CastlingInfo.BLACK_LONG))
+                {
+                    if (((position.WhitePieces | position.BlackPieces) & 0x0E00000000000000UL)
+                        == 0x0000000000000000UL)
+                    {
+                        if (!IsSquareAttacked(0x0800000000000000UL, ref position)
+                            && !IsSquareAttacked(0x0400000000000000UL, ref position)
+                            && !IsSquareAttacked(0x1000000000000000UL, ref position))
+                        {
+                            AddMove(0x1000000000000000UL, 0x0400000000000000UL, PieceRank.KING, color,
+                                position.HalfMoveCounter, position.CastlingInfo, position.EnPassantTarget,
+                                null, null, evade, ref position);
+                        }
+                    }
+                }
+            }
         }
 
-        public List<int> GetNonCaptures(List<int> locs, Position pos)
+        private bool IsSquareAttacked(UInt64 square, ref Position position)
         {
-            return locs.FindAll(l => !IsCapture(l, pos));
+            bool result = false;
+            int squareIndex = util.GetLSB(square);
+            int blockerIndex;
+            UInt64 opposingKnights =
+                position.ColorToMove == PieceColor.WHITE ? position.BlackKnights : position.WhiteKnights;
+            UInt64 opposingBishops =
+                position.ColorToMove == PieceColor.WHITE ? position.BlackBishops : position.WhiteBishops;
+            UInt64 opposingRooks =
+                position.ColorToMove == PieceColor.WHITE ? position.BlackRooks : position.WhiteRooks;
+            UInt64 opposingQueens =
+                position.ColorToMove == PieceColor.WHITE ? position.BlackQueens : position.WhiteQueens;
+
+
+            if ((KnightAttacks[squareIndex] & opposingKnights) != 0x0000000000000000UL)
+            {
+                result = true;
+            }
+
+            blockerIndex = util.GetLSB(RayAttacksN[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingRooks | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetLSB(RayAttacksNE[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingBishops | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetLSB(RayAttacksE[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingRooks | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetMSB(RayAttacksSE[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingBishops | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetMSB(RayAttacksS[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingRooks | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetMSB(RayAttacksSW[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingBishops | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetMSB(RayAttacksW[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingRooks | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            blockerIndex = util.GetLSB(RayAttacksNW[squareIndex] & (position.WhitePieces | position.BlackPieces));
+
+            if (blockerIndex != -1)
+            {
+                if (((0x0000000000000001UL << blockerIndex) & (opposingBishops | opposingQueens))
+                    != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            if (position.ColorToMove == PieceColor.WHITE)
+            {
+                if (((((square & 0x00FEFEFEFEFEFEFEUL) << 7) & position.BlackPawns) != 0x0000000000000000UL)
+                    || ((((square & 0x007F7F7F7F7F7F7FUL) << 9) & position.BlackPawns) != 0x0000000000000000UL))
+                {
+                    result = true;
+                }
+
+                if ((KingAttacks[squareIndex] & position.BlackKing) != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+            else
+            {
+                if (((((square & 0xFEFEFEFEFEFEFE00UL) >> 9) & position.WhitePawns) != 0x0000000000000000UL)
+                    || ((((square & 0x7F7F7F7F7F7F7F00UL) >> 7) & position.WhitePawns) != 0x0000000000000000UL))
+                {
+                    result = true;
+                }
+
+                if ((KingAttacks[squareIndex] & position.WhiteKing) != 0x0000000000000000UL)
+                {
+                    result = true;
+                }
+            }
+
+            return result;
         }
-
-
     }
 }

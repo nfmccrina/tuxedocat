@@ -5,118 +5,64 @@ namespace TuxedoCat
 {
     public struct Move
     {
-        private int sourceLocation;
-        private int targetLocation;
-        private PieceRank movingPiece;
-        private PieceColor moveColor;
-        private int currentHalfMoves;
-        private PieceRank? capturedPiece;
-        private PieceRank? promotedPiece;
-        private int? currentEnPassant;
-        private CastlingInfo currentCastlingInfo;
 
-        public Move(int src, int tgt, PieceRank m, PieceColor pc, int hm, CastlingInfo ci, PieceRank? c = null, PieceRank? p = null, int? ep = null)
+        public Move(UInt64 src, UInt64 tgt, PieceRank m, PieceColor pc, int hm, CastlingInfo ci, UInt64 ep, PieceRank? c = null, PieceRank? p = null)
         {
-            Debug.Assert(src >= 0 && src < 64);
-            Debug.Assert(tgt >= 0 && tgt < 64);
+            SourceLocation = src;
+            TargetLocation = tgt;
 
-            if (src >= 0 && src < 64)
-            {
-                sourceLocation = src;
-            }
-            else
-            {
-                sourceLocation = 0;
-            }
-
-            if (tgt >= 0 && tgt < 64)
-            {
-                targetLocation = tgt;
-            }
-            else
-            {
-                targetLocation = 0;
-            }
-
-            movingPiece = m;
-            moveColor = pc;
-            currentHalfMoves = hm;
-            capturedPiece = c;
-            promotedPiece = p;
-            currentEnPassant = ep;
-            currentCastlingInfo = ci;
+            MovingPiece = m;
+            MoveColor = pc;
+            CurrentHalfMoves = hm;
+            CapturedPiece = c;
+            PromotedRank = p;
+            CurrentEnPassant = ep;
+            CurrentCastlingInfo = ci;
         }
 
-        public int SourceLocation
+        public UInt64 SourceLocation
         {
-            get
-            {
-                return sourceLocation;
-            }
+            get; set;
         }
 
-        public int TargetLocation
+        public UInt64 TargetLocation
         {
-            get
-            {
-                return targetLocation;
-            }
+            get; set;
         }
 
         public PieceRank MovingPiece
         {
-            get
-            {
-                return movingPiece;
-            }
+            get; set;
         }
 
         public int CurrentHalfMoves
         {
-            get
-            {
-                return currentHalfMoves;
-            }
+            get; set;
         }
 
         public PieceColor MoveColor
         {
-            get
-            {
-                return moveColor;
-            }
+            get; set;
         }
 
         public PieceRank? CapturedPiece
         {
-            get
-            {
-                return capturedPiece;
-            }
+            get; set;
         }
 
         public PieceRank? PromotedRank
         {
-            get
-            {
-                return promotedPiece;
-            }
+            get; set;
         }
 
-        public int? CurrentEnPassant
+        public UInt64 CurrentEnPassant
         {
-            get
-            {
-                return currentEnPassant;
-            }
+            get; set;
         }
 
         public CastlingInfo CurrentCastlingInfo
         {
-            get
-            {
-                return currentCastlingInfo;
-            }
+            get; set;
         }
     }
 }

@@ -8,6 +8,7 @@ namespace TuxedoCat
     {
         public void Run()
         {
+            Engine engine = new Engine();
             bool keepRunning = true;
             string input;
             string[] inputTokens;
@@ -25,13 +26,32 @@ namespace TuxedoCat
                     {
                         keepRunning = false;
                     }
+                    else if (inputTokens[0].ToLower() == "setboard")
+                    {
+                        if (inputTokens.Length < 2)
+                        {
+                            Console.WriteLine("Usage: setboard <FEN>");
+                            continue;
+                        }
+
+                        try
+                        {
+                            engine.SetBoard(string.Join(" ", inputTokens, 1, inputTokens.Length - 1));
+                        }
+                        catch (ArgumentException)
+                        {
+                            Console.WriteLine("Error: Invalid FEN");
+
+                            engine.SetBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                        }
+                    }
                     else if (inputTokens[0].ToLower() == "perft")
                     {
                         Stopwatch stopwatch = new Stopwatch();
 
-                        if (inputTokens.Length < 3)
+                        if (inputTokens.Length < 2)
                         {
-                            Console.WriteLine("Usage: perft <depth> <FEN>");
+                            Console.WriteLine("Usage: perft <depth>");
                             continue;
                         }
 
@@ -39,15 +59,12 @@ namespace TuxedoCat
 
                         if (Int32.TryParse(inputTokens[1], out depth))
                         {
-                            string fen = string.Join(" ", inputTokens, 2, inputTokens.Length - 2);
-                            Position.CurrentPosition.SetPosition(fen);
-                            MoveGenerator moveGenerator = new MoveGenerator();
-
                             stopwatch.Reset();
                             stopwatch.Start();
-                            int result = moveGenerator.Perft(depth, Position.CurrentPosition);
-                            stopwatch.Stop();
 
+                            UInt64 result = engine.Perft(depth);
+
+                            stopwatch.Stop();
 
                             Console.WriteLine("Elapsed time: " + (stopwatch.ElapsedMilliseconds / 1000.0).ToString("N1"));
                             Console.WriteLine("perft (" + depth + "): " + result.ToString());
@@ -60,9 +77,9 @@ namespace TuxedoCat
                     }
                     else if (inputTokens[0].ToLower() == "divide")
                     {
-                        if (inputTokens.Length < 3)
+                        if (inputTokens.Length < 2)
                         {
-                            Console.WriteLine("Usage: divide <depth> <FEN>");
+                            Console.WriteLine("Usage: divide <depth>");
                             continue;
                         }
 
@@ -70,11 +87,7 @@ namespace TuxedoCat
 
                         if (Int32.TryParse(inputTokens[1], out depth))
                         {
-                            string fen = string.Join(" ", inputTokens, 2, inputTokens.Length - 2);
-                            Position.CurrentPosition.SetPosition(fen);
-                            MoveGenerator moveGenerator = new MoveGenerator();
-
-                            moveGenerator.Divide(depth, Position.CurrentPosition);
+                            engine.Divide(depth);
                         }
                         else
                         {
