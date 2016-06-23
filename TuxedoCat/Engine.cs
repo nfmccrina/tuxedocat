@@ -1,4 +1,28 @@
-﻿using System;
+﻿/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2016 Nathan McCrina
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+using System;
 using System.Linq;
 
 namespace TuxedoCat
@@ -14,15 +38,15 @@ namespace TuxedoCat
             currentPosition = new Position();
         }
 
-        public UInt64 Perft(int depth)
+        public ulong Perft(int depth)
         {
             if (depth <= 1)
             {
-                return (UInt64)moveGenerator.GenerateMoves(ref currentPosition).Length;
+                return (ulong)moveGenerator.GenerateMoves(ref currentPosition).Length;
             }
             else
             {
-                UInt64 count = 0;
+                ulong count = 0;
                 Move[] availableMoves = moveGenerator.GenerateMoves(ref currentPosition);
 
                 foreach (Move move in availableMoves)
@@ -45,7 +69,7 @@ namespace TuxedoCat
         {
             SANParser sanParser = new SANParser();
             Move[] availableMoves;
-            UInt64 totalCount = 0;
+            ulong totalCount = 0;
             int moveCount = 0;
 
             if (depth <= 1)
@@ -74,7 +98,7 @@ namespace TuxedoCat
 
                     currentPosition.Make(move);
 
-                    UInt64 count = Perft(depth - 1);
+                    ulong count = Perft(depth - 1);
 
                     totalCount += count;
                     Console.WriteLine(moveSAN + ": " + count.ToString());

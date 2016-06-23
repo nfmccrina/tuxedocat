@@ -1,26 +1,48 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2016 Nathan McCrina
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+using System;
 
 namespace TuxedoCat
 {
     public class MoveGenerator
     {
-        private static UInt64[] FileMask;
-        private static UInt64[] RankMask;
-        private static UInt64[] SWNEMask;
-        private static UInt64[] NWSEMask;
+        private static ulong[] FileMask;
+        private static ulong[] RankMask;
+        private static ulong[] SWNEMask;
+        private static ulong[] NWSEMask;
 
-        private static UInt64[] KnightAttacks;
-        private static UInt64[] KingAttacks;
-        private static UInt64[] RayAttacksN;
-        private static UInt64[] RayAttacksS;
-        private static UInt64[] RayAttacksE;
-        private static UInt64[] RayAttacksW;
-        private static UInt64[] RayAttacksNE;
-        private static UInt64[] RayAttacksNW;
-        private static UInt64[] RayAttacksSE;
-        private static UInt64[] RayAttacksSW;
+        private static ulong[] KnightAttacks;
+        private static ulong[] KingAttacks;
+        private static ulong[] RayAttacksN;
+        private static ulong[] RayAttacksS;
+        private static ulong[] RayAttacksE;
+        private static ulong[] RayAttacksW;
+        private static ulong[] RayAttacksNE;
+        private static ulong[] RayAttacksNW;
+        private static ulong[] RayAttacksSE;
+        private static ulong[] RayAttacksSW;
 
         private static TuxedoCatUtility util;
         private MoveList moveList;
@@ -48,8 +70,8 @@ namespace TuxedoCat
 
         public Move[] GenerateMoves(ref Position position)
         {
-            UInt64 pieces = position.ColorToMove == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
-            UInt64 currentPiece;
+            ulong pieces = position.ColorToMove == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            ulong currentPiece;
             PieceRank rank;
             bool inCheck = false;
 
@@ -161,31 +183,31 @@ namespace TuxedoCat
             return moveList.getSlice(moveList.Count);
         }
 
-        private bool IsPiecePinnedNWSE(UInt64 location, ref Position position)
+        private bool IsPiecePinnedNWSE(ulong location, ref Position position)
         {
             return IsPiecePinned(location, ref position, 7);
         }
 
-        private bool IsPiecePinnedSWNE(UInt64 location, ref Position position)
+        private bool IsPiecePinnedSWNE(ulong location, ref Position position)
         {
             return IsPiecePinned(location, ref position, 9);
         }
 
-        private bool IsPiecePinnedRank(UInt64 location, ref Position position)
+        private bool IsPiecePinnedRank(ulong location, ref Position position)
         {
             return IsPiecePinned(location, ref position, 1);
         }
 
-        private bool IsPiecePinnedFile(UInt64 location, ref Position position)
+        private bool IsPiecePinnedFile(ulong location, ref Position position)
         {
             return IsPiecePinned(location, ref position, 8);
         }
 
         private void InitializeFileMask()
         {
-            FileMask = new UInt64[64];
-            UInt64 currentMask;
-            UInt64 currentSquare = 0x0000000000000001UL;
+            FileMask = new ulong[64];
+            ulong currentMask;
+            ulong currentSquare = 0x0000000000000001UL;
 
             for (int index = 0; index < 64; index++)
             {
@@ -208,9 +230,9 @@ namespace TuxedoCat
 
         private void InitializeRankMask()
         {
-            RankMask = new UInt64[64];
-            UInt64 currentMask;
-            UInt64 currentSquare = 0x0000000000000001UL;
+            RankMask = new ulong[64];
+            ulong currentMask;
+            ulong currentSquare = 0x0000000000000001UL;
 
             for (int index = 0; index < 64; index++)
             {
@@ -233,9 +255,9 @@ namespace TuxedoCat
 
         private void InitializeSWNEMask()
         {
-            SWNEMask = new UInt64[64];
-            UInt64 currentMask;
-            UInt64 currentSquare = 0x0000000000000001UL;
+            SWNEMask = new ulong[64];
+            ulong currentMask;
+            ulong currentSquare = 0x0000000000000001UL;
 
             for (int index = 0; index < 64; index++)
             {
@@ -263,9 +285,9 @@ namespace TuxedoCat
 
         private void InitializeNWSEMask()
         {
-            NWSEMask = new UInt64[64];
-            UInt64 currentMask;
-            UInt64 currentSquare = 0x0000000000000001UL;
+            NWSEMask = new ulong[64];
+            ulong currentMask;
+            ulong currentSquare = 0x0000000000000001UL;
 
             for (int index = 0; index < 64; index++)
             {
@@ -293,9 +315,9 @@ namespace TuxedoCat
 
         private void InitializeKnightAttacks()
         {
-            KnightAttacks = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 moves;
+            KnightAttacks = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -316,9 +338,9 @@ namespace TuxedoCat
 
         private void InitializeKingAttacks()
         {
-            KingAttacks = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 moves;
+            KingAttacks = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -339,10 +361,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksN()
         {
-            RayAttacksN = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksN = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -362,10 +384,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksS()
         {
-            RayAttacksS = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksS = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -385,10 +407,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksE()
         {
-            RayAttacksE = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksE = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -408,10 +430,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksW()
         {
-            RayAttacksW = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksW = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -431,10 +453,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksNE()
         {
-            RayAttacksNE = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksNE = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -454,10 +476,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksNW()
         {
-            RayAttacksNW = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksNW = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -477,10 +499,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksSE()
         {
-            RayAttacksSE = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksSE = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -500,10 +522,10 @@ namespace TuxedoCat
 
         private void InitializeRayAttacksSW()
         {
-            RayAttacksSW = new UInt64[64];
-            UInt64 currentSquare = 0x0000000000000001UL;
-            UInt64 tmpSquare;
-            UInt64 moves;
+            RayAttacksSW = new ulong[64];
+            ulong currentSquare = 0x0000000000000001UL;
+            ulong tmpSquare;
+            ulong moves;
 
             for (int i = 0; i < 64; i++)
             {
@@ -521,18 +543,18 @@ namespace TuxedoCat
             }
         }
 
-        private bool IsPiecePinned(UInt64 location, ref Position position, int offset)
+        private bool IsPiecePinned(ulong location, ref Position position, int offset)
         {
             bool result = true;
             int locationMaskIndex;
             PieceColor pinningColor =
                     position.GetColorAt(location) == PieceColor.WHITE ? PieceColor.BLACK : PieceColor.WHITE;
-            UInt64 pinMask;
-            UInt64 pinnedKingLocation;
-            UInt64 mask;
-            UInt64 occupancy;
-            UInt64 tmpLocation;
-            UInt64 guard;
+            ulong pinMask;
+            ulong pinnedKingLocation;
+            ulong mask;
+            ulong occupancy;
+            ulong tmpLocation;
+            ulong guard;
             bool goUp;
 
             if (util.PopCount(location) == 1)
@@ -718,15 +740,15 @@ namespace TuxedoCat
             return result;
         }
 
-        private void GenerateSlidingMovesAt(UInt64 location, ref Position position, UInt16 direction, bool evade)
+        private void GenerateSlidingMovesAt(ulong location, ref Position position, UInt16 direction, bool evade)
         {
             int locationIndex;
-            UInt64 moveMask = 0x0000000000000000UL;
-            UInt64 currentMove;
+            ulong moveMask = 0x0000000000000000UL;
+            ulong currentMove;
             PieceColor color = position.GetColorAt(location).Value;
-            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
-            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
-            UInt64 blocker;
+            ulong opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            ulong ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            ulong blocker;
             int blockerIndex;
 
             if (util.PopCount(location) == 1)
@@ -851,31 +873,31 @@ namespace TuxedoCat
             }
         }
 
-        private void GeneratePawnMovesAt(UInt64 location, ref Position position, bool evade)
+        private void GeneratePawnMovesAt(ulong location, ref Position position, bool evade)
         {
-            UInt64 advancedLocation = position.ColorToMove == PieceColor.WHITE ? location << 8 : location >> 8;
-            UInt64 doubleAdvancedLocation =
+            ulong advancedLocation = position.ColorToMove == PieceColor.WHITE ? location << 8 : location >> 8;
+            ulong doubleAdvancedLocation =
                 position.ColorToMove == PieceColor.WHITE ? location << 16 : location >> 16;
 
-            UInt64 captureLeftLocation =
+            ulong captureLeftLocation =
                 position.ColorToMove == PieceColor.WHITE ? location << 7 : location >> 7;
 
-            UInt64 captureRightLocation =
+            ulong captureRightLocation =
                 position.ColorToMove == PieceColor.WHITE ? location << 9 : location >> 9;
 
-            UInt64 startRankMask =
+            ulong startRankMask =
                 position.ColorToMove == PieceColor.WHITE ? 0x000000000000FF00UL : 0x00FF000000000000UL;
 
-            UInt64 backRankMask =
+            ulong backRankMask =
                 position.ColorToMove == PieceColor.WHITE ? 0xFF00000000000000UL : 0x00000000000000FFUL;
 
-            UInt64 leftEdgeMask =
+            ulong leftEdgeMask =
                 position.ColorToMove == PieceColor.WHITE ? 0x0101010101010101UL : 0x8080808080808080UL;
 
-            UInt64 rightEdgeMask =
+            ulong rightEdgeMask =
                 position.ColorToMove == PieceColor.WHITE ? 0x8080808080808080UL : 0x0101010101010101UL;
 
-            UInt64 opposingPieces =
+            ulong opposingPieces =
                 position.ColorToMove == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
 
             if (!IsPiecePinnedRank(location, ref position))
@@ -1042,8 +1064,8 @@ namespace TuxedoCat
             }
         }
 
-        private void AddMove(UInt64 src, UInt64 tgt, PieceRank rank, PieceColor color, int hm, CastlingInfo ci,
-            UInt64 ep, PieceRank? capture, PieceRank? promotion, bool evade, ref Position position)
+        private void AddMove(ulong src, ulong tgt, PieceRank rank, PieceColor color, int hm, CastlingInfo ci,
+            ulong ep, PieceRank? capture, PieceRank? promotion, bool evade, ref Position position)
         {
             if (evade)
             {
@@ -1068,14 +1090,14 @@ namespace TuxedoCat
             }
         }
 
-        private void GenerateKnightMovesAt(UInt64 location, ref Position position, bool evade)
+        private void GenerateKnightMovesAt(ulong location, ref Position position, bool evade)
         {
             int locationIndex;
-            UInt64 moveMask = 0x0000000000000000UL;
-            UInt64 currentMove;
+            ulong moveMask = 0x0000000000000000UL;
+            ulong currentMove;
             PieceColor color = position.GetColorAt(location).Value;
-            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
-            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            ulong opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            ulong ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
 
 
             if (util.PopCount(location) == 1)
@@ -1102,14 +1124,14 @@ namespace TuxedoCat
             }
         }
 
-        private void GenerateKingMovesAt(UInt64 location, ref Position position, bool evade)
+        private void GenerateKingMovesAt(ulong location, ref Position position, bool evade)
         {
             int locationIndex;
-            UInt64 moveMask = 0x0000000000000000UL;
-            UInt64 currentMove;
+            ulong moveMask = 0x0000000000000000UL;
+            ulong currentMove;
             PieceColor color = position.GetColorAt(location).Value;
-            UInt64 opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
-            UInt64 ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
+            ulong opposingPieces = color == PieceColor.WHITE ? position.BlackPieces : position.WhitePieces;
+            ulong ownPieces = color == PieceColor.WHITE ? position.WhitePieces : position.BlackPieces;
 
 
             if (util.PopCount(location) == 1)
@@ -1209,18 +1231,18 @@ namespace TuxedoCat
             }
         }
 
-        private bool IsSquareAttacked(UInt64 square, ref Position position)
+        private bool IsSquareAttacked(ulong square, ref Position position)
         {
             bool result = false;
             int squareIndex = util.GetLSB(square);
             int blockerIndex;
-            UInt64 opposingKnights =
+            ulong opposingKnights =
                 position.ColorToMove == PieceColor.WHITE ? position.BlackKnights : position.WhiteKnights;
-            UInt64 opposingBishops =
+            ulong opposingBishops =
                 position.ColorToMove == PieceColor.WHITE ? position.BlackBishops : position.WhiteBishops;
-            UInt64 opposingRooks =
+            ulong opposingRooks =
                 position.ColorToMove == PieceColor.WHITE ? position.BlackRooks : position.WhiteRooks;
-            UInt64 opposingQueens =
+            ulong opposingQueens =
                 position.ColorToMove == PieceColor.WHITE ? position.BlackQueens : position.WhiteQueens;
 
 

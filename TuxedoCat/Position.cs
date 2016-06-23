@@ -1,6 +1,29 @@
-﻿using System;
+﻿/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2016 Nathan McCrina
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
+using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace TuxedoCat
 {
@@ -19,7 +42,7 @@ namespace TuxedoCat
         public void SetPosition(string fen)
         {
             FENParser parser = new FENParser();
-            List<UInt64> pieceInfo;
+            List<ulong> pieceInfo;
 
             string[] fenParts = fen.Split(new char[] { ' ' });
 
@@ -189,11 +212,11 @@ namespace TuxedoCat
                             {
                                 if (mv.MoveColor == PieceColor.WHITE)
                                 {
-                                    RemovePieceAt((UInt64)(mv.TargetLocation >> 8));
+                                    RemovePieceAt((ulong)(mv.TargetLocation >> 8));
                                 }
                                 else
                                 {
-                                    RemovePieceAt((UInt64)(mv.TargetLocation << 8));
+                                    RemovePieceAt((ulong)(mv.TargetLocation << 8));
                                 }
                             }
                             else
@@ -347,8 +370,8 @@ namespace TuxedoCat
                         || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x0400000000000000UL)
                         || (mv.SourceLocation == 0x1000000000000000UL && mv.TargetLocation == 0x4000000000000000UL)))
                 {
-                    UInt64 oldRookLocation = 0x0000000000000000UL;
-                    UInt64 newRookLocation = 0x0000000000000000UL;
+                    ulong oldRookLocation = 0x0000000000000000UL;
+                    ulong newRookLocation = 0x0000000000000000UL;
 
                     if (mv.SourceLocation == 0x0000000000000010UL && mv.TargetLocation == 0x0000000000000040UL)
                     {
@@ -411,73 +434,73 @@ namespace TuxedoCat
             }
         }
 
-        public UInt64 WhitePawns
+        public ulong WhitePawns
         {
             get; set;
         }
 
-        public UInt64 WhiteKnights
+        public ulong WhiteKnights
         {
             get; set;
         }
 
-        public UInt64 WhiteBishops
+        public ulong WhiteBishops
         {
             get; set;
         }
 
-        public UInt64 WhiteRooks
+        public ulong WhiteRooks
         {
             get; set;
         }
 
-        public UInt64 WhiteQueens
+        public ulong WhiteQueens
         {
             get; set;
         }
 
-        public UInt64 WhiteKing
+        public ulong WhiteKing
         {
             get; set;
         }
 
-        public UInt64 WhitePieces
+        public ulong WhitePieces
         {
             get; set;
         }
 
 
-        public UInt64 BlackPawns
+        public ulong BlackPawns
         {
             get; set;
         }
 
-        public UInt64 BlackKnights
+        public ulong BlackKnights
         {
             get; set;
         }
 
-        public UInt64 BlackBishops
+        public ulong BlackBishops
         {
             get; set;
         }
 
-        public UInt64 BlackRooks
+        public ulong BlackRooks
         {
             get; set;
         }
 
-        public UInt64 BlackQueens
+        public ulong BlackQueens
         {
             get; set;
         }
 
-        public UInt64 BlackKing
+        public ulong BlackKing
         {
             get; set;
         }
 
-        public UInt64 BlackPieces
+        public ulong BlackPieces
         {
             get; set;
         }
@@ -498,7 +521,7 @@ namespace TuxedoCat
             }
         }
 
-        public UInt64 EnPassantTarget
+        public ulong EnPassantTarget
         {
             get
             {
@@ -522,7 +545,7 @@ namespace TuxedoCat
             }
         }
 
-        public void AddPieceAt(UInt64 loc, PieceColor color, PieceRank rank)
+        public void AddPieceAt(ulong loc, PieceColor color, PieceRank rank)
         {
             if (rank == PieceRank.QUEEN)
             {
@@ -594,7 +617,7 @@ namespace TuxedoCat
             UpdatePieces();
         }
 
-        public void RemovePieceAt(UInt64 loc)
+        public void RemovePieceAt(ulong loc)
         {
             WhitePawns = WhitePawns & (~loc);
             WhiteKnights = WhiteKnights & (~loc);
@@ -630,7 +653,7 @@ namespace TuxedoCat
                 | BlackKing);
         }
 
-        public PieceRank? GetRankAt(UInt64 loc)
+        public PieceRank? GetRankAt(ulong loc)
         {
             PieceRank? rank = null;
 
@@ -673,7 +696,7 @@ namespace TuxedoCat
             return rank;
         }
 
-        public PieceColor? GetColorAt(UInt64 loc)
+        public PieceColor? GetColorAt(ulong loc)
         {
             PieceColor? color = null;
 
@@ -692,7 +715,7 @@ namespace TuxedoCat
 
         private PieceColor colorToMove;
         private CastlingInfo castlingInfo;
-        private UInt64 enPassantTarget;
+        private ulong enPassantTarget;
         private int fullMoveCounter;
         private int halfMoveCounter;
     }
