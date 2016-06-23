@@ -22,68 +22,60 @@
  * IN THE SOFTWARE.
  */
 
+using System.Linq;
+
 namespace TuxedoCat
 {
-    public struct Move
+    public class MoveList
     {
-
-        public Move(ulong src, ulong tgt, PieceRank m, PieceColor pc, int hm, CastlingInfo ci, ulong ep, PieceRank? c = null, PieceRank? p = null)
+        public MoveList()
         {
-            SourceLocation = src;
-            TargetLocation = tgt;
-
-            MovingPiece = m;
-            MoveColor = pc;
-            CurrentHalfMoves = hm;
-            CapturedPiece = c;
-            PromotedRank = p;
-            CurrentEnPassant = ep;
-            CurrentCastlingInfo = ci;
+            moves = new Move[250];
+            count = 0;
         }
 
-        public ulong SourceLocation
+        public int Count
         {
-            get; set;
+            get
+            {
+                return count;
+            }
         }
 
-        public ulong TargetLocation
+        public void pushMove(ulong src, ulong tgt, PieceRank m, PieceColor pc, int hm, CastlingInfo ci, ulong ep, PieceRank? c, PieceRank? p)
         {
-            get; set;
+            if (count < 250)
+            {
+                moves[count].SourceLocation = src;
+                moves[count].TargetLocation = tgt;
+                moves[count].CapturedPiece = c;
+                moves[count].CurrentCastlingInfo = ci;
+                moves[count].CurrentEnPassant = ep;
+                moves[count].CurrentHalfMoves = hm;
+                moves[count].MoveColor = pc;
+                moves[count].MovingPiece = m;
+                moves[count].PromotedRank = p;
+
+                count++;
+            }
         }
 
-        public PieceRank MovingPiece
+        public Move getMoveAt(int index)
         {
-            get; set;
+            return moves[index];
         }
 
-        public int CurrentHalfMoves
+        public Move[] getSlice(int num)
         {
-            get; set;
+            return moves.Take(num).ToArray();
         }
 
-        public PieceColor MoveColor
+        public void clear()
         {
-            get; set;
+            count = 0;
         }
 
-        public PieceRank? CapturedPiece
-        {
-            get; set;
-        }
-
-        public PieceRank? PromotedRank
-        {
-            get; set;
-        }
-
-        public ulong CurrentEnPassant
-        {
-            get; set;
-        }
-
-        public CastlingInfo CurrentCastlingInfo
-        {
-            get; set;
-        }
+        private int count;
+        private Move[] moves;
     }
 }

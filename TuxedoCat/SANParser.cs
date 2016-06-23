@@ -1,4 +1,27 @@
-﻿using System;
+﻿/*
+ * The MIT License (MIT)
+ * 
+ * Copyright (c) 2016 Nathan McCrina
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to
+ * deal in the Software without restriction, including without limitation the
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+ * sell copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ */
+
 using System.Linq;
 using System.Collections.Generic;
 
@@ -6,7 +29,7 @@ namespace TuxedoCat
 {
     public class SANParser
     {
-        public string GenerateSAN(Position position, Move move)
+        public string GenerateSAN(ref Position position, Move move, List<Move> allMoves)
         {
             string san = "";
             bool isCastle = false;
@@ -33,7 +56,10 @@ namespace TuxedoCat
                 }
                 else if (move.MovingPiece == PieceRank.KING)
                 {
-                    if (Math.Abs((move.TargetLocation % 8) - (move.SourceLocation % 8)) > 1)
+                    if ((move.SourceLocation == 0x0000000000000010UL && move.TargetLocation == 0x0000000000000004UL)
+                        || (move.SourceLocation == 0x0000000000000010UL && move.TargetLocation == 0x0000000000000040UL)
+                        || (move.SourceLocation == 0x1000000000000000UL && move.TargetLocation == 0x0400000000000000UL)
+                        || (move.SourceLocation == 0x1000000000000000UL && move.TargetLocation == 0x4000000000000000UL))
                     {
                         isCastle = true;
                     }
@@ -45,10 +71,33 @@ namespace TuxedoCat
 
                 if (!isCastle)
                 {
-                    if (position.Pieces.Count(
-                        piece => piece.Rank == move.MovingPiece && piece.Color == move.MoveColor) > 1)
+                    ulong pieces = 0x0000000000000000UL;
+
+                    if (move.MovingPiece == PieceRank.KNIGHT)
                     {
-                        List<Move> possibleMoves = mg.Moves(move.MovingPiece, position).Where(
+                        pieces =
+                            move.MoveColor == PieceColor.WHITE ? position.WhiteKnights : position.BlackKnights;
+                    }
+                    else if (move.MovingPiece == PieceRank.BISHOP)
+                    {
+                        pieces =
+                            move.MoveColor == PieceColor.WHITE ? position.WhiteBishops : position.BlackBishops;
+                    }
+                    else if (move.MovingPiece == PieceRank.ROOK)
+                    {
+                        pieces =
+                            move.MoveColor == PieceColor.WHITE ? position.WhiteRooks : position.BlackRooks;
+                    }
+                    else if (move.MovingPiece == PieceRank.QUEEN)
+                    {
+                        pieces =
+                            move.MoveColor == PieceColor.WHITE ? position.WhiteQueens : position.BlackQueens;
+                    }
+
+
+                    if (util.PopCount(pieces) > 1)
+                    {
+                        List<Move> possibleMoves = allMoves.Where(
                             possibleMove => possibleMove.MovingPiece == move.MovingPiece
                                 && possibleMove.MoveColor == move.MoveColor
                                 && possibleMove.TargetLocation == move.TargetLocation
@@ -63,14 +112,14 @@ namespace TuxedoCat
                                 san += util.GetFileFromLocation(move.SourceLocation);
                             }
                             else if (!possibleMoves.Any(
-                                possibleMove => ((possibleMove.SourceLocation / 8) + 1) == ((move.SourceLocation / 8) + 1)))
+                                possibleMove => util.GetRankFromLocation(possibleMove.SourceLocation) == util.GetRankFromLocation(move.SourceLocation)))
                             {
-                                san += (move.SourceLocation / 8).ToString();
+                                san += util.GetRankFromLocation(move.SourceLocation).ToString();
                             }
                             else
                             {
                                 san += util.GetFileFromLocation(move.SourceLocation);
-                                san += ((move.SourceLocation / 8) + 1).ToString();
+                                san += util.GetRankFromLocation(move.SourceLocation).ToString();
                             }
                         }
                     }
@@ -81,7 +130,7 @@ namespace TuxedoCat
                     }
 
                     san += util.GetFileFromLocation(move.TargetLocation);
-                    san += ((move.TargetLocation / 8) + 1).ToString();
+                    san += util.GetRankFromLocation(move.TargetLocation).ToString();
                 }
             }
             else
@@ -93,7 +142,7 @@ namespace TuxedoCat
                 }
 
                 san += util.GetFileFromLocation(move.TargetLocation);
-                san += ((move.TargetLocation / 8) + 1).ToString();
+                san += util.GetRankFromLocation(move.TargetLocation).ToString();
 
                 if (move.TargetLocation == position.EnPassantTarget
                     && move.CapturedPiece.HasValue)
@@ -124,7 +173,7 @@ namespace TuxedoCat
 
             if (isCastle)
             {
-                if (move.TargetLocation == 6 || move.TargetLocation == 62)
+                if (move.TargetLocation == 0x0000000000000040UL || move.TargetLocation == 0x4000000000000000UL)
                 {
                     san = "0-0";
                 }
