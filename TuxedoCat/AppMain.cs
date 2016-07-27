@@ -30,9 +30,8 @@ namespace TuxedoCat
     {
         public static void Main(string[] args)
         {
-            Controller controller = new Controller();
-
-            controller.Run();
+            Generator gen = new Generator();
+            gen.GenerateArrays();
         }
     }
 }

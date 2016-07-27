@@ -77,6 +77,12 @@
     <Reference Include="System" />
     <Reference Include="System.Runtime.Serialization" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\LookupTableGenerator\LookupTableGenerator.csproj">
+      <Project>{ed9006af-e01d-4546-adbb-1e9248da3c1d}</Project>
+      <Name>LookupTableGenerator</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
