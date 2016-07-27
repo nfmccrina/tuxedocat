@@ -347,19 +347,21 @@ std::string Utility::GetFileFromLocation(uint64_t location)
 {
 	uint64_t mask = 0x0101010101010101UL;
 	char file = ' ';
+	std::stringstream ss;
 
-	for (int index = 0; index < 8; index++)
+	for (char index = 0; index < 8; index++)
 	{
 		if ((mask & location) != 0x0000000000000000UL)
 		{
-			file = (char)(index + 97);
+			file = index + 97;
 			break;
 		}
 
 		mask = mask << 1;
 	}
 
-	return std::to_string(file);
+	ss << file;
+	return ss.str();
 }
 
 int Utility::GetRankFromLocation(uint64_t location)

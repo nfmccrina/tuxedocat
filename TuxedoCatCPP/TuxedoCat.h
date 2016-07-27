@@ -153,13 +153,16 @@ namespace TuxedoCat
 		uint64_t Perft(Board& position, int depth);
 		void Divide(Board& position, int depth);
 		void InitializeEngine();
-		void SetPositionHandler(std::string cmdline);
-		void PerftHandler(std::string cmdline);
 	}
 
 	namespace UI
 	{
 		void Run();
-		void Poll(bool& inputStatus, bool& terminate);
+	}
+
+	namespace Test
+	{
+		void TestPerft();
+		void PrintTestResult(std::string name, bool result);
 	}
 }

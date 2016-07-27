@@ -24,84 +24,77 @@
 
 #include "TuxedoCat.h"
 #include <iostream>
-#include <mutex>
+#include <sstream>
 
 using namespace TuxedoCat;
-using namespace TuxedoCat::Engine;
 
-std::mutex inputAvailableMutex;
-std::mutex stopMutex;
-
-bool inputAvailable;
-bool stopPolling;
+extern struct Board currentPosition;
 
 void UI::Run()
 {
 	bool isRunning = true;
-	stopPolling = false;
-	inputAvailable = false;
 	std::string command;
+	std::string input;
+	std::stringstream ss;
 
-	InitializeEngine();
-
-	std::thread t1{ Poll, std::ref(inputAvailable), std::ref(stopPolling) };
+	Engine::InitializeEngine();
 
 	while (isRunning)
 	{
-		inputAvailableMutex.lock();
-		if (inputAvailable)
+		command = "";
+		input = "";
+		ss.clear();
+
+		std::cout << "tuxedocat: ";
+		std::getline(std::cin, input);
+		ss.str(input);
+		std::getline(ss, command, ' ');
+
+		if (command == "quit")
 		{
-			inputAvailable = false;
-			inputAvailableMutex.unlock();
+			isRunning = false;
+		}
+		else if (command == "setboard")
+		{
+			std::string fen;
 
-			std::getline(std::cin, command);
-
-			if (command.substr(0, 4) == "quit")
+			if (!ss.eof())
 			{
-				isRunning = false;
+				std::getline(ss, fen);
+				Position::SetPosition(currentPosition, fen);
 			}
-			else if (command.substr(0, 7) == "setboard")
+			else
 			{
-				SetPositionHandler(command);
-			}
-			else if (command.substr(0, 5) == "perft")
-			{
-				PerftHandler(command);
+				std::cout << "error: no position provided" << std::endl;
 			}
 		}
-		else
+		else if (command == "perft")
 		{
-			inputAvailableMutex.unlock();
-		}
-	}
+			int depth;
 
-	stopMutex.lock();
-	stopPolling = true;
-	stopMutex.unlock();
-
-	t1.join();
-}
-
-void UI::Poll(bool& inputStatus, bool& terminate)
-{
-	std::string str;
-	bool quit = true;
-
-	while (true)
-	{
-		if (std::cin.peek() != EOF)
-		{
-			inputAvailableMutex.lock();
-			inputStatus = true;
-			inputAvailableMutex.unlock();
-
-			stopMutex.lock();
-			if (terminate)
+			if (!ss.eof())
 			{
-				stopMutex.unlock();
-				break;
+				ss >> depth;
 			}
-			stopMutex.unlock();
+
+			uint64_t result = Engine::Perft(currentPosition, depth);
+
+			std::cout << "Perft (" << depth << "): " << result << std::endl;
+		}
+		else if (command == "divide")
+		{
+			int depth;
+
+			if (!ss.eof())
+			{
+				ss >> depth;
+			}
+
+			Engine::Divide(currentPosition, depth);
+		}
+		else if (command.substr(0, 4) == "test")
+		{
+			Test::TestPerft();
 		}
 	}
 }

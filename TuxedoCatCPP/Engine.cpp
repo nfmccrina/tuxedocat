@@ -30,7 +30,7 @@ using namespace TuxedoCat::MoveGenerator;
 using namespace TuxedoCat::Position;
 using namespace TuxedoCat::Utility;
 
-static Board currentPosition;
+Board currentPosition;
 
 void Engine::InitializeEngine()
 {
@@ -93,20 +93,4 @@ void Engine::Divide(Board& position, int depth)
 	}
 
 	std::cout << std::endl << "Moves: " << moveCount << std::endl << "Total leaf nodes: " << totalCount << std::endl;
-}
-
-void Engine::SetPositionHandler(std::string cmdline)
-{
-	std::string fen = cmdline.substr(9, std::string::npos);
-
-	SetPosition(currentPosition, fen);
-}
-
-void Engine::PerftHandler(std::string cmdline)
-{
-	int depth = std::stoi(cmdline.substr(6, std::string::npos));
-
-	uint64_t result = Perft(currentPosition, depth);
-
-	std::cout << "Perft (" << depth << "): " << result << std::endl;
 }

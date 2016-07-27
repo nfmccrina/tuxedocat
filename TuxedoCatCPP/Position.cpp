@@ -59,7 +59,7 @@ void TuxedoCat::Position::SetPosition(Board& position, std::string fen)
 			char currentCharacter = rankInfo[i][j];
 			if (currentCharacter > 47 && currentCharacter < 58)
 			{
-				currentSquare = currentSquare << currentCharacter;
+				currentSquare = currentSquare << (currentCharacter - 48);
 			}
 			else
 			{
@@ -87,17 +87,17 @@ void TuxedoCat::Position::SetPosition(Board& position, std::string fen)
 		position.CastlingStatus = position.CastlingStatus | CastlingFlags::WHITE_SHORT;
 	}
 
-	if (fen_parts[2].find("K") != std::string::npos)
+	if (fen_parts[2].find("Q") != std::string::npos)
 	{
 		position.CastlingStatus = position.CastlingStatus | CastlingFlags::WHITE_LONG;
 	}
 
-	if (fen_parts[2].find("K") != std::string::npos)
+	if (fen_parts[2].find("k") != std::string::npos)
 	{
 		position.CastlingStatus = position.CastlingStatus | CastlingFlags::BLACK_SHORT;
 	}
 
-	if (fen_parts[2].find("K") != std::string::npos)
+	if (fen_parts[2].find("q") != std::string::npos)
 	{
 		position.CastlingStatus = position.CastlingStatus | CastlingFlags::BLACK_LONG;
 	}

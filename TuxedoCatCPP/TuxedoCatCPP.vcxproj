@@ -110,7 +110,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Main.h" />
     <ClInclude Include="TuxedoCat.h" />
   </ItemGroup>
   <ItemGroup>
@@ -122,6 +121,7 @@
     <ClCompile Include="PieceColor.cpp" />
     <ClCompile Include="PieceRank.cpp" />
     <ClCompile Include="Position.cpp" />
+    <ClCompile Include="Test.cpp" />
     <ClCompile Include="Utility.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
