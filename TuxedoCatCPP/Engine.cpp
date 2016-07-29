@@ -26,33 +26,30 @@
 #include <iostream>
 
 using namespace TuxedoCat;
-using namespace TuxedoCat::MoveGenerator;
-using namespace TuxedoCat::Position;
-using namespace TuxedoCat::Utility;
 
 Board currentPosition;
 
 void Engine::InitializeEngine()
 {
-	SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+	Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 uint64_t Engine::Perft(Board& position, int depth)
 {
 	if (depth <= 1)
 	{
-		return static_cast<uint64_t>(GenerateMoves(position).size());
+		return static_cast<uint64_t>(MoveGenerator::GenerateMoves(position).size());
 	}
 	else
 	{
 		uint64_t count = 0;
-		std::vector<Move> availableMoves = GenerateMoves(position);
+		std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
 
 		for (auto it = availableMoves.cbegin(); it != availableMoves.cend(); it++)
 		{
-			Make(position, *it);
+			Position::Make(position, *it);
 			count += Perft(position, depth - 1);
-			Unmake(position, *it);
+			Position::Unmake(position, *it);
 		}
 
 		return count;
@@ -63,7 +60,7 @@ void Engine::Divide(Board& position, int depth)
 {
 	uint64_t totalCount = 0;
 	int moveCount = 0;
-	std::vector<Move> availableMoves = GenerateMoves(position);
+	std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
 
 	if (depth <= 1)
 	{
@@ -71,7 +68,7 @@ void Engine::Divide(Board& position, int depth)
 		{
 			moveCount++;
 			totalCount++;
-			std::cout << GenerateSAN(position, *it, availableMoves) << ": 1" << std::endl;
+			std::cout << Utility::GenerateSAN(position, *it, availableMoves) << ": 1" << std::endl;
 		}
 	}
 	else
@@ -80,15 +77,15 @@ void Engine::Divide(Board& position, int depth)
 		{
 			moveCount++;
 
-			Make(position, *it);
+			Position::Make(position, *it);
 
 			uint64_t count = Perft(position, depth - 1);
 
 			totalCount += count;
 
-			std::cout << GenerateSAN(position, *it, availableMoves) << ": " << std::to_string(count) << std::endl;
+			std::cout << Utility::GenerateSAN(position, *it, availableMoves) << ": " << std::to_string(count) << std::endl;
 
-			Unmake(position, *it);
+			Position::Unmake(position, *it);
 		}
 	}
 

@@ -1,11 +1,10 @@
 #include "TuxedoCat.h"
 
 using namespace TuxedoCat;
-using namespace TuxedoCat::UI;
 
 int main()
 {
-	Run();
+	Interface::Run();
 
 	return 0;
 }

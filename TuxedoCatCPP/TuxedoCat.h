@@ -146,6 +146,7 @@ namespace TuxedoCat
 		std::string GetFileFromLocation(uint64_t location);
 		int GetRankFromLocation(uint64_t location);
 		std::string GenerateSAN(Board& position, Move move, std::vector<Move> allMoves);
+		void WriteLog(std::string msg);
 	}
 
 	namespace Engine
@@ -155,9 +156,11 @@ namespace TuxedoCat
 		void InitializeEngine();
 	}
 
-	namespace UI
+	namespace Interface
 	{
 		void Run();
+		void ReadInput();
+		void OutputFeatures();
 	}
 
 	namespace Test
@@ -166,3 +169,5 @@ namespace TuxedoCat
 		void PrintTestResult(std::string name, bool result);
 	}
 }
+
+extern struct TuxedoCat::Board currentPosition;

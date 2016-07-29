@@ -25,38 +25,141 @@
 #include "TuxedoCat.h"
 #include <iostream>
 #include <sstream>
+#include <thread>
 
 using namespace TuxedoCat;
 
 extern struct Board currentPosition;
+static bool winboardMode;
+static bool shouldQuitProgram;
+static bool readyForInput;
+static bool inputAvailable;
+static bool showPrompt;
 
-void UI::Run()
+static std::string input;
+
+void Interface::ReadInput()
 {
-	bool isRunning = true;
+	while (true)
+	{
+		if (readyForInput)
+		{
+			readyForInput = false;
+
+			if (showPrompt)
+			{
+				std::cout << "tuxedocat: ";
+			}
+
+			std::getline(std::cin, input);
+
+			inputAvailable = true;
+		}
+
+		if (shouldQuitProgram)
+		{
+			break;
+		}
+	}
+}
+
+void Interface::OutputFeatures()
+{
+	std::cout << "setboard=1" << std::endl;
+	std::cout << "myname=TuxedoCat" << std::endl;
+	std::cout << "variants=normal" << std::endl;
+	std::cout << "done=1" << std::endl;
+}
+
+void Interface::Run()
+{
+	shouldQuitProgram = false;
+	readyForInput = true;
+	inputAvailable = false;
+	winboardMode = false;
+	showPrompt = true;
 	std::string command;
-	std::string input;
 	std::stringstream ss;
 
-	Engine::InitializeEngine();
+	std::thread inputThread(ReadInput);
 
-	while (isRunning)
+	while (!shouldQuitProgram)
 	{
-		command = "";
-		input = "";
-		ss.clear();
+		if (inputAvailable)
+		{
+			inputAvailable = false;
 
-		std::cout << "tuxedocat: ";
-		std::getline(std::cin, input);
+			ss.str(input);
+
+			ss >> command;
+
+			if (command == "quit")
+			{
+				Utility::WriteLog("received " + input);
+				shouldQuitProgram = true;
+			}
+			else if (command == "xboard")
+			{
+				Utility::WriteLog("received " + input);
+				
+				winboardMode = true;
+				showPrompt = false;
+
+				std::cout << std::endl;
+
+				readyForInput = true;
+			}
+			else if (command == "protover")
+			{
+				Utility::WriteLog("received " + input);
+
+				OutputFeatures();
+
+				readyForInput = true;
+			}
+			else if (command == "new")
+			{
+				Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+			}
+			else
+			{
+				Utility::WriteLog("received " + input);
+
+				readyForInput = true;
+			}
+
+			ss.clear();
+			input = "";
+			command = "";
+		}
+
+		/*std::getline(std::cin, input);
 		ss.str(input);
 		std::getline(ss, command, ' ');
 
 		if (command == "quit")
 		{
+			Utility::WriteLog("received: " + ss.str());
 			isRunning = false;
+		}
+		else if (command == "xboard")
+		{
+			Utility::WriteLog("received: " + ss.str());
+
+			winboardMode = true;
+			std::cout << std::endl;
+		}
+		else if (command == "protover")
+		{
+			Utility::WriteLog("received: " + ss.str());
+
+			std::cout << "feature setboard=1 myname=\"TuxedoCat\" done=1" << std::endl;
 		}
 		else if (command == "setboard")
 		{
 			std::string fen;
+
+			Utility::WriteLog("received: " + ss.str());
 
 			if (!ss.eof())
 			{
@@ -96,5 +199,14 @@ void UI::Run()
 		{
 			Test::TestPerft();
 		}
+		else if (ss.str().length() > 0)
+		{
+			Utility::WriteLog("received: " + ss.str());
+		}*/
+	}
+
+	if (inputThread.joinable())
+	{
+		inputThread.join();
 	}
 }

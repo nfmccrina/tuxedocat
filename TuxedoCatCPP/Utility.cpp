@@ -29,8 +29,18 @@
 #include "TuxedoCat.h"
 #include <sstream>
 #include <cctype>
+#include <iostream>
+#include <fstream>
+#include <ctime>
+#include <chrono>
+#include <iomanip>
+#include <time.h>
 
 using namespace TuxedoCat;
+
+/*
+ wiki constants
+ */
 
 static const uint64_t k1 = 0x5555555555555555ULL;
 static const uint64_t k2 = 0x3333333333333333ULL;
@@ -58,6 +68,10 @@ static int index64Reverse[64] = {
 	25, 39, 14, 33, 19, 30,  9, 24,
 	13, 18,  8, 12,  7,  6,  5, 63
 };
+
+/*
+ end wiki constants
+*/
 
 std::vector<std::string> Utility::split(std::string str, std::string delimiter)
 {
@@ -380,4 +394,20 @@ int Utility::GetRankFromLocation(uint64_t location)
 	}
 
 	return index;
+}
+
+void Utility::WriteLog(std::string msg)
+{
+	std::ofstream fout;
+	std::time_t currentTime;
+	std::tm tm_struct;
+
+	currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+
+	fout.open("log.txt", std::ios_base::app);
+
+	localtime_s(&tm_struct, &currentTime);
+	fout << std::put_time(&tm_struct, "%c") << ": " << msg << std::endl;
+
+	fout.close();
 }
