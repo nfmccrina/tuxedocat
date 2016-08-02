@@ -55,25 +55,6 @@ namespace TuxedoCat
 		int CastlingStatus;
 	};
 
-	/*struct LookupData
-	{
-		uint64_t FileMask[64];
-		uint64_t RankMask[64];
-		uint64_t SWNEMask[64];
-		uint64_t NWSEMask[64];
-
-		uint64_t KnightAttacks[64];
-		uint64_t KingAttacks[64];
-		uint64_t RayAttacksN[64];
-		uint64_t RayAttacksS[64];
-		uint64_t RayAttacksE[64];
-		uint64_t RayAttacksW[64];
-		uint64_t RayAttacksNE[64];
-		uint64_t RayAttacksNW[64];
-		uint64_t RayAttacksSE[64];
-		uint64_t RayAttacksSW[64];
-	};*/
-
 	struct Board
 	{
 		uint64_t WhitePawns;
@@ -101,10 +82,15 @@ namespace TuxedoCat
 		PieceColor ColorToMove;
 	};
 
-	void InitializeMove(Move& move, uint64_t tgt, uint64_t src, uint64_t cep, PieceColor mc, PieceRank mp,
-		PieceRank cp, PieceRank pr, int chm, int cs);
 	PieceColor GetPieceColorFromChar(char piece);
 	PieceRank GetPieceRankFromChar(char piece);
+
+	namespace MoveUtil
+	{
+		void InitializeMove(Move& move, uint64_t tgt, uint64_t src, uint64_t cep, PieceColor mc, PieceRank mp,
+			PieceRank cp, PieceRank pr, int chm, int cs);
+		bool AreEqual(const Move& move1, const Move& move2);
+	}
 
 	namespace Position
 	{
@@ -149,6 +135,10 @@ namespace TuxedoCat
 		TuxedoCat::Move GetMoveFromXBoardNotation(Board& position, std::string moveString);
 		std::string GenerateXBoardNotation(Move move);
 		std::string GenerateSAN(Board& position, Move move, std::vector<Move> allMoves);
+		std::string PrintMove(Move move);
+		std::string RankToString(PieceRank rank);
+		std::string ColorToString(PieceColor color);
+		std::string CastlingStatusToString(int flags);
 		void WriteLog(std::string msg);
 	}
 
@@ -160,6 +150,9 @@ namespace TuxedoCat
 		bool IsGameOver(Board& position);
 		std::string GetGameResult(Board& position);
 		void InitializeEngine();
+		int EvaluatePosition(Board& position);
+		int NegaMax(Board& position, int depth);
+		Move NegaMaxRoot(Board& position, int depth);
 	}
 
 	namespace Interface

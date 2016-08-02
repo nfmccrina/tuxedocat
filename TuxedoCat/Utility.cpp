@@ -205,6 +205,8 @@ uint64_t Utility::GetMaskFromRankOrFile(char rankorfile)
 TuxedoCat::Move Utility::GetMoveFromXBoardNotation(Board& position, std::string moveString)
 {
 	Move move;
+	std::vector<Move> legalMoves;
+	bool isLegalMove = false;
 
 	move.SourceLocation = GetSquareFromAlgebraic(moveString.substr(0, 2));
 	move.TargetLocation = GetSquareFromAlgebraic(moveString.substr(2, 2));
@@ -238,14 +240,43 @@ TuxedoCat::Move Utility::GetMoveFromXBoardNotation(Board& position, std::string 
 		move.PromotedRank = PieceRank::NONE;
 	}
 
-	if ((move.MoveColor == PieceColor::WHITE && Position::GetColorAt(position, move.TargetLocation) == PieceColor::BLACK)
-		|| (move.MoveColor == PieceColor::BLACK && Position::GetColorAt(position, move.TargetLocation) == PieceColor::WHITE))
+	if (position.ColorToMove == PieceColor::WHITE)
 	{
-		move.CapturedPiece = Position::GetRankAt(position, move.TargetLocation);
+		if (move.MovingPiece == PieceRank::PAWN && move.TargetLocation == position.EnPassantTarget)
+		{
+			move.CapturedPiece = Position::GetRankAt(position, ((move.TargetLocation >> 8) & position.BlackPawns));
+		}
+		else
+		{
+			move.CapturedPiece = Position::GetRankAt(position, (move.TargetLocation & position.BlackPieces));
+		}
 	}
-	else
+	else if (position.ColorToMove == PieceColor::BLACK)
 	{
-		move.CapturedPiece = PieceRank::NONE;
+		if (move.MovingPiece == PieceRank::PAWN && move.TargetLocation == position.EnPassantTarget)
+		{
+			move.CapturedPiece = Position::GetRankAt(position, ((move.TargetLocation << 8) & position.WhitePawns));
+		}
+		else
+		{
+			move.CapturedPiece = Position::GetRankAt(position, (move.TargetLocation & position.WhitePieces));
+		}
+	}
+
+	legalMoves = MoveGenerator::GenerateMoves(position);
+
+	for (auto it = legalMoves.begin(); it != legalMoves.end(); it++)
+	{
+		if (MoveUtil::AreEqual(move, *it))
+		{
+			isLegalMove = true;
+			break;
+		}
+	}
+
+	if (!isLegalMove)
+	{
+		move.TargetLocation = 0;
 	}
 
 	return move;
@@ -254,6 +285,7 @@ TuxedoCat::Move Utility::GetMoveFromXBoardNotation(Board& position, std::string 
 std::string Utility::GenerateXBoardNotation(Move move)
 {
 	std::stringstream ss;
+	std::string result = "";
 
 	ss << GetFileFromLocation(move.SourceLocation) << GetRankFromLocation(move.SourceLocation)
 		<< GetFileFromLocation(move.TargetLocation) << GetRankFromLocation(move.TargetLocation);
@@ -278,7 +310,120 @@ std::string Utility::GenerateXBoardNotation(Move move)
 		}
 	}
 	
-	return ss.str();
+	result = ss.str();
+
+	return result;
+}
+
+std::string Utility::RankToString(PieceRank rank)
+{
+	std::string result = "";
+
+	if (rank == PieceRank::PAWN)
+	{
+		result = "pawn";
+	}
+	else if (rank == PieceRank::KNIGHT)
+	{
+		result = "knight";
+	}
+	else if (rank == PieceRank::BISHOP)
+	{
+		result = "bishop";
+	}
+	else if (rank == PieceRank::ROOK)
+	{
+		result = "rook";
+	}
+	else if (rank == PieceRank::QUEEN)
+	{
+		result = "queen";
+	}
+	else if (rank == PieceRank::KING)
+	{
+		result = "king";
+	}
+	else
+	{
+		result = "none";
+	}
+
+	return result;
+}
+
+std::string Utility::ColorToString(PieceColor color)
+{
+	std::string result;
+
+	if (color == PieceColor::WHITE)
+	{
+		result = "white";
+	}
+	else if (color == PieceColor::BLACK)
+	{
+		result = "black";
+	}
+	else
+	{
+		result = "none";
+	}
+
+	return result;
+}
+
+std::string Utility::CastlingStatusToString(int flags)
+{
+	std::stringstream result;
+
+	if (flags & CastlingFlags::WHITE_SHORT)
+	{
+		result << "K";
+	}
+
+	if (flags & CastlingFlags::WHITE_LONG)
+	{
+		result << "Q";
+	}
+
+	if (flags & CastlingFlags::BLACK_SHORT)
+	{
+		result << "k";
+	}
+
+	if (flags & CastlingFlags::BLACK_LONG)
+	{
+		result << "q";
+	}
+
+	return result.str();
+}
+
+std::string Utility::PrintMove(Move move)
+{
+	std::stringstream moveString;
+
+	moveString << std::endl << "********" << std::endl;
+	moveString << "Source: " << GetFileFromLocation(move.SourceLocation) << GetRankFromLocation(move.SourceLocation) << std::endl;
+	moveString << "Target: " << GetFileFromLocation(move.TargetLocation) << GetRankFromLocation(move.TargetLocation) << std::endl;
+	moveString << "Piece: " << RankToString(move.MovingPiece) << std::endl;
+	moveString << "Color: " << ColorToString(move.MoveColor) << std::endl;
+	moveString << "Captured Piece: " << RankToString(move.CapturedPiece) << std::endl;
+	moveString << "Promoted Rank: " << RankToString(move.PromotedRank) << std::endl;
+	moveString << "Castling Status: " << CastlingStatusToString(move.CastlingStatus) << std::endl;
+
+	if (move.CurrentEnPassant != 0)
+	{
+		moveString << "En Passant: " << GetFileFromLocation(move.CurrentEnPassant) << GetRankFromLocation(move.CurrentEnPassant) << std::endl;
+	}
+	else
+	{
+		moveString << "En Passant: none" << std::endl;
+	}
+
+	moveString << "Half Move Counter: " << move.CurrentHalfMoves << std::endl;
+	moveString << "********" << std::endl;
+
+	return moveString.str();
 }
 
 std::string Utility::GenerateSAN(Board& position, Move move, std::vector<Move> allMoves)

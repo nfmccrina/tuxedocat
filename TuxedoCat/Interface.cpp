@@ -67,19 +67,24 @@ void Interface::ReadInput()
 
 void Interface::OutputFeatures()
 {
-	std::cout << "feature done=0" << std::endl;
-	std::cout << "feature setboard=1" << std::endl;
-	std::cout << "feature usermove=1" << std::endl;
-	std::cout << "feature playother=1" << std::endl;
-	std::cout << "feature analyze=0" << std::endl;
-	std::cout << "feature sigint=0" << std::endl;
-	std::cout << "feature sigterm=0" << std::endl;
-	std::cout << "feature time=0" << std::endl;
-	std::cout << "feature san=0" << std::endl;
-	std::cout << "feature ping=1" << std::endl;
-	std::cout << "feature myname=\"TuxedoCat\"" << std::endl;
-	std::cout << "feature variants=\"normal\"" << std::endl;
-	std::cout << "feature done=1" << std::endl;
+	std::stringstream features;
+
+	features << "feature done=0" << std::endl;
+	features << "feature setboard=1" << std::endl;
+	features << "feature usermove=1" << std::endl;
+	features << "feature playother=1" << std::endl;
+	features << "feature analyze=0" << std::endl;
+	features << "feature sigint=0" << std::endl;
+	features << "feature sigterm=0" << std::endl;
+	features << "feature time=0" << std::endl;
+	features << "feature san=0" << std::endl;
+	features << "feature ping=1" << std::endl;
+	features << "feature myname=\"TuxedoCat\"" << std::endl;
+	features << "feature variants=\"normal\"" << std::endl;
+	features << "feature done=1" << std::endl;
+
+	std::cout << features.str();
+	Utility::WriteLog("engine -> interface: " + features.str());
 }
 
 void Interface::Run()
@@ -90,8 +95,9 @@ void Interface::Run()
 	winboardMode = false;
 	showPrompt = true;
 	forceMode = false;
-	static bool computerIsBlack = true;
+	bool computerIsBlack = true;
 	std::string command;
+	std::stringstream output;
 	std::stringstream ss;
 
 	Engine::InitializeEngine();
@@ -110,13 +116,20 @@ void Interface::Run()
 
 			if (command == "quit")
 			{
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
 				shouldQuitProgram = true;
 			}
 			else if (command == "xboard")
 			{
-				Utility::WriteLog("received " + input);
-				
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
 				winboardMode = true;
 				showPrompt = false;
 
@@ -126,7 +139,10 @@ void Interface::Run()
 			}
 			else if (command == "protover")
 			{
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				OutputFeatures();
 
@@ -134,6 +150,11 @@ void Interface::Run()
 			}
 			else if (command == "new")
 			{
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
 				Engine::InitializeEngine();
 				forceMode = false;
 				readyForInput = true;
@@ -141,6 +162,11 @@ void Interface::Run()
 			else if (command == "go")
 			{
 				forceMode = false;
+
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (currentPosition.ColorToMove == PieceColor::WHITE)
 				{
@@ -157,18 +183,33 @@ void Interface::Run()
 				{
 					if (Engine::IsGameOver(currentPosition))
 					{
-						std::cout << Engine::GetGameResult(currentPosition) << std::endl;
+						output << Engine::GetGameResult(currentPosition);
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
 					}
 				}
 				else
 				{
 					if (Engine::IsGameOver(currentPosition))
 					{
-						std::cout << Engine::GetGameResult(currentPosition) << std::endl;
+						output << Engine::GetGameResult(currentPosition);
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
 					}
 					else
 					{
-						std::cout << "move " << move << std::endl;
+						output << "move " << move;
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
 					}
 				}
 
@@ -177,6 +218,11 @@ void Interface::Run()
 			else if (command == "playother")
 			{
 				forceMode = false;
+
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (currentPosition.ColorToMove == PieceColor::WHITE)
 				{
@@ -193,11 +239,47 @@ void Interface::Run()
 			{
 				int value;
 
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (ss >> value)
 				{
-					std::cout << "pong " << value << std::endl;
+					output << "pong " << value;
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
+				}
+
+				readyForInput = true;
+			}
+			else if (command == "search")
+			{
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
+				if (Engine::IsGameOver(currentPosition))
+				{
+					output << Engine::GetGameResult(currentPosition);
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
+				}
+				else
+				{
+					output << Utility::GenerateXBoardNotation(Engine::NegaMaxRoot(currentPosition, 4));
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
 				}
 
 				readyForInput = true;
@@ -205,18 +287,29 @@ void Interface::Run()
 			else if (command == "perft")
 			{
 				int depth;
-				uint64_t result;
 
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (ss >> depth)
 				{
-					result = Engine::Perft(currentPosition, depth);
-					std::cout << "Perft (" << depth << "): " << result << std::endl;
+					output << "Perft (" << depth << "): " << Engine::Perft(currentPosition, depth);
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
 				}
 				else
 				{
-					std::cout << "Error: depth parameter required" << std::endl;
+					output << "Error: depth parameter required";
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
 				}
 
 				readyForInput = true;
@@ -225,7 +318,10 @@ void Interface::Run()
 			{
 				int depth;
 
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (ss >> depth)
 				{
@@ -233,7 +329,12 @@ void Interface::Run()
 				}
 				else
 				{
-					std::cout << "Error: depth parameter required" << std::endl;
+					output << "Error: depth parameter required";
+					std::cout << output.str() << std::endl;
+
+					Utility::WriteLog("engine -> interface: " + output.str());
+					output.clear();
+					output.str("");
 				}
 
 				readyForInput = true;
@@ -244,7 +345,10 @@ void Interface::Run()
 				std::stringstream fen;
 				int fenPartCount = 0;
 
-				Utility::WriteLog("received: " + ss.str());
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				while (fenPartCount < 6)
 				{
@@ -269,11 +373,16 @@ void Interface::Run()
 				{
 					if (winboardMode)
 					{
-						Utility::WriteLog("received invalid position");
+						Utility::WriteLog("Error: Invalid FEN received");
 					}
 					else
 					{
-						std::cout << "Error: Invalid FEN received" << std::endl;
+						output << "Error: Invalid FEN received";
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
 					}
 				}
 				else
@@ -288,13 +397,21 @@ void Interface::Run()
 				std::string moveNotation;
 				TuxedoCat::Move move;
 
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				if (ss >> moveNotation)
 				{
 					if (moveNotation.length() < 4)
 					{
-						std::cout << "Error (ambiguous move): " << moveNotation << std::endl;
+						output << "Error (ambiguous move): " << moveNotation;
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
 					}
 					else
 					{
@@ -302,7 +419,12 @@ void Interface::Run()
 
 						if (move.TargetLocation == 0)
 						{
-							std::cout << "Illegal move: " << moveNotation << std::endl;
+							output << "Illegal move: " << moveNotation;
+							std::cout << output.str() << std::endl;
+
+							Utility::WriteLog("engine -> interface: " + output.str());
+							output.clear();
+							output.str("");
 						}
 						else
 						{
@@ -316,18 +438,40 @@ void Interface::Run()
 								{
 									if (Engine::IsGameOver(currentPosition))
 									{
-										std::cout << Engine::GetGameResult(currentPosition) << std::endl;
+										output << Engine::GetGameResult(currentPosition);
+										std::cout << output.str() << std::endl;
+
+										Utility::WriteLog("engine -> interface: " + output.str());
+										output.clear();
+										output.str("");
 									}
 								}
 								else
 								{
 									if (Engine::IsGameOver(currentPosition))
 									{
-										std::cout << Engine::GetGameResult(currentPosition) << std::endl;
+										output << "move " << move;
+										std::cout << output.str() << std::endl;
+
+										Utility::WriteLog("engine -> interface: " + output.str());
+										output.clear();
+										output.str("");
+
+										output << Engine::GetGameResult(currentPosition);
+										std::cout << output.str() << std::endl;
+
+										Utility::WriteLog("engine -> interface: " + output.str());
+										output.clear();
+										output.str("");
 									}
 									else
 									{
-										std::cout << "move " << move << std::endl;
+										output << "move " << move;
+										std::cout << output.str() << std::endl;
+
+										Utility::WriteLog("engine -> interface: " + output.str());
+										output.clear();
+										output.str("");
 									}
 								}
 							}
@@ -339,25 +483,37 @@ void Interface::Run()
 			}
 			else if (command == "force")
 			{
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				forceMode = true;
 				readyForInput = true;
 			}
 			else if (command == "test")
 			{
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				Test::TestPerft();
 			}
 			else
 			{
-				Utility::WriteLog("received " + input);
+				output << "interface -> engine: " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
 
 				readyForInput = true;
 			}
 
 			ss.clear();
+			ss.str("");
+			output.clear();
+			output.str("");
 			input = "";
 			command = "";
 		}

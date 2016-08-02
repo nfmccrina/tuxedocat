@@ -27,6 +27,8 @@
 #include <random>
 #include <functional>
 #include <ctime>
+#include <sstream>
+#include <stack>
 
 using namespace TuxedoCat;
 
@@ -39,7 +41,7 @@ void Engine::InitializeEngine()
 
 std::string Engine::GetMove(Board& position)
 {
-	std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
+	/*std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
 	std::string result;
 	
 	if (availableMoves.size() > 0)
@@ -55,9 +57,134 @@ std::string Engine::GetMove(Board& position)
 	else
 	{
 		result = "";
+	}*/
+
+	Move move = NegaMaxRoot(position, 4);
+	std::string result = "";
+
+	if (move.TargetLocation != 0)
+	{
+		Position::Make(position, move);
+		result = Utility::GenerateXBoardNotation(move);
 	}
 	
 	return result;
+}
+
+int Engine::EvaluatePosition(Board& position)
+{
+	int score = 0;
+	int sideToMoveFactor = 0;
+
+	if (position.ColorToMove == PieceColor::WHITE)
+	{
+		sideToMoveFactor = 1;
+	}
+	else
+	{
+		sideToMoveFactor = -1;
+	}
+
+	// material count
+	score += (100 * Utility::PopCount(position.WhitePawns));
+	score += (300 * Utility::PopCount(position.WhiteKnights));
+	score += (300 * Utility::PopCount(position.WhiteBishops));
+	score += (500 * Utility::PopCount(position.WhiteRooks));
+	score += (900 * Utility::PopCount(position.WhiteQueens));
+	score += (100000 * Utility::PopCount(position.WhiteKing));
+
+	score -= (100 * Utility::PopCount(position.BlackPawns));
+	score -= (300 * Utility::PopCount(position.BlackKnights));
+	score -= (300 * Utility::PopCount(position.BlackBishops));
+	score -= (500 * Utility::PopCount(position.BlackRooks));
+	score -= (900 * Utility::PopCount(position.BlackQueens));
+	score -= (100000 * Utility::PopCount(position.BlackKing));
+
+	return (score * sideToMoveFactor);
+}
+
+Move Engine::NegaMaxRoot(Board& position, int depth)
+{
+	int max = 0;
+	int currentScore = 0;
+	std::vector<Move> availableMoves;
+	Move bestMove;
+
+	bestMove.TargetLocation = 0;
+
+	max = -3000000;
+
+	availableMoves = MoveGenerator::GenerateMoves(position);
+
+	for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
+	{
+		Position::Make(position, *it);
+
+		currentScore = -NegaMax(position, depth - 1);
+
+		Position::Unmake(position, *it);
+
+		if (currentScore > max)
+		{
+			max = currentScore;
+			bestMove = *it;
+		}
+	}
+
+	return bestMove;	
+}
+
+int Engine::NegaMax(Board& position, int depth)
+{
+	int max = 0;
+	int currentScore = 0;
+	std::vector<Move> availableMoves;
+
+	if (depth == 0)
+	{
+		return EvaluatePosition(position);
+	}
+	else
+	{
+		max = -1999999;
+		currentScore;
+
+		availableMoves = MoveGenerator::GenerateMoves(position);
+
+		if (availableMoves.size() > 0)
+		{
+			for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
+			{
+				Position::Make(position, *it);
+
+				currentScore = -NegaMax(position, depth - 1);
+
+				Position::Unmake(position, *it);
+
+				if (currentScore > max)
+				{
+					max = currentScore;
+				}
+			}
+		}
+		else
+		{			
+			if (position.ColorToMove == PieceColor::WHITE && !MoveGenerator::IsSquareAttacked(position.WhiteKing, position))
+			{
+				max = 0;
+			}
+			else if (position.ColorToMove == PieceColor::BLACK && !MoveGenerator::IsSquareAttacked(position.BlackKing, position))
+			{
+				max = 0;
+			}
+			else
+			{
+				max = max - depth;
+			}
+		}
+
+		return max;
+	}
 }
 
 bool Engine::IsGameOver(Board& position)
@@ -122,6 +249,7 @@ void Engine::Divide(Board& position, int depth)
 	uint64_t totalCount = 0;
 	int moveCount = 0;
 	std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
+	std::stringstream output;
 
 	if (depth <= 1)
 	{
@@ -129,7 +257,11 @@ void Engine::Divide(Board& position, int depth)
 		{
 			moveCount++;
 			totalCount++;
-			std::cout << Utility::GenerateSAN(position, *it, availableMoves) << ": 1" << std::endl;
+
+			output << Utility::GenerateSAN(position, *it, availableMoves) << ": 1";
+			std::cout << output.str() << std::endl;
+
+			Utility::WriteLog("engine -> interface: " + output.str());
 		}
 	}
 	else

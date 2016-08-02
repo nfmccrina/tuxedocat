@@ -1250,12 +1250,12 @@ void MoveGenerator::AddMove(uint64_t src, uint64_t tgt, PieceRank rank, PieceCol
 	PieceRank capture, PieceRank promotion, bool evade, Board& position)
 {
 	Move m;
-	InitializeMove(m, tgt, src, ep, color, rank, capture, promotion, hm, cs);
+	MoveUtil::InitializeMove(m, tgt, src, ep, color, rank, capture, promotion, hm, cs);
 
 	if (evade)
 	{
 		Move nullMove;
-		InitializeMove(nullMove, 0x0000000000000000UL, 0x0000000000000000UL, 0x0000000000000000, PieceColor::NONE,
+		MoveUtil::InitializeMove(nullMove, 0x0000000000000000UL, 0x0000000000000000UL, 0x0000000000000000, PieceColor::NONE,
 			PieceRank::NONE, PieceRank::NONE, PieceRank::NONE, 0, 0);
 
 		Make(position, m);
