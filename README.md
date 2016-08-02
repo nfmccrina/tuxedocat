@@ -22,7 +22,7 @@ algorithms used by most other chess engines; the implementation
 will be my own). So far the lone exception is some bit-twiddling code from the
 chess programming wiki, which is acknowledged in the source files. Also, I may
 eventually utilise freely available endgame tablebases or opening books, if it
-doesn't seem worthwhile to develop my own. Overall, the goal for TuxedoCat is
+doesn't seem worthwhile to develop my own. In the end, the goal for TuxedoCat is
 to be educational and something I can be proud of, which isn't achievable by
 copying large swaths of code from other engines.
 
@@ -53,16 +53,16 @@ documentation on the Winboard protocal read the protocol
 particularly the section "Commands from xboard to the engine". Currently
 TuxedoCat only reacts to the most essential commands, specifically
 
-* xboard
-* quit
-* protover
-* new
-* go
-* playother
-* ping
-* setboard
-* usermove
-* force
+* `xboard`
+* `quit`
+* `protover`
+* `new`
+* `go`
+* `playother`
+* `ping`
+* `setboard`
+* `usermove`
+* `force`
 
 Notably, none of the commands dealing with clocks are implemented, as
 TuxedoCat has no concept of time yet.
@@ -71,10 +71,10 @@ In addition to the regular Winboard commands, several other commands are
 available if you run the engine separately. The commands and their usage are
 as follows:
 
-* perft <depth>
+* `perft <depth>`
 
     perft measures the number of possible chess positions that can be reached
-    after <depth> number of moves from the current position. For example, from
+    after &lt;depth&gt; number of moves from the current position. For example, from
     the standard starting position there are 20 possible moves for White, so
     `perft 1` would be 20. For each of those 20 White moves Black has 20 possible
     responses, so `perft 2` (still from the starting position) would be 400
@@ -88,10 +88,10 @@ as follows:
     position. To calculate perft for another position, use the `setboard`
     command to setup a position and then run perft.
     
-* divide <depth>
+* `divide <depth>`
 
     Similar to perft, except that instead of simply returning the number of
-    possible positions after <depth> moves, it lists all the possible moves at
+    possible positions after &lt;depth&gt; moves, it lists all the possible moves at
     the top level and then calls `perft <depth - 1>` for each of those
     positions, thus "dividing" the total count into separate sums for each
     original move. Mainly useful for debugging perft.
