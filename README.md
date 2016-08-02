@@ -2,8 +2,8 @@
 
 ## About
 
-TuxedoCat is a chess engine. I am developing it as a hobby; it isn't fancy
-and professional like Stockfish or Houdini. The main purpose is simply the
+TuxedoCat is a chess engine. I am developing it as a hobby; it isn't crazy
+awesome like Crafty or Stockfish. The main purpose is simply the
 entertainment value of creating a moderately complex system which does
 something more or less impressive. TuxedoCat is compatible with version 2 of
 the Winboard protocol; to download Winboard and read the documentation on
