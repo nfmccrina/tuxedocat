@@ -32,14 +32,18 @@ See the COPYING file.
 
 ## Building
 
-The goal for TuxedoCat is to be portable; I've tried to use only standard C++
-so this should be very possible but thus far I have only built it on Windows.
+### Windows
+
 A .sln file is included in the repository so building the code should be as
 simple as opening the solution in Visual Studio and building. Visual Studio
 2015 is recommended, any version of 2015 should work however (I use the free
 edition).
 
-A Makefile for compiling on *nix should be coming soon.
+
+### Linux
+
+Simply cd into the TuxedoCat directory and run `make`. Tested with gcc 6.1 on
+Fedora 24.
 
 ## Usage
 
@@ -99,21 +103,13 @@ as follows:
 ## Logging
 
 TuxedoCat logs all communication between itself and Winboard/the user. The log
-can be accessed by opening log.txt, located in the same folder as the
-executable.
+can be accessed by opening log.txt, located either in the same directory as the
+executable or in the working directory. There might be a difference between
+Linux and Windows here.
 
 ## Bugs
 
-* thread shenanigans
-
-	GCC optimizes the boolean flags out of the input thread, causing it to hang
-	on Linux. I had the same problem on Windows, but changing the way the if
-	statements were written caused MSVC not to do that. The root problem is
-	that I am naively using plain old booleans for communication between the
-	main thread and the input thread, and the compilers tend to optimize them
-	in ways I'm not expected. I need to rewrite that code using mutexes or
-	condition variables in order to guarantee consistent behavior when the
-	code is optimized.
+None that I know of right now, except that the engine sucks. :)
 
 ## Contact
 
