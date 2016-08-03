@@ -26,28 +26,40 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <condition_variable>
+#include <mutex>
 
 using namespace TuxedoCat;
 
 extern struct Board currentPosition;
+static bool quitProgram;
 static bool winboardMode;
-static bool shouldQuitProgram;
 static bool readyForInput;
 static bool inputAvailable;
 static bool showPrompt;
 static bool forceMode;
 static bool computerIsBlack;
 
+static std::mutex readyForInputMutex;
+static std::mutex inputAvailableMutex;
+static std::mutex quitProgramMutex;
+
 static std::string input;
 
 void Interface::ReadInput()
 {
+	bool shouldGo;
+	bool killThread;
+
 	while (true)
 	{
-		if (readyForInput)
-		{
-			readyForInput = false;
+		readyForInputMutex.lock();
+		shouldGo = readyForInput;
+		readyForInput = false;
+		readyForInputMutex.unlock();
 
+		if (shouldGo)
+		{
 			if (showPrompt)
 			{
 				std::cout << "tuxedocat: ";
@@ -55,10 +67,16 @@ void Interface::ReadInput()
 
 			std::getline(std::cin, input);
 
+			inputAvailableMutex.lock();
 			inputAvailable = true;
+			inputAvailableMutex.unlock();
 		}
 
-		if (shouldQuitProgram)
+		quitProgramMutex.lock();
+		killThread = quitProgram;
+		quitProgramMutex.unlock();
+
+		if (killThread)
 		{
 			break;
 		}
@@ -89,13 +107,13 @@ void Interface::OutputFeatures()
 
 void Interface::Run()
 {
-	shouldQuitProgram = false;
 	readyForInput = true;
 	inputAvailable = false;
 	winboardMode = false;
 	showPrompt = true;
 	forceMode = false;
 	bool computerIsBlack = true;
+	bool shouldGo;
 	std::string command;
 	std::stringstream output;
 	std::stringstream ss;
@@ -104,12 +122,15 @@ void Interface::Run()
 
 	std::thread inputThread(ReadInput);
 
-	while (!shouldQuitProgram)
+	while (true)
 	{
-		if (inputAvailable)
-		{
-			inputAvailable = false;
+		inputAvailableMutex.lock();
+		shouldGo = inputAvailable;
+		inputAvailable = false;
+		inputAvailableMutex.unlock();
 
+		if (shouldGo)
+		{
 			ss.str(input);
 
 			ss >> command;
@@ -121,7 +142,11 @@ void Interface::Run()
 				output.clear();
 				output.str("");
 
-				shouldQuitProgram = true;
+				quitProgramMutex.lock();
+				quitProgram = true;
+				quitProgramMutex.unlock();
+
+				break;
 			}
 			else if (command == "xboard")
 			{
@@ -134,8 +159,6 @@ void Interface::Run()
 				showPrompt = false;
 
 				std::cout << std::endl;
-
-				readyForInput = true;
 			}
 			else if (command == "protover")
 			{
@@ -145,8 +168,6 @@ void Interface::Run()
 				output.str("");
 
 				OutputFeatures();
-
-				readyForInput = true;
 			}
 			else if (command == "new")
 			{
@@ -157,7 +178,6 @@ void Interface::Run()
 
 				Engine::InitializeEngine();
 				forceMode = false;
-				readyForInput = true;
 			}
 			else if (command == "go")
 			{
@@ -212,8 +232,6 @@ void Interface::Run()
 						output.str("");
 					}
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "playother")
 			{
@@ -232,8 +250,6 @@ void Interface::Run()
 				{
 					computerIsBlack = false;
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "ping")
 			{
@@ -253,8 +269,6 @@ void Interface::Run()
 					output.clear();
 					output.str("");
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "perft")
 			{
@@ -283,8 +297,6 @@ void Interface::Run()
 					output.clear();
 					output.str("");
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "divide")
 			{
@@ -308,8 +320,6 @@ void Interface::Run()
 					output.clear();
 					output.str("");
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "setboard")
 			{
@@ -361,8 +371,6 @@ void Interface::Run()
 				{
 					Position::SetPosition(currentPosition, fen.str());
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "usermove")
 			{
@@ -450,8 +458,6 @@ void Interface::Run()
 						}
 					}
 				}
-
-				readyForInput = true;
 			}
 			else if (command == "force")
 			{
@@ -461,7 +467,6 @@ void Interface::Run()
 				output.str("");
 
 				forceMode = true;
-				readyForInput = true;
 			}
 			else if (command == "test")
 			{
@@ -478,8 +483,6 @@ void Interface::Run()
 				Utility::WriteLog(output.str());
 				output.clear();
 				output.str("");
-
-				readyForInput = true;
 			}
 
 			ss.clear();
@@ -488,6 +491,10 @@ void Interface::Run()
 			output.str("");
 			input = "";
 			command = "";
+
+			readyForInputMutex.lock();
+			readyForInput = true;
+			readyForInputMutex.unlock();
 		}
 	}
 
