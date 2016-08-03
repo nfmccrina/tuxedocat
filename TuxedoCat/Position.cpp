@@ -54,7 +54,7 @@ void TuxedoCat::Position::SetPosition(Board& position, std::string fen)
 	{
 		currentSquare = 0x0000000000000001ULL << (8 * (7 - i));
 
-		for (int j = 0; j < rankInfo[i].length(); j++)
+		for (size_t j = 0; j < rankInfo[i].length(); j++)
 		{
 			char currentCharacter = rankInfo[i][j];
 			if (currentCharacter > 47 && currentCharacter < 58)

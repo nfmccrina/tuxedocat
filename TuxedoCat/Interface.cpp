@@ -67,9 +67,7 @@ void Interface::ReadInput()
 
 			std::getline(std::cin, input);
 
-			inputAvailableMutex.lock();
 			inputAvailable = true;
-			inputAvailableMutex.unlock();
 		}
 
 		quitProgramMutex.lock();
@@ -112,8 +110,9 @@ void Interface::Run()
 	winboardMode = false;
 	showPrompt = true;
 	forceMode = false;
-	bool computerIsBlack = true;
-	bool shouldGo;
+	computerIsBlack = true;
+	
+    bool shouldGo;
 	std::string command;
 	std::stringstream output;
 	std::stringstream ss;

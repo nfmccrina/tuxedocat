@@ -10,3 +10,7 @@ x86/
 build/
 *.orig
 *.db
+TuxedoCat/*.o
+TuxedoCat/TuxedoCat
+TuxedoCat/log.txt
+log.txt

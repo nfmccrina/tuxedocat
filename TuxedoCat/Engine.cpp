@@ -154,7 +154,6 @@ int Engine::NegaMax(Board& position, int depth)
 	else
 	{
 		max = -1999999;
-		currentScore;
 
 		availableMoves = MoveGenerator::GenerateMoves(position);
 

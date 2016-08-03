@@ -34,7 +34,10 @@
 #include <ctime>
 #include <chrono>
 #include <iomanip>
+
+#ifdef _WIN32
 #include <time.h>
+#endif
 
 using namespace TuxedoCat;
 
@@ -655,14 +658,21 @@ void Utility::WriteLog(std::string msg)
 {
 	std::ofstream fout;
 	std::time_t currentTime;
+    
+    #ifdef _WIN32
 	std::tm tm_struct;
+    #endif
 
 	currentTime = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
 	fout.open("log.txt", std::ios_base::app);
 
+    #ifdef _WIN32
 	localtime_s(&tm_struct, &currentTime);
 	fout << std::put_time(&tm_struct, "%c") << ": " << msg << std::endl;
+    #else
+    fout << std::put_time(localtime(&currentTime), "%c") << ": " << msg << std::endl;
+    #endif
 
 	fout.close();
 }

@@ -651,7 +651,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 	PieceColor color = GetColorAt(position, location);
 	uint64_t opposingPieces = color == PieceColor::WHITE ? position.BlackPieces : position.WhitePieces;
 	uint64_t ownPieces = color == PieceColor::WHITE ? position.WhitePieces : position.BlackPieces;
-	uint64_t blocker;
 	int blockerIndex;
 
 	if (PopCount(location) == 1)
@@ -665,7 +664,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksN[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -677,7 +675,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksNE[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -689,7 +686,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksE[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -701,7 +697,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksSE[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -713,7 +708,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksS[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -725,7 +719,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksSW[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -737,7 +730,6 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksW[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
@@ -749,13 +741,10 @@ void MoveGenerator::GenerateSlidingMovesAt(Board& position, uint64_t location,
 
 			if (blockerIndex != -1)
 			{
-				blocker = 0x0000000000000001ULL << blockerIndex;
 				moveMask = moveMask & ~RayAttacksNW[blockerIndex];
 				moveMask = moveMask & ~ownPieces;
 			}
 		}
-
-
 	}
 
 	while (moveMask != 0x0000000000000000ULL)
