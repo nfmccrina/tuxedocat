@@ -39,11 +39,11 @@ void Engine::InitializeEngine()
 	Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
-std::string Engine::GetMove(Board& position)
+std::string Engine::GetRandomMove(Board& position)
 {
-	/*std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
+	std::vector<Move> availableMoves = MoveGenerator::GenerateMoves(position);
 	std::string result;
-	
+
 	if (availableMoves.size() > 0)
 	{
 		std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
@@ -57,9 +57,14 @@ std::string Engine::GetMove(Board& position)
 	else
 	{
 		result = "";
-	}*/
+	}
 
-	Move move = NegaMaxRoot(position, 4);
+	return result;
+}
+
+std::string Engine::GetMove(Board& position)
+{
+	Move move = NegaMaxRoot(position);
 	std::string result = "";
 
 	if (move.TargetLocation != 0)
@@ -103,31 +108,33 @@ int Engine::EvaluatePosition(Board& position)
 	return (score * sideToMoveFactor);
 }
 
-Move Engine::NegaMaxRoot(Board& position, int depth)
+Move Engine::NegaMaxRoot(Board& position)
 {
 	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
 	Move bestMove;
 
-	bestMove.TargetLocation = 0;
-
-	max = -3000000;
-
-	availableMoves = MoveGenerator::GenerateMoves(position);
-
-	for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
+	for (int depth = 1; depth < 5; depth++) // max depth of 4 for now
 	{
-		Position::Make(position, *it);
+		max = -3000000;
+		bestMove.TargetLocation = 0;
 
-		currentScore = -NegaMax(position, depth - 1);
+		availableMoves = MoveGenerator::GenerateMoves(position);
 
-		Position::Unmake(position, *it);
-
-		if (currentScore > max)
+		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
-			max = currentScore;
-			bestMove = *it;
+			Position::Make(position, *it);
+
+			currentScore = -NegaMax(position, depth - 1);
+
+			Position::Unmake(position, *it);
+
+			if (currentScore > max)
+			{
+				max = currentScore;
+				bestMove = *it;
+			}
 		}
 	}
 

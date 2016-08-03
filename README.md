@@ -95,16 +95,25 @@ as follows:
     the top level and then calls `perft <depth - 1>` for each of those
     positions, thus "dividing" the total count into separate sums for each
     original move. Mainly useful for debugging perft.
-    
-* search
-
-    Returns the best move found by the engine for the current position.
 
 ## Logging
 
 TuxedoCat logs all communication between itself and Winboard/the user. The log
 can be accessed by opening log.txt, located in the same folder as the
 executable.
+
+## Bugs
+
+* thread shenanigans
+
+	GCC optimizes the boolean flags out of the input thread, causing it to hang
+	on Linux. I had the same problem on Windows, but changing the way the if
+	statements were written caused MSVC not to do that. The root problem is
+	that I am naively using plain old booleans for communication between the
+	main thread and the input thread, and the compilers tend to optimize them
+	in ways I'm not expected. I need to rewrite that code using mutexes or
+	condition variables in order to guarantee consistent behavior when the
+	code is optimized.
 
 ## Contact
 

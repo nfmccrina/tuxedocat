@@ -256,34 +256,6 @@ void Interface::Run()
 
 				readyForInput = true;
 			}
-			else if (command == "search")
-			{
-				output << "interface -> engine: " << input;
-				Utility::WriteLog(output.str());
-				output.clear();
-				output.str("");
-
-				if (Engine::IsGameOver(currentPosition))
-				{
-					output << Engine::GetGameResult(currentPosition);
-					std::cout << output.str() << std::endl;
-
-					Utility::WriteLog("engine -> interface: " + output.str());
-					output.clear();
-					output.str("");
-				}
-				else
-				{
-					output << Utility::GenerateXBoardNotation(Engine::NegaMaxRoot(currentPosition, 4));
-					std::cout << output.str() << std::endl;
-
-					Utility::WriteLog("engine -> interface: " + output.str());
-					output.clear();
-					output.str("");
-				}
-
-				readyForInput = true;
-			}
 			else if (command == "perft")
 			{
 				int depth;
