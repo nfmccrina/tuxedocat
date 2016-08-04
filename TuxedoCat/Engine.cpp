@@ -33,6 +33,8 @@
 using namespace TuxedoCat;
 
 Board currentPosition;
+uint32_t engineTime;
+uint32_t opponentTime;
 
 void Engine::InitializeEngine()
 {
