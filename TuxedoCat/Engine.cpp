@@ -148,7 +148,7 @@ Move Engine::NegaMaxRoot(Board& position)
 		}
 		else
 		{
-			movesRemainingUntilNextTimeControl = currentClock.movesPerControl - (currentPosition.FullMoveCounter - 1);
+			movesRemainingUntilNextTimeControl = currentClock.movesPerControl - ((currentPosition.FullMoveCounter - 1) % currentClock.movesPerControl);
 			
 			if (movesRemainingUntilNextTimeControl == 0)
 			{
