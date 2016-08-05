@@ -62,24 +62,44 @@ void Interface::ReadInput()
 
 void Interface::OutputFeatures()
 {
-	std::stringstream features;
+	std::cout << "feature done=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature done = 0");
 
-	features << "feature done=0" << std::endl;
-	features << "feature setboard=1" << std::endl;
-	features << "feature usermove=1" << std::endl;
-	features << "feature playother=1" << std::endl;
-	features << "feature analyze=0" << std::endl;
-	features << "feature sigint=0" << std::endl;
-	features << "feature sigterm=0" << std::endl;
-	features << "feature nps=0" << std::endl;
-	features << "feature san=0" << std::endl;
-	features << "feature ping=1" << std::endl;
-	features << "feature myname=\"TuxedoCat\"" << std::endl;
-	features << "feature variants=\"normal\"" << std::endl;
-	features << "feature done=1" << std::endl;
+	std::cout << "feature setboard=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature setboard=1");
 
-	std::cout << features.str();
-	Utility::WriteLog("engine -> interface: " + features.str());
+	std::cout << "feature usermove=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature usermove=1");
+
+	std::cout << "feature playother=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature playother=1");
+
+	std::cout << "feature analyze=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature analyze=0");
+
+	std::cout << "feature sigint=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature sigint=0");
+
+	std::cout << "feature sigterm=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature sigterm=0");
+
+	std::cout << "feature nps=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature nps=0");
+
+	std::cout << "feature san=0" << std::endl;
+	Utility::WriteLog("engine -> interface: feature san=0");
+
+	std::cout << "feature ping=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature ping=1");
+
+	std::cout << "feature myname=\"TuxedoCat\"" << std::endl;
+	Utility::WriteLog("engine -> interface: feature myname=\"TuxedoCat\"");
+
+	std::cout << "feature variants=\"normal\"" << std::endl;
+	Utility::WriteLog("engine -> interface: feature variants=\"normal\"");
+
+	std::cout << "feature done=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature done=1");
 }
 
 void Interface::Run()
@@ -169,7 +189,7 @@ void Interface::Run()
 
 			if (ss >> timeValue)
 			{
-				engineTime = timeValue;
+				currentClock.remainingTime = timeValue;
 			}
 			else
 			{
@@ -178,20 +198,114 @@ void Interface::Run()
 		}
 		else if (command == "otim")
 		{
-			uint32_t timeValue;
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+		}
+		else if (command == "level")
+		{
+			uint32_t mpc;
+			std::string remainingTime;
+			uint32_t inc;
+			bool invalidCommand = false;
 
 			output << "interface -> engine: " << input;
 			Utility::WriteLog(output.str());
 			output.clear();
 			output.str("");
 
-			if (ss >> timeValue)
+			if (ss >> mpc)
 			{
-				opponentTime = timeValue;
+				currentClock.movesPerControl = mpc;
 			}
 			else
 			{
-				Utility::WriteLog("Error: could not parse time value");
+				invalidCommand = true;
+			}
+
+			if (ss >> remainingTime)
+			{
+				if (remainingTime.find(':') == std::string::npos)
+				{
+					currentClock.remainingTime = std::stoi(remainingTime) * 6000;
+				}
+				else
+				{
+					uint32_t minutes = 0;
+					uint32_t seconds = 0;
+
+					minutes = std::stoi(remainingTime.substr(0, remainingTime.find(':')));
+					seconds = std::stoi(remainingTime.substr(remainingTime.find(':') + 1));
+
+					currentClock.remainingTime = ((minutes * 60) + seconds) * 100;
+				}
+			}
+			else
+			{
+				invalidCommand = true;
+			}
+
+			if (ss >> inc)
+			{
+				if (inc == 0)
+				{
+					currentClock.timeIncrement = 0;
+					currentClock.type = TimeControlType::CONVENTIONAL;
+				}
+				else
+				{
+					currentClock.timeIncrement = inc;
+					currentClock.type = TimeControlType::INCREMENTAL;
+				}
+			}
+			else
+			{
+				invalidCommand = true;
+			}
+
+			if (invalidCommand)
+			{
+				output << "Error (unknown command)";
+				std::cout << output.str() << std::endl;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
+				currentClock.movesPerControl = 40;
+				currentClock.remainingTime = 30000;
+				currentClock.timeIncrement = 0;
+				currentClock.type = TimeControlType::CONVENTIONAL;
+			}
+		}
+		else if (command == "st")
+		{
+			uint32_t spm;
+
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			if (ss >> spm)
+			{
+				currentClock.movesPerControl = 0;
+				currentClock.remainingTime = spm;
+				currentClock.timeIncrement = 0;
+				currentClock.type = TimeControlType::TIME_PER_MOVE;
+			}
+			else
+			{
+				output << "Error (unknown command)";
+				std::cout << output.str() << std::endl;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+
+				currentClock.movesPerControl = 40;
+				currentClock.remainingTime = 30000;
+				currentClock.timeIncrement = 0;
+				currentClock.type = TimeControlType::CONVENTIONAL;
 			}
 		}
 		else if (command == "go")

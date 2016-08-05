@@ -15,16 +15,7 @@ using an engine with it see
 TuxedoCat is written in C++. The intention is to stick with standard C++ as
 much as possible to facilitate portability. Simplicity and readability are also
 priorities, hence there are no classes or other object-oriented programming
-overhead. Also, TuxedoCat is not a clone so I try to avoid using other people's
-code even if it is open source (of course, most of the search algorithms and
-other logic, such as NegaMax and alpha-beta pruning, will be the standard
-algorithms used by most other chess engines; the implementation
-will be my own). So far the lone exception is some bit-twiddling code from the
-chess programming wiki, which is acknowledged in the source files. Also, I may
-eventually utilise freely available endgame tablebases or opening books, if it
-doesn't seem worthwhile to develop my own. In the end, the goal for TuxedoCat is
-to be educational and something I can be proud of, which isn't achievable by
-copying large swaths of code from other engines.
+overhead. 
 
 ## License
 
@@ -67,9 +58,10 @@ TuxedoCat only reacts to the most essential commands, specifically
 * `setboard`
 * `usermove`
 * `force`
-
-Notably, none of the commands dealing with clocks are implemented, as
-TuxedoCat has no concept of time yet.
+* `time`
+* `otim`
+* `level`
+* `st`
 
 In addition to the regular Winboard commands, several other commands are
 available if you run the engine separately. The commands and their usage are
@@ -110,6 +102,26 @@ Linux and Windows here.
 ## Bugs
 
 None that I know of right now, except that the engine sucks. :)
+
+## TODO
+
+* Improve the time-management algorithm
+
+	The engine currently seems to be leaving a lot of time on the table, so
+	the algorithm should be modified to allow for a deeper search at least some
+	of the time.
+	
+* Improve search
+
+	Currently the search is pure brute-force; the next step is to implement
+	alpha-beta pruning and halfway-intelligent move ordering to reduce the
+	search space.
+
+
+## Acknowledgements
+
+Some bit-twiddling code was copied from the chess programming wiki; all of this
+code is clearly outlined in comments in the source files.
 
 ## Contact
 

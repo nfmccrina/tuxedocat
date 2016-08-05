@@ -29,15 +29,22 @@
 #include <ctime>
 #include <sstream>
 #include <stack>
+#include <chrono>
 
 using namespace TuxedoCat;
 
 Board currentPosition;
-uint32_t engineTime;
-uint32_t opponentTime;
+TimeControl currentClock;
+
+static uint64_t nodeCount;
 
 void Engine::InitializeEngine()
 {
+	currentClock.movesPerControl = 40;
+	currentClock.remainingTime = 30000;
+	currentClock.timeIncrement = 0;
+	currentClock.type = TimeControlType::CONVENTIONAL;
+
 	Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
@@ -113,20 +120,68 @@ int Engine::EvaluatePosition(Board& position)
 Move Engine::NegaMaxRoot(Board& position)
 {
 	int max = 0;
+	int depth = 1;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
 	Move bestMove;
+	std::stringstream logText;
+	std::chrono::high_resolution_clock::time_point start;
+	std::chrono::high_resolution_clock::time_point currentTime;
+	std::chrono::milliseconds elapsedTime;
+	uint32_t estimatedLeafNodesAtNextDepth = 0;
+	uint32_t leafNodesAtCurrentDepth = 0;
+	uint32_t leafNodesAtPreviousDepth = 0;
+	uint32_t movesRemainingUntilNextTimeControl = 0;
+	uint32_t availableTimeForThisMove = 0;
+	double branchingFactorSum = 0;
+	double effectiveBranchingFactor = 0;
+	uint32_t timeRequiredForNextIteration = 0;
+	uint64_t nodeCountAtPreviousDepth;
 
-	for (int depth = 1; depth < 5; depth++) // max depth of 4 for now
+	nodeCount = 0;
+
+	if (currentClock.type == TimeControlType::CONVENTIONAL)
+	{
+		if (currentClock.movesPerControl == 0)
+		{
+			movesRemainingUntilNextTimeControl = 30;
+		}
+		else
+		{
+			movesRemainingUntilNextTimeControl = currentClock.movesPerControl - (currentPosition.FullMoveCounter - 1);
+			
+			if (movesRemainingUntilNextTimeControl == 0)
+			{
+				movesRemainingUntilNextTimeControl = 1;
+			}
+		}
+		
+		availableTimeForThisMove = (currentClock.remainingTime - 100) / movesRemainingUntilNextTimeControl;
+	}
+	else if (currentClock.type == TimeControlType::INCREMENTAL)
+	{
+		availableTimeForThisMove = ((currentClock.remainingTime - 100) / 30) + (currentClock.timeIncrement - 50);
+	}
+	else if (currentClock.type == TimeControlType::TIME_PER_MOVE)
+	{
+		availableTimeForThisMove = currentClock.remainingTime - 10;
+	}
+	
+	start = std::chrono::high_resolution_clock::now();
+
+	while (true)
 	{
 		max = -3000000;
 		bestMove.TargetLocation = 0;
+		nodeCountAtPreviousDepth = nodeCount;
+		leafNodesAtPreviousDepth = leafNodesAtCurrentDepth;
 
 		availableMoves = MoveGenerator::GenerateMoves(position);
 
 		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
 			Position::Make(position, *it);
+			nodeCount++;
 
 			currentScore = -NegaMax(position, depth - 1);
 
@@ -137,6 +192,48 @@ Move Engine::NegaMaxRoot(Board& position)
 				max = currentScore;
 				bestMove = *it;
 			}
+		}
+
+		leafNodesAtCurrentDepth = static_cast<uint32_t>(nodeCount - nodeCountAtPreviousDepth);
+
+		if (leafNodesAtPreviousDepth == 0)
+		{
+			branchingFactorSum += leafNodesAtCurrentDepth;
+			effectiveBranchingFactor = branchingFactorSum;
+		}
+		else
+		{
+			branchingFactorSum += leafNodesAtCurrentDepth / (leafNodesAtPreviousDepth * 1.0);
+			effectiveBranchingFactor = branchingFactorSum / depth;
+		}
+
+		estimatedLeafNodesAtNextDepth = static_cast<int>(leafNodesAtCurrentDepth * effectiveBranchingFactor);
+
+		currentTime = std::chrono::high_resolution_clock::now();
+		elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - start);
+		long long msecs = elapsedTime.count();
+
+		logText << "Search depth: " << depth << ", node count: " << nodeCount << ", elapsed time: " << msecs << "ms, nps: " << nodeCount / (msecs / 1000.0);
+		Utility::WriteLog(logText.str());
+		logText.clear();
+		logText.str("");
+
+		timeRequiredForNextIteration = static_cast<uint32_t>(((nodeCount + estimatedLeafNodesAtNextDepth) / (nodeCount / (msecs / 1000.0))) * 100);
+
+		logText << "Leaf nodes at next depth: " << estimatedLeafNodesAtNextDepth << ", estimated time for search at next depth: " << timeRequiredForNextIteration
+			<< ", allocated search time: " << availableTimeForThisMove << std::endl;
+
+		Utility::WriteLog(logText.str());
+		logText.clear();
+		logText.str("");
+
+		if (((msecs / 10) + timeRequiredForNextIteration) >= availableTimeForThisMove)
+		{
+			break;
+		}
+		else
+		{
+			depth++;
 		}
 	}
 
@@ -164,6 +261,7 @@ int Engine::NegaMax(Board& position, int depth)
 			for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 			{
 				Position::Make(position, *it);
+				nodeCount++;
 
 				currentScore = -NegaMax(position, depth - 1);
 

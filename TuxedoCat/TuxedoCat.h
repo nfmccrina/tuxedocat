@@ -32,6 +32,8 @@ namespace TuxedoCat
 {
 	enum class PieceRank { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING, NONE };
 	enum class PieceColor { WHITE, BLACK, NONE };
+	enum class TimeControlType { CONVENTIONAL, INCREMENTAL, TIME_PER_MOVE };
+
 
 	struct CastlingFlags
 	{
@@ -40,6 +42,14 @@ namespace TuxedoCat
 		static const int WHITE_LONG = 2;
 		static const int BLACK_SHORT = 4;
 		static const int BLACK_LONG = 8;
+	};
+
+	struct TimeControl
+	{
+		TimeControlType type;
+		uint32_t movesPerControl;
+		uint32_t remainingTime;
+		uint32_t timeIncrement;
 	};
 
 	struct Move
@@ -171,8 +181,7 @@ namespace TuxedoCat
 }
 
 extern struct TuxedoCat::Board currentPosition;
-extern uint32_t engineTime;
-extern uint32_t opponentTime;
+extern struct TuxedoCat::TimeControl currentClock;
 extern uint64_t KnightAttacks[64];
 extern uint64_t KingAttacks[64];
 extern uint64_t RayAttacksN[64];
