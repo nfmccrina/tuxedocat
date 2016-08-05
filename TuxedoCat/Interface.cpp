@@ -26,20 +26,16 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
-#include <condition_variable>
-#include <queue>
-#include <mutex>
 
 using namespace TuxedoCat;
 
-extern struct Board currentPosition;
+bool randomMode;
+std::queue<std::string> inputQueue;
+std::mutex inputQueueMutex;
+
 static bool winboardMode;
-static bool inputAvailable;
 static bool forceMode;
 static bool computerIsBlack;
-static std::queue<std::string> inputQueue;
-
-static std::mutex inputQueueMutex;
 
 void Interface::ReadInput()
 {
@@ -58,6 +54,8 @@ void Interface::ReadInput()
 			break;
 		}
 	}
+
+	Utility::WriteLog("Input thread killed...");
 }
 
 void Interface::OutputFeatures()
@@ -104,10 +102,11 @@ void Interface::OutputFeatures()
 
 void Interface::Run()
 {
-	inputAvailable = false;
+	bool inputAvailable = false;
 	winboardMode = false;
 	forceMode = false;
 	computerIsBlack = true;
+	randomMode = false;
 	
 	std::string input;
 	std::string command;
@@ -177,6 +176,15 @@ void Interface::Run()
 
 			Engine::InitializeEngine();
 			forceMode = false;
+		}
+		else if (command == "random")
+		{
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			randomMode = !randomMode;
 		}
 		else if (command == "time")
 		{
@@ -340,6 +348,10 @@ void Interface::Run()
 					output.str("");
 				}
 			}
+			else if (move == "abandoned")
+			{
+				;
+			}
 			else
 			{
 				if (Engine::IsGameOver(currentPosition))
@@ -359,6 +371,17 @@ void Interface::Run()
 					Utility::WriteLog("engine -> interface: " + output.str());
 					output.clear();
 					output.str("");
+
+					if (needToPong)
+					{
+						output << "pong " << pongValue;
+						std::cout << output.str() << std::endl;
+
+						Utility::WriteLog("engine -> interface: " + output.str());
+						output.clear();
+						output.str("");
+
+					}
 				}
 			}
 		}
@@ -555,6 +578,10 @@ void Interface::Run()
 									output.str("");
 								}
 							}
+							else if (move == "abandoned")
+							{
+								;
+							}
 							else
 							{
 								if (Engine::IsGameOver(currentPosition))
@@ -581,6 +608,17 @@ void Interface::Run()
 									Utility::WriteLog("engine -> interface: " + output.str());
 									output.clear();
 									output.str("");
+
+									if (needToPong)
+									{
+										output << "pong " << pongValue;
+										std::cout << output.str() << std::endl;
+
+										Utility::WriteLog("engine -> interface: " + output.str());
+										output.clear();
+										output.str("");
+
+									}
 								}
 							}
 						}

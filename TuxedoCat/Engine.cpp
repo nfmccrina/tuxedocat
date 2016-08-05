@@ -35,8 +35,15 @@ using namespace TuxedoCat;
 
 Board currentPosition;
 TimeControl currentClock;
+bool needToPong;
+int pongValue;
 
 static uint64_t nodeCount;
+static uint64_t nodesSinceInputCheck;
+static bool abandonSearch;
+static bool moveNow;
+static Move bestMove;
+static std::stringstream logOutput;
 
 void Engine::InitializeEngine()
 {
@@ -44,6 +51,8 @@ void Engine::InitializeEngine()
 	currentClock.remainingTime = 30000;
 	currentClock.timeIncrement = 0;
 	currentClock.type = TimeControlType::CONVENTIONAL;
+
+	randomMode = false;
 
 	Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
@@ -73,7 +82,17 @@ std::string Engine::GetRandomMove(Board& position)
 
 std::string Engine::GetMove(Board& position)
 {
+	needToPong = false;
+	pongValue = 0;
+	abandonSearch = false;
+	moveNow = false;
 	Move move = NegaMaxRoot(position);
+
+	if (abandonSearch)
+	{
+		return "abandoned";
+	}
+
 	std::string result = "";
 
 	if (move.TargetLocation != 0)
@@ -89,6 +108,8 @@ int Engine::EvaluatePosition(Board& position)
 {
 	int score = 0;
 	int sideToMoveFactor = 0;
+	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
+	std::uniform_int_distribution<> dist(-10, 10);
 
 	if (position.ColorToMove == PieceColor::WHITE)
 	{
@@ -114,6 +135,11 @@ int Engine::EvaluatePosition(Board& position)
 	score -= (900 * Utility::PopCount(position.BlackQueens));
 	score -= (100000 * Utility::PopCount(position.BlackKing));
 
+	if (randomMode)
+	{
+		score += dist(generator);
+	}
+
 	return (score * sideToMoveFactor);
 }
 
@@ -123,8 +149,9 @@ Move Engine::NegaMaxRoot(Board& position)
 	int depth = 1;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
-	Move bestMove;
 	std::stringstream logText;
+	std::stringstream input;
+	std::string command;
 	std::chrono::high_resolution_clock::time_point start;
 	std::chrono::high_resolution_clock::time_point currentTime;
 	std::chrono::milliseconds elapsedTime;
@@ -137,8 +164,10 @@ Move Engine::NegaMaxRoot(Board& position)
 	double effectiveBranchingFactor = 0;
 	uint32_t timeRequiredForNextIteration = 0;
 	uint64_t nodeCountAtPreviousDepth;
+	bool inputAvailable = false;
 
 	nodeCount = 0;
+	nodesSinceInputCheck = 0;
 
 	if (currentClock.type == TimeControlType::CONVENTIONAL)
 	{
@@ -178,12 +207,100 @@ Move Engine::NegaMaxRoot(Board& position)
 
 		availableMoves = MoveGenerator::GenerateMoves(position);
 
+		if (availableMoves.empty())
+		{
+			break;
+		}
+
 		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
 			Position::Make(position, *it);
 			nodeCount++;
+			nodesSinceInputCheck++;
+
+			if (nodesSinceInputCheck > 2048)
+			{
+				nodesSinceInputCheck = 0;
+				inputAvailable = false;
+
+				inputQueueMutex.lock();
+				if (!inputQueue.empty())
+				{
+					inputAvailable = true;
+					input.str(inputQueue.front());
+					inputQueue.pop();
+				}
+				inputQueueMutex.unlock();
+
+				if (inputAvailable)
+				{
+					input >> command;
+
+					if (command == "quit")
+					{
+						logOutput << "interface -> engine: " << input.str();
+						Utility::WriteLog(logOutput.str());
+						logOutput.clear();
+						logOutput.str("");
+
+						std::exit(0);
+					}
+					else if (command == "force")
+					{
+						logOutput << "interface -> engine: " << input.str();
+						Utility::WriteLog(logOutput.str());
+						logOutput.clear();
+						logOutput.str("");
+
+						abandonSearch = true;
+						Position::Unmake(position, *it);
+
+						break;
+					}
+					else if (command == "?")
+					{
+						logOutput << "interface -> engine: " << input.str();
+						Utility::WriteLog(logOutput.str());
+						logOutput.clear();
+						logOutput.str("");
+
+						moveNow = true;
+						Position::Unmake(position, *it);
+
+						break;
+					}
+					else if (command == "ping")
+					{
+						logOutput << "interface -> engine: " << input.str();
+						Utility::WriteLog(logOutput.str());
+						logOutput.clear();
+						logOutput.str("");
+
+						needToPong = true;
+						input >> pongValue;
+					}
+					else if (command == "result")
+					{
+						logOutput << "interface -> engine: " << input.str();
+						Utility::WriteLog(logOutput.str());
+						logOutput.clear();
+						logOutput.str("");
+
+						abandonSearch = true;
+						Position::Unmake(position, *it);
+
+						break;
+					}
+				}
+			}
 
 			currentScore = -NegaMax(position, depth - 1);
+
+			if (abandonSearch || moveNow)
+			{
+				Position::Unmake(position, *it);
+				break;
+			}
 
 			Position::Unmake(position, *it);
 
@@ -192,6 +309,11 @@ Move Engine::NegaMaxRoot(Board& position)
 				max = currentScore;
 				bestMove = *it;
 			}
+		}
+
+		if (abandonSearch || moveNow)
+		{
+			break;
 		}
 
 		leafNodesAtCurrentDepth = static_cast<uint32_t>(nodeCount - nodeCountAtPreviousDepth);
@@ -245,6 +367,9 @@ int Engine::NegaMax(Board& position, int depth)
 	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
+	bool inputAvailable = false;
+	std::stringstream input;
+	std::string command;
 
 	if (depth == 0)
 	{
@@ -262,8 +387,91 @@ int Engine::NegaMax(Board& position, int depth)
 			{
 				Position::Make(position, *it);
 				nodeCount++;
+				nodesSinceInputCheck++;
+
+				if (nodesSinceInputCheck > 2048)
+				{
+					inputAvailable = false;
+					nodesSinceInputCheck = 0;
+
+					inputQueueMutex.lock();
+					if (!inputQueue.empty())
+					{
+						inputAvailable = true;
+						input.str(inputQueue.front());
+						inputQueue.pop();
+					}
+					inputQueueMutex.unlock();
+
+					if (inputAvailable)
+					{
+						input >> command;
+
+						if (command == "quit")
+						{
+							logOutput << "interface -> engine: " << input.str();
+							Utility::WriteLog(logOutput.str());
+							logOutput.clear();
+							logOutput.str("");
+
+							std::exit(0);
+						}
+						else if (command == "force")
+						{
+							logOutput << "interface -> engine: " << input.str();
+							Utility::WriteLog(logOutput.str());
+							logOutput.clear();
+							logOutput.str("");
+
+							abandonSearch = true;
+							Position::Unmake(position, *it);
+
+							break;
+						}
+						else if (command == "?")
+						{
+							logOutput << "interface -> engine: " << input.str();
+							Utility::WriteLog(logOutput.str());
+							logOutput.clear();
+							logOutput.str("");
+
+							moveNow = true;
+							Position::Unmake(position, *it);
+
+							break;
+						}
+						else if (command == "ping")
+						{
+							logOutput << "interface -> engine: " << input.str();
+							Utility::WriteLog(logOutput.str());
+							logOutput.clear();
+							logOutput.str("");
+
+							needToPong = true;
+							input >> pongValue;
+						}
+						else if (command == "result")
+						{
+							logOutput << "interface -> engine: " << input.str();
+							Utility::WriteLog(logOutput.str());
+							logOutput.clear();
+							logOutput.str("");
+
+							abandonSearch = true;
+							Position::Unmake(position, *it);
+
+							break;
+						}
+					}
+				}
 
 				currentScore = -NegaMax(position, depth - 1);
+
+				if (abandonSearch || moveNow)
+				{
+					Position::Unmake(position, *it);
+					return 0;
+				}
 
 				Position::Unmake(position, *it);
 
@@ -368,6 +576,8 @@ void Engine::Divide(Board& position, int depth)
 			std::cout << output.str() << std::endl;
 
 			Utility::WriteLog("engine -> interface: " + output.str());
+			output.clear();
+			output.str("");
 		}
 	}
 	else

@@ -27,6 +27,8 @@
 #include <cstdint>
 #include <string>
 #include <vector>
+#include <queue>
+#include <mutex>
 
 namespace TuxedoCat
 {
@@ -182,6 +184,11 @@ namespace TuxedoCat
 
 extern struct TuxedoCat::Board currentPosition;
 extern struct TuxedoCat::TimeControl currentClock;
+extern bool randomMode;
+extern std::queue<std::string> inputQueue;
+extern std::mutex inputQueueMutex;
+extern bool needToPong;
+extern int pongValue;
 extern uint64_t KnightAttacks[64];
 extern uint64_t KingAttacks[64];
 extern uint64_t RayAttacksN[64];
