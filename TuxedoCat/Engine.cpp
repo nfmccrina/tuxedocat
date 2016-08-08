@@ -91,6 +91,8 @@ int Engine::EvaluatePosition(Board& position)
 {
 	int score = 0;
 	int sideToMoveFactor = 0;
+	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
+	std::uniform_int_distribution<> dist(-10, 10);
 
 	if (position.ColorToMove == PieceColor::WHITE)
 	{
@@ -115,6 +117,11 @@ int Engine::EvaluatePosition(Board& position)
 	score -= (500 * Utility::PopCount(position.BlackRooks));
 	score -= (900 * Utility::PopCount(position.BlackQueens));
 	score -= (100000 * Utility::PopCount(position.BlackKing));
+
+	if (randomMode)
+	{
+		score += dist(generator);
+	}
 
 	return (score * sideToMoveFactor);
 }

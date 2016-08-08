@@ -34,9 +34,9 @@ using namespace TuxedoCat;
 
 extern struct Board currentPosition;
 int maxSearchDepth;
+bool randomMode;
 
 static bool winboardMode;
-static bool inputAvailable;
 static bool forceMode;
 static bool computerIsBlack;
 static std::queue<std::string> inputQueue;
@@ -106,10 +106,11 @@ void Interface::OutputFeatures()
 
 void Interface::Run()
 {
-	inputAvailable = false;
+	bool inputAvailable = false;
 	winboardMode = false;
 	forceMode = false;
 	computerIsBlack = true;
+	randomMode = false;
 	
 	std::string input;
 	std::string command;
@@ -179,6 +180,15 @@ void Interface::Run()
 
 			Engine::InitializeEngine();
 			forceMode = false;
+		}
+		else if (command == "random")
+		{
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			randomMode = !randomMode;
 		}
 		else if (command == "sd")
 		{
