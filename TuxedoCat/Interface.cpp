@@ -33,6 +33,8 @@
 using namespace TuxedoCat;
 
 extern struct Board currentPosition;
+int maxSearchDepth;
+
 static bool winboardMode;
 static bool inputAvailable;
 static bool forceMode;
@@ -177,6 +179,27 @@ void Interface::Run()
 
 			Engine::InitializeEngine();
 			forceMode = false;
+		}
+		else if (command == "sd")
+		{
+			int depth;
+
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			if (ss >> depth)
+			{
+				maxSearchDepth = depth;
+			}
+			else
+			{
+				output << "Could not parse depth argument " << input;
+				Utility::WriteLog(output.str());
+				output.clear();
+				output.str("");
+			}
 		}
 		else if (command == "time")
 		{

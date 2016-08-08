@@ -182,6 +182,7 @@ namespace TuxedoCat
 
 extern struct TuxedoCat::Board currentPosition;
 extern struct TuxedoCat::TimeControl currentClock;
+extern int maxSearchDepth;
 extern uint64_t KnightAttacks[64];
 extern uint64_t KingAttacks[64];
 extern uint64_t RayAttacksN[64];

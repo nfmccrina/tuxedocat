@@ -45,6 +45,8 @@ void Engine::InitializeEngine()
 	currentClock.timeIncrement = 0;
 	currentClock.type = TimeControlType::CONVENTIONAL;
 
+	maxSearchDepth = 10000;
+
 	Position::SetPosition(currentPosition, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
@@ -234,6 +236,11 @@ Move Engine::NegaMaxRoot(Board& position)
 		else
 		{
 			depth++;
+
+			if (depth > maxSearchDepth)
+			{
+				break;
+			}
 		}
 	}
 
