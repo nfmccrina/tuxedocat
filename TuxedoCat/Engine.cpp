@@ -35,6 +35,7 @@ using namespace TuxedoCat;
 
 Board currentPosition;
 TimeControl currentClock;
+std::stack<std::string> pvStrings;
 
 static uint64_t nodeCount;
 
@@ -118,6 +119,16 @@ int Engine::EvaluatePosition(Board& position)
 	score -= (900 * Utility::PopCount(position.BlackQueens));
 	score -= (100000 * Utility::PopCount(position.BlackKing));
 
+
+	// advanced pawns
+	score += (35 * Utility::PopCount(position.WhitePawns & 0x00FF000000000000ULL));
+	score += (30 * Utility::PopCount(position.WhitePawns & 0x0000FF0000000000ULL));
+	score += (20 * Utility::PopCount(position.WhitePawns & 0x000000FF00000000ULL));
+
+	score -= (35 * Utility::PopCount(position.BlackPawns & 0x000000000000FF00ULL));
+	score -= (30 * Utility::PopCount(position.BlackPawns & 0x0000000000FF0000ULL));
+	score -= (20 * Utility::PopCount(position.BlackPawns & 0x00000000FF000000ULL));
+
 	if (randomMode)
 	{
 		score += dist(generator);
@@ -134,6 +145,8 @@ Move Engine::NegaMaxRoot(Board& position)
 	std::vector<Move> availableMoves;
 	Move bestMove;
 	std::stringstream logText;
+	std::stringstream thinkingOutput;
+	std::string pvStr;
 	std::chrono::high_resolution_clock::time_point start;
 	std::chrono::high_resolution_clock::time_point currentTime;
 	std::chrono::milliseconds elapsedTime;
@@ -198,8 +211,27 @@ Move Engine::NegaMaxRoot(Board& position)
 
 			if (currentScore > max)
 			{
+				pvStrings.push(Utility::GenerateXBoardNotation(*it));
+
+				while (!pvStrings.empty())
+				{
+					thinkingOutput << pvStrings.top() << " ";
+					pvStrings.pop();
+				}
+
+				pvStr = thinkingOutput.str().substr(0, thinkingOutput.str().size() - 1);
+				thinkingOutput.clear();
+				thinkingOutput.str("");
+
 				max = currentScore;
 				bestMove = *it;
+			}
+			else
+			{
+				while (!pvStrings.empty())
+				{
+					pvStrings.pop();
+				}
 			}
 		}
 
@@ -227,7 +259,7 @@ Move Engine::NegaMaxRoot(Board& position)
 		logText.clear();
 		logText.str("");
 
-		timeRequiredForNextIteration = static_cast<uint32_t>(((nodeCount + estimatedLeafNodesAtNextDepth) / (nodeCount / (msecs / 1000.0))) * 100);
+		timeRequiredForNextIteration = static_cast<uint32_t>((nodeCount + estimatedLeafNodesAtNextDepth) / (nodeCount / (msecs / 10.0)));
 
 		logText << "Leaf nodes at next depth: " << estimatedLeafNodesAtNextDepth << ", estimated time for search at next depth: " << timeRequiredForNextIteration
 			<< ", allocated search time: " << availableTimeForThisMove << std::endl;
@@ -235,6 +267,13 @@ Move Engine::NegaMaxRoot(Board& position)
 		Utility::WriteLog(logText.str());
 		logText.clear();
 		logText.str("");
+
+		thinkingOutput << depth << " " << max << " " << msecs / 10 << " " << nodeCount << " " << pvStr;
+
+		std::cout << thinkingOutput.str() << std::endl;
+		Utility::WriteLog(thinkingOutput.str());
+		thinkingOutput.clear();
+		thinkingOutput.str("");
 
 		if (((msecs / 10) + timeRequiredForNextIteration) >= availableTimeForThisMove)
 		{
@@ -259,6 +298,8 @@ int Engine::NegaMax(Board& position, int depth)
 	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
+	Move localBestMove;
+	std::stack<std::string> tmpStack;
 
 	if (depth == 0)
 	{
@@ -277,18 +318,48 @@ int Engine::NegaMax(Board& position, int depth)
 				Position::Make(position, *it);
 				nodeCount++;
 
+				pvStrings.push(Utility::GenerateXBoardNotation(*it));
+
 				currentScore = -NegaMax(position, depth - 1);
 
 				Position::Unmake(position, *it);
 
 				if (currentScore > max)
 				{
+					if (max != -1999999)
+					{
+						for (int count = 0; count < depth; count++)
+						{
+							tmpStack.push(pvStrings.top());
+							pvStrings.pop();
+						}
+
+						for (int count = 0; count < depth; count++)
+						{
+							pvStrings.pop();
+						}
+
+						for (int count = 0; count < depth; count++)
+						{
+							pvStrings.push(tmpStack.top());
+							tmpStack.pop();
+						}
+					}
+
+					localBestMove = *it;
 					max = currentScore;
+				}
+				else
+				{
+					for (int count = 0; count < depth; count++)
+					{
+						pvStrings.pop();
+					}
 				}
 			}
 		}
 		else
-		{			
+		{		
 			if (position.ColorToMove == PieceColor::WHITE && !MoveGenerator::IsSquareAttacked(position.WhiteKing, position))
 			{
 				max = 0;
