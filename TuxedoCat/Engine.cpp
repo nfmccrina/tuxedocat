@@ -35,7 +35,7 @@ using namespace TuxedoCat;
 
 Board currentPosition;
 TimeControl currentClock;
-std::stack<std::string> pvStrings;
+std::vector<std::string> pv;
 
 static uint64_t nodeCount;
 
@@ -92,8 +92,6 @@ int Engine::EvaluatePosition(Board& position)
 {
 	int score = 0;
 	int sideToMoveFactor = 0;
-	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
-	std::uniform_int_distribution<> dist(-10, 10);
 
 	if (position.ColorToMove == PieceColor::WHITE)
 	{
@@ -105,34 +103,12 @@ int Engine::EvaluatePosition(Board& position)
 	}
 
 	// material count
-	score += (100 * Utility::PopCount(position.WhitePawns));
-	score += (300 * Utility::PopCount(position.WhiteKnights));
-	score += (300 * Utility::PopCount(position.WhiteBishops));
-	score += (500 * Utility::PopCount(position.WhiteRooks));
-	score += (900 * Utility::PopCount(position.WhiteQueens));
-	score += (100000 * Utility::PopCount(position.WhiteKing));
-
-	score -= (100 * Utility::PopCount(position.BlackPawns));
-	score -= (300 * Utility::PopCount(position.BlackKnights));
-	score -= (300 * Utility::PopCount(position.BlackBishops));
-	score -= (500 * Utility::PopCount(position.BlackRooks));
-	score -= (900 * Utility::PopCount(position.BlackQueens));
-	score -= (100000 * Utility::PopCount(position.BlackKing));
-
-
-	// advanced pawns
-	score += (35 * Utility::PopCount(position.WhitePawns & 0x00FF000000000000ULL));
-	score += (30 * Utility::PopCount(position.WhitePawns & 0x0000FF0000000000ULL));
-	score += (20 * Utility::PopCount(position.WhitePawns & 0x000000FF00000000ULL));
-
-	score -= (35 * Utility::PopCount(position.BlackPawns & 0x000000000000FF00ULL));
-	score -= (30 * Utility::PopCount(position.BlackPawns & 0x0000000000FF0000ULL));
-	score -= (20 * Utility::PopCount(position.BlackPawns & 0x00000000FF000000ULL));
-
-	if (randomMode)
-	{
-		score += dist(generator);
-	}
+	score += (100 * (Utility::PopCount(position.WhitePawns) - Utility::PopCount(position.BlackPawns)));
+	score += (300 * (Utility::PopCount(position.WhiteKnights) - Utility::PopCount(position.BlackKnights)));
+	score += (300 * (Utility::PopCount(position.WhiteBishops) - Utility::PopCount(position.BlackBishops)));
+	score += (500 * (Utility::PopCount(position.WhiteRooks) - Utility::PopCount(position.BlackRooks)));
+	score += (900 * (Utility::PopCount(position.WhiteQueens) - Utility::PopCount(position.BlackQueens)));
+	score += (10000 * (Utility::PopCount(position.WhiteKing) - Utility::PopCount(position.BlackKing)));
 
 	return (score * sideToMoveFactor);
 }
@@ -145,11 +121,11 @@ Move Engine::NegaMaxRoot(Board& position)
 	std::vector<Move> availableMoves;
 	Move bestMove;
 	std::stringstream logText;
-	std::stringstream thinkingOutput;
-	std::string pvStr;
 	std::chrono::high_resolution_clock::time_point start;
 	std::chrono::high_resolution_clock::time_point currentTime;
 	std::chrono::milliseconds elapsedTime;
+	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
+	std::uniform_int_distribution<> dist(-10, 10);
 	uint32_t estimatedLeafNodesAtNextDepth = 0;
 	uint32_t leafNodesAtCurrentDepth = 0;
 	uint32_t leafNodesAtPreviousDepth = 0;
@@ -199,38 +175,51 @@ Move Engine::NegaMaxRoot(Board& position)
 		leafNodesAtPreviousDepth = leafNodesAtCurrentDepth;
 
 		availableMoves = MoveGenerator::GenerateMoves(position);
+		std::vector<std::string> pvBackup(depth);
+
+		pv.push_back("");
+
+		for (int count = 0; count < depth; count++)
+		{
+			pv[count] = "";
+		}
 
 		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
 			Position::Make(position, *it);
 			nodeCount++;
 
+			for (int count = 0; count < depth; count++)
+			{
+				pvBackup.push_back(pv[count]);
+			}
+
 			currentScore = -NegaMax(position, depth - 1);
 
 			Position::Unmake(position, *it);
 
+			if (randomMode)
+			{
+				currentScore += dist(generator);
+			}
+
 			if (currentScore > max)
 			{
-				pvStrings.push(Utility::GenerateXBoardNotation(*it));
+				pv[depth - 1] = Utility::GenerateXBoardNotation(*it);
 
-				while (!pvStrings.empty())
+				for (int count = 0; count < depth; count++)
 				{
-					thinkingOutput << pvStrings.top() << " ";
-					pvStrings.pop();
+					pvBackup[count] = pv[count];
 				}
-
-				pvStr = thinkingOutput.str().substr(0, thinkingOutput.str().size() - 1);
-				thinkingOutput.clear();
-				thinkingOutput.str("");
 
 				max = currentScore;
 				bestMove = *it;
 			}
 			else
 			{
-				while (!pvStrings.empty())
+				for (int count = 0; count < depth; count++)
 				{
-					pvStrings.pop();
+					pv[count] = pvBackup[count];
 				}
 			}
 		}
@@ -262,18 +251,24 @@ Move Engine::NegaMaxRoot(Board& position)
 		timeRequiredForNextIteration = static_cast<uint32_t>((nodeCount + estimatedLeafNodesAtNextDepth) / (nodeCount / (msecs / 10.0)));
 
 		logText << "Leaf nodes at next depth: " << estimatedLeafNodesAtNextDepth << ", estimated time for search at next depth: " << timeRequiredForNextIteration
-			<< ", allocated search time: " << availableTimeForThisMove << std::endl;
+			<< ", allocated search time: " << availableTimeForThisMove;
 
 		Utility::WriteLog(logText.str());
 		logText.clear();
 		logText.str("");
 
-		thinkingOutput << depth << " " << max << " " << msecs / 10 << " " << nodeCount << " " << pvStr;
+		logText << depth << " " << max << " " << msecs / 10 << " " << nodeCount;
 
-		std::cout << thinkingOutput.str() << std::endl;
-		Utility::WriteLog(thinkingOutput.str());
-		thinkingOutput.clear();
-		thinkingOutput.str("");
+		for (int count = static_cast<int>(pv.size() - 1); count >= 0; count--)
+		{
+			logText << " " << pv[count];
+		}
+
+		std::cout << logText.str() << std::endl;
+		
+		Utility::WriteLog(logText.str());
+		logText.clear();
+		logText.str("");
 
 		if (((msecs / 10) + timeRequiredForNextIteration) >= availableTimeForThisMove)
 		{
@@ -282,13 +277,15 @@ Move Engine::NegaMaxRoot(Board& position)
 		else
 		{
 			depth++;
-
+			std::cout << depth << " " << maxSearchDepth << std::endl;
 			if (depth > maxSearchDepth)
 			{
 				break;
 			}
 		}
 	}
+
+	pv.resize(0);
 
 	return bestMove;	
 }
@@ -298,8 +295,7 @@ int Engine::NegaMax(Board& position, int depth)
 	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
-	Move localBestMove;
-	std::stack<std::string> tmpStack;
+	std::vector<std::string> pvBackup(depth);
 
 	if (depth == 0)
 	{
@@ -318,7 +314,10 @@ int Engine::NegaMax(Board& position, int depth)
 				Position::Make(position, *it);
 				nodeCount++;
 
-				pvStrings.push(Utility::GenerateXBoardNotation(*it));
+				for (int count = 0; count < depth; count++)
+				{
+					pvBackup.push_back(pv[count]);
+				}
 
 				currentScore = -NegaMax(position, depth - 1);
 
@@ -326,34 +325,20 @@ int Engine::NegaMax(Board& position, int depth)
 
 				if (currentScore > max)
 				{
-					if (max != -1999999)
+					pv[depth - 1] = Utility::GenerateXBoardNotation(*it);
+					
+					for (int count = 0; count < depth; count++)
 					{
-						for (int count = 0; count < depth; count++)
-						{
-							tmpStack.push(pvStrings.top());
-							pvStrings.pop();
-						}
-
-						for (int count = 0; count < depth; count++)
-						{
-							pvStrings.pop();
-						}
-
-						for (int count = 0; count < depth; count++)
-						{
-							pvStrings.push(tmpStack.top());
-							tmpStack.pop();
-						}
+						pvBackup[count] = pv[count];
 					}
 
-					localBestMove = *it;
 					max = currentScore;
 				}
 				else
 				{
 					for (int count = 0; count < depth; count++)
 					{
-						pvStrings.pop();
+						pv[count] = pvBackup[count];
 					}
 				}
 			}
