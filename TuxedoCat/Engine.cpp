@@ -154,7 +154,7 @@ Move Engine::NegaMaxRoot(Board& position)
 			}
 		}
 		
-		availableTimeForThisMove = (currentClock.remainingTime - 100) / movesRemainingUntilNextTimeControl;
+		availableTimeForThisMove = (currentClock.remainingTime - 100) / (movesRemainingUntilNextTimeControl / 2);
 	}
 	else if (currentClock.type == TimeControlType::INCREMENTAL)
 	{
