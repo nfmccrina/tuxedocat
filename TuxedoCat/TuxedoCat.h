@@ -158,14 +158,15 @@ namespace TuxedoCat
 	{
 		uint64_t Perft(Board& position, int depth);
 		void Divide(Board& position, int depth);
-		std::string GetMove(Board& position);
+		std::string GetMove(Board& position, TimeControl& clock);
 		std::string GetRandomMove(Board& position);
 		bool IsGameOver(Board& position);
 		std::string GetGameResult(Board& position);
 		void InitializeEngine();
 		int EvaluatePosition(Board& position);
-		int NegaMax(Board& position, int depth);
-		Move NegaMaxRoot(Board& position);
+		int Search(Board& position, int depth);
+		Move SearchRoot(Board& position, TimeControl& clock);
+		uint64_t GetAvailableSearchTime(TimeControl& clock, Board& position);
 	}
 
 	namespace Interface

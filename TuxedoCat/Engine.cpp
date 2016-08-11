@@ -35,7 +35,6 @@ using namespace TuxedoCat;
 
 Board currentPosition;
 TimeControl currentClock;
-std::vector<std::string> pv;
 
 static uint64_t nodeCount;
 
@@ -74,9 +73,9 @@ std::string Engine::GetRandomMove(Board& position)
 	return result;
 }
 
-std::string Engine::GetMove(Board& position)
+std::string Engine::GetMove(Board& position, TimeControl& clock)
 {
-	Move move = NegaMaxRoot(position);
+	Move move = SearchRoot(position, clock);
 	std::string result = "";
 
 	if (move.TargetLocation != 0)
@@ -131,88 +130,100 @@ int Engine::EvaluatePosition(Board& position)
 	return (score * sideToMoveFactor);
 }
 
-Move Engine::NegaMaxRoot(Board& position)
+uint64_t Engine::GetAvailableSearchTime(TimeControl& clock, Board& position)
+{
+	uint32_t movesRemainingUntilNextTimeControl;
+	uint64_t availableTime;
+
+	if (clock.type == TimeControlType::CONVENTIONAL)
+	{
+		if (clock.movesPerControl == 0)
+		{
+			movesRemainingUntilNextTimeControl = 30;
+		}
+		else
+		{
+			movesRemainingUntilNextTimeControl = clock.movesPerControl - ((position.FullMoveCounter - 1) % clock.movesPerControl);
+
+			if (movesRemainingUntilNextTimeControl == 0)
+			{
+				movesRemainingUntilNextTimeControl = 1;
+			}
+		}
+
+		if (clock.remainingTime <= 50)
+		{
+			availableTime = 0;
+		}
+		else
+		{
+			availableTime = ((clock.remainingTime - 50) * 4) / movesRemainingUntilNextTimeControl;
+		}
+	}
+	else if (clock.type == TimeControlType::INCREMENTAL)
+	{
+		if (clock.remainingTime <= 50)
+		{
+			availableTime = 0;
+		}
+		else
+		{
+			availableTime = ((clock.remainingTime - 50) / 30) + (clock.timeIncrement - 50);
+		}
+	}
+	else if (clock.type == TimeControlType::TIME_PER_MOVE)
+	{
+		availableTime = clock.remainingTime - 10;
+	}
+
+	return availableTime;
+}
+
+Move Engine::SearchRoot(Board& position, TimeControl& clock)
 {
 	int max = 0;
 	int depth = 1;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
 	Move bestMove;
-	std::stringstream logText;
+	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
+	std::uniform_int_distribution<> dist(-10, 10);
 	std::chrono::high_resolution_clock::time_point start;
 	std::chrono::high_resolution_clock::time_point currentTime;
 	std::chrono::milliseconds elapsedTime;
-	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
-	std::uniform_int_distribution<> dist(-10, 10);
-	uint32_t estimatedLeafNodesAtNextDepth = 0;
-	uint32_t leafNodesAtCurrentDepth = 0;
-	uint32_t leafNodesAtPreviousDepth = 0;
-	uint32_t movesRemainingUntilNextTimeControl = 0;
-	uint32_t availableTimeForThisMove = 0;
-	double branchingFactorSum = 0;
-	double effectiveBranchingFactor = 0;
-	uint32_t timeRequiredForNextIteration = 0;
-	uint64_t nodeCountAtPreviousDepth;
+	uint64_t availableSearchTime;
+	uint64_t predictedSearchTime;
+	uint64_t nodeCountAtBeginningOfIteration;
+	uint64_t nodeCountOfPreviousIteration;
+	uint64_t nodeCountOfCurrentIteration;
+	uint64_t predictedNodesOfNextIteration;
+	uint64_t effectiveBranchingFactor;
+	uint64_t branchingFactorSum;
+	long long msecs;
+	uint64_t nodesPerMillisecond;
+	std::stringstream logText;
 
+	availableSearchTime = GetAvailableSearchTime(clock, position);
+	predictedSearchTime = 0;
 	nodeCount = 0;
+	nodeCountOfPreviousIteration = 0;
 
-	if (currentClock.type == TimeControlType::CONVENTIONAL)
-	{
-		if (currentClock.movesPerControl == 0)
-		{
-			movesRemainingUntilNextTimeControl = 30;
-		}
-		else
-		{
-			movesRemainingUntilNextTimeControl = currentClock.movesPerControl - ((currentPosition.FullMoveCounter - 1) % currentClock.movesPerControl);
-			
-			if (movesRemainingUntilNextTimeControl == 0)
-			{
-				movesRemainingUntilNextTimeControl = 1;
-			}
-		}
-		
-		availableTimeForThisMove = (currentClock.remainingTime - 100) / (movesRemainingUntilNextTimeControl / 2);
-	}
-	else if (currentClock.type == TimeControlType::INCREMENTAL)
-	{
-		availableTimeForThisMove = ((currentClock.remainingTime - 100) / 30) + (currentClock.timeIncrement - 50);
-	}
-	else if (currentClock.type == TimeControlType::TIME_PER_MOVE)
-	{
-		availableTimeForThisMove = currentClock.remainingTime - 10;
-	}
-	
 	start = std::chrono::high_resolution_clock::now();
-
-	while (true)
+	
+	while (predictedSearchTime < availableSearchTime)
 	{
 		max = -3000000;
 		bestMove.TargetLocation = 0;
-		nodeCountAtPreviousDepth = nodeCount;
-		leafNodesAtPreviousDepth = leafNodesAtCurrentDepth;
+		nodeCountAtBeginningOfIteration = nodeCount;
 
 		availableMoves = MoveGenerator::GenerateMoves(position);
-		std::vector<std::string> pvBackup(depth);
-
-		pv.push_back("");
-
-		for (int count = 0; count < depth; count++)
-		{
-			pv[count] = "";
-		}
-
+	
 		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
 			Position::Make(position, *it);
 			nodeCount++;
 
-			for (int count = 0; count < depth; count++)
-			{
-				pvBackup.push_back(pv[count]);
-			}
-
-			currentScore = -NegaMax(position, depth - 1);
+			currentScore = -Search(position, depth - 1);
 
 			Position::Unmake(position, *it);
 
@@ -223,97 +234,55 @@ Move Engine::NegaMaxRoot(Board& position)
 
 			if (currentScore > max)
 			{
-				pv[depth - 1] = Utility::GenerateXBoardNotation(*it);
-
-				for (int count = 0; count < depth; count++)
-				{
-					pvBackup[count] = pv[count];
-				}
-
 				max = currentScore;
 				bestMove = *it;
 			}
-			else
-			{
-				for (int count = 0; count < depth; count++)
-				{
-					pv[count] = pvBackup[count];
-				}
-			}
 		}
 
-		leafNodesAtCurrentDepth = static_cast<uint32_t>(nodeCount - nodeCountAtPreviousDepth);
+		// calculate predicted time of next iteration
 
-		if (leafNodesAtPreviousDepth == 0)
+		nodeCountOfCurrentIteration = nodeCount - nodeCountAtBeginningOfIteration;
+
+		if (nodeCountOfPreviousIteration == 0)
 		{
-			branchingFactorSum += leafNodesAtCurrentDepth;
-			effectiveBranchingFactor = branchingFactorSum;
+			branchingFactorSum = nodeCountOfCurrentIteration;
 		}
 		else
 		{
-			branchingFactorSum += leafNodesAtCurrentDepth / (leafNodesAtPreviousDepth * 1.0);
-			effectiveBranchingFactor = branchingFactorSum / depth;
+			branchingFactorSum += (nodeCountOfCurrentIteration / nodeCountOfPreviousIteration);
 		}
 
-		estimatedLeafNodesAtNextDepth = static_cast<int>(leafNodesAtCurrentDepth * effectiveBranchingFactor);
+		effectiveBranchingFactor = (branchingFactorSum / depth);
+
+		predictedNodesOfNextIteration = (nodeCountOfCurrentIteration * effectiveBranchingFactor);
+		nodeCountOfPreviousIteration = nodeCountOfCurrentIteration;
 
 		currentTime = std::chrono::high_resolution_clock::now();
 		elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - start);
-		long long msecs = elapsedTime.count();
+		msecs = elapsedTime.count();
 
-		logText << "Search depth: " << depth << ", node count: " << nodeCount << ", elapsed time: " << msecs << "ms, nps: " << nodeCount / (msecs / 1000.0);
-		Utility::WriteLog(logText.str());
-		logText.clear();
-		logText.str("");
-
-		timeRequiredForNextIteration = static_cast<uint32_t>((nodeCount + estimatedLeafNodesAtNextDepth) / (nodeCount / (msecs / 10.0)));
-
-		logText << "Leaf nodes at next depth: " << estimatedLeafNodesAtNextDepth << ", estimated time for search at next depth: " << timeRequiredForNextIteration
-			<< ", allocated search time: " << availableTimeForThisMove;
-
-		Utility::WriteLog(logText.str());
-		logText.clear();
-		logText.str("");
-
-		logText << depth << " " << max << " " << msecs / 10 << " " << nodeCount;
-
-		for (int count = static_cast<int>(pv.size() - 1); count >= 0; count--)
+		if (msecs == 0)
 		{
-			logText << " " << pv[count];
-		}
-
-		std::cout << logText.str() << std::endl;
-		
-		Utility::WriteLog(logText.str());
-		logText.clear();
-		logText.str("");
-
-		if (((msecs / 10) + timeRequiredForNextIteration) >= availableTimeForThisMove)
-		{
-			break;
+			nodesPerMillisecond = 0x7FFFFFFFFFFFFFFFULL;
 		}
 		else
 		{
-			depth++;
-			std::cout << depth << " " << maxSearchDepth << std::endl;
-			if (depth > maxSearchDepth)
-			{
-				break;
-			}
+			nodesPerMillisecond = nodeCount / msecs;
 		}
-	}
 
-	pv.resize(0);
+		predictedSearchTime = (predictedNodesOfNextIteration / (nodesPerMillisecond * 10)) + (msecs / 10);
+
+		depth++;
+	}
 
 	return bestMove;	
 }
 
-int Engine::NegaMax(Board& position, int depth)
+int Engine::Search(Board& position, int depth)
 {
 	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
-	std::vector<std::string> pvBackup(depth);
 
 	if (depth == 0)
 	{
@@ -332,32 +301,13 @@ int Engine::NegaMax(Board& position, int depth)
 				Position::Make(position, *it);
 				nodeCount++;
 
-				for (int count = 0; count < depth; count++)
-				{
-					pvBackup.push_back(pv[count]);
-				}
-
-				currentScore = -NegaMax(position, depth - 1);
+				currentScore = -Search(position, depth - 1);
 
 				Position::Unmake(position, *it);
 
 				if (currentScore > max)
 				{
-					pv[depth - 1] = Utility::GenerateXBoardNotation(*it);
-					
-					for (int count = 0; count < depth; count++)
-					{
-						pvBackup[count] = pv[count];
-					}
-
 					max = currentScore;
-				}
-				else
-				{
-					for (int count = 0; count < depth; count++)
-					{
-						pv[count] = pvBackup[count];
-					}
 				}
 			}
 		}

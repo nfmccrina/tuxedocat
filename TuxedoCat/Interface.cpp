@@ -359,7 +359,7 @@ void Interface::Run()
 				computerIsBlack = true;
 			}
 
-			std::string move = Engine::GetMove(currentPosition);
+			std::string move = Engine::GetMove(currentPosition, currentClock);
 
 			if (move == "")
 			{
@@ -574,7 +574,7 @@ void Interface::Run()
 
 						if (!forceMode)
 						{
-							std::string move = Engine::GetMove(currentPosition);
+							std::string move = Engine::GetMove(currentPosition, currentClock);
 
 							if (move == "")
 							{
@@ -629,6 +629,16 @@ void Interface::Run()
 			output.str("");
 
 			forceMode = true;
+		}
+		else if (command == "result")
+		{
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			forceMode = true;
+			Engine::InitializeEngine();
 		}
 		else if (command == "test")
 		{
