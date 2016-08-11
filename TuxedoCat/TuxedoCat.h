@@ -112,6 +112,8 @@ namespace TuxedoCat
 		void Make(Board& position, Move mv);
 		void Unmake(Board& position, Move mv);
 		void UpdatePieces(Board& position);
+		uint64_t GetPassedPawns(Board& position, PieceColor color);
+		int GetDoubledPawnCount(Board& position, PieceColor color);
 	}
 
 	namespace MoveGenerator
@@ -176,7 +178,26 @@ namespace TuxedoCat
 	namespace Test
 	{
 		void TestPerft();
-		void PrintTestResult(std::string name, bool result);
+		void GetDoubledPawnCountTest();
+		void RunTests();
+
+		template <class T>
+		void PrintTestResult(std::string name, T expected, T actual)
+		{
+			std::cout << name << "...";
+
+			if (expected == actual)
+			{
+				std::cout << "passed";
+			}
+			else
+			{
+				std::cout << "failed" << std::endl;
+				std::cout << "    expected " << actual << " to equal " << expected;
+			}
+
+			std::cout << std::endl;
+		}
 	}
 }
 

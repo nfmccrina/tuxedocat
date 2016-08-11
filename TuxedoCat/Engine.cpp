@@ -92,6 +92,8 @@ int Engine::EvaluatePosition(Board& position)
 {
 	int score = 0;
 	int sideToMoveFactor = 0;
+	uint64_t whitePassedPawns;
+	uint64_t blackPassedPawns;
 
 	if (position.ColorToMove == PieceColor::WHITE)
 	{
@@ -109,6 +111,22 @@ int Engine::EvaluatePosition(Board& position)
 	score += (500 * (Utility::PopCount(position.WhiteRooks) - Utility::PopCount(position.BlackRooks)));
 	score += (900 * (Utility::PopCount(position.WhiteQueens) - Utility::PopCount(position.BlackQueens)));
 	score += (10000 * (Utility::PopCount(position.WhiteKing) - Utility::PopCount(position.BlackKing)));
+
+	// passed pawns
+	whitePassedPawns = Position::GetPassedPawns(position, PieceColor::WHITE);
+	blackPassedPawns = Position::GetPassedPawns(position, PieceColor::BLACK);
+
+	score += (20 * (Utility::PopCount(whitePassedPawns) - Utility::PopCount(blackPassedPawns)));
+
+	score += (10 * (Utility::PopCount(whitePassedPawns & 0x00FF000000000000ULL) - Utility::PopCount(blackPassedPawns & 0x000000000000FF00ULL)));
+
+	score += (5 * (Utility::PopCount(whitePassedPawns & 0x0000FF0000000000ULL) - Utility::PopCount(blackPassedPawns & 0x0000000000FF0000ULL)));
+
+	score += (2 * (Utility::PopCount(whitePassedPawns & 0x000000FF00000000ULL) - Utility::PopCount(blackPassedPawns & 0x00000000FF000000ULL)));
+
+	// doubled pawns
+
+	score -= (3 * (Position::GetDoubledPawnCount(position, PieceColor::WHITE) - Position::GetDoubledPawnCount(position, PieceColor::BLACK)));
 
 	return (score * sideToMoveFactor);
 }

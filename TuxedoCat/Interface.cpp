@@ -637,7 +637,7 @@ void Interface::Run()
 			output.clear();
 			output.str("");
 
-			Test::TestPerft();
+			Test::RunTests();
 		}
 		else
 		{

@@ -26,13 +26,112 @@
 #include <vector>
 
 using namespace TuxedoCat;
-using namespace TuxedoCat::Utility;
+
+uint64_t Position::GetPassedPawns(Board& position, PieceColor color)
+{
+	uint64_t tmpPawns;
+	uint64_t potentialBlockerMask;
+	uint64_t passedPawnMask = 0;
+
+	if (color == PieceColor::WHITE)
+	{
+		tmpPawns = position.WhitePawns;
+
+		while (tmpPawns != 0)
+		{
+			int index = Utility::GetLSB(tmpPawns);
+
+			potentialBlockerMask = RayAttacksN[index];
+
+			if ((index % 8) != 0)
+			{
+				potentialBlockerMask = potentialBlockerMask | RayAttacksN[index - 1];
+			}
+
+			if ((index % 8) != 7)
+			{
+				potentialBlockerMask = potentialBlockerMask | RayAttacksN[index + 1];
+			}
+
+			if ((potentialBlockerMask & position.BlackPawns) == 0)
+			{
+				passedPawnMask = passedPawnMask | (0x0000000000000001ULL << index);
+			}
+
+			tmpPawns = tmpPawns ^ (0x0000000000000001ULL << index);
+		}
+	}
+	else
+	{
+		tmpPawns = position.BlackPawns;
+
+		while (tmpPawns != 0)
+		{
+			int index = Utility::GetLSB(tmpPawns);
+
+			potentialBlockerMask = RayAttacksS[index];
+
+			if ((index % 8) != 0)
+			{
+				potentialBlockerMask = potentialBlockerMask | RayAttacksS[index - 1];
+			}
+
+			if ((index % 8) != 7)
+			{
+				potentialBlockerMask = potentialBlockerMask | RayAttacksS[index + 1];
+			}
+
+			if ((potentialBlockerMask & position.WhitePawns) == 0)
+			{
+				passedPawnMask = passedPawnMask | (0x0000000000000001ULL << index);
+			}
+
+			tmpPawns = tmpPawns ^ (0x0000000000000001ULL << index);
+		}
+	}
+
+	return passedPawnMask;
+}
+
+int Position::GetDoubledPawnCount(Board& position, PieceColor color)
+{
+	int count = 0;
+
+	if (color == PieceColor::WHITE)
+	{
+		count += (
+			(Utility::PopCount(position.WhitePawns & 0x8080808080808080ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x4040404040404040ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x2020202020202020ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x1010101010101010ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x0808080808080808ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x0404040404040404ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x0202020202020202ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.WhitePawns & 0x0101010101010101ULL) > 1 ? 1 : 0)
+			);
+	}
+	else
+	{
+		count += (
+			(Utility::PopCount(position.BlackPawns & 0x8080808080808080ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x4040404040404040ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x2020202020202020ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x1010101010101010ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x0808080808080808ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x0404040404040404ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x0202020202020202ULL) > 1 ? 1 : 0) +
+			(Utility::PopCount(position.BlackPawns & 0x0101010101010101ULL) > 1 ? 1 : 0)
+			);
+	}
+
+	return count;
+}
 
 void TuxedoCat::Position::SetPosition(Board& position, std::string fen)
 {
-	std::vector<std::string> fen_parts = split(fen, " ");
+	std::vector<std::string> fen_parts = Utility::split(fen, " ");
 
-	std::vector<std::string> rankInfo = split(fen_parts[0], "/");
+	std::vector<std::string> rankInfo = Utility::split(fen_parts[0], "/");
 	uint64_t currentSquare = 0x0000000000000000ULL;
 
 	position.WhitePawns = 0x0000000000000000ULL;
@@ -108,7 +207,7 @@ void TuxedoCat::Position::SetPosition(Board& position, std::string fen)
 	}
 	else
 	{
-		position.EnPassantTarget = GetSquareFromAlgebraic(fen);
+		position.EnPassantTarget = Utility::GetSquareFromAlgebraic(fen);
 	}
 
 	position.HalfMoveCounter = std::stoi(fen_parts[4]);
