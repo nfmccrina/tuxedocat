@@ -133,7 +133,7 @@ int Engine::EvaluatePosition(Board& position)
 uint64_t Engine::GetAvailableSearchTime(TimeControl& clock, Board& position)
 {
 	uint32_t movesRemainingUntilNextTimeControl;
-	uint64_t availableTime;
+	uint64_t availableTime = 0;
 
 	if (clock.type == TimeControlType::CONVENTIONAL)
 	{
