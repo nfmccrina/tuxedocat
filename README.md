@@ -62,6 +62,8 @@ TuxedoCat only reacts to the most essential commands, specifically
 * `otim`
 * `level`
 * `st`
+* `sd`
+* `random`
 
 In addition to the regular Winboard commands, several other commands are
 available if you run the engine separately. The commands and their usage are
@@ -104,12 +106,6 @@ Linux and Windows here.
 None that I know of right now, except that the engine sucks. :)
 
 ## TODO
-
-* Improve the time-management algorithm
-
-	The engine currently seems to be leaving a lot of time on the table, so
-	the algorithm should be modified to allow for a deeper search at least some
-	of the time.
 	
 * Improve search
 
@@ -117,8 +113,18 @@ None that I know of right now, except that the engine sucks. :)
 	alpha-beta pruning and halfway-intelligent move ordering to reduce the
 	search space.
 
+* Output thinking (pv) information
+
+	This is surprisingly tricky. I implemented this, but the code was very
+	clunky and I wasn't even sure that it was printing out the line the
+	engine was actually looking at so I took it out and I'll revisit this
+	again in the future.
+
 
 ## Acknowledgements
+
+Thanks to Norbert Leisner for his work on the amazing engine logos, and Tamás
+Bajusz for providing a Linux build.
 
 Some bit-twiddling code was copied from the chess programming wiki; all of this
 code is clearly outlined in comments in the source files.
