@@ -157,7 +157,7 @@ uint64_t Engine::GetAvailableSearchTime(TimeControl& clock, Board& position)
 		}
 		else
 		{
-			availableTime = ((clock.remainingTime - 50) * 4) / movesRemainingUntilNextTimeControl;
+			availableTime = ((clock.remainingTime - 50) * 3) / movesRemainingUntilNextTimeControl;
 		}
 	}
 	else if (clock.type == TimeControlType::INCREMENTAL)
