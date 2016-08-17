@@ -64,6 +64,9 @@ TuxedoCat only reacts to the most essential commands, specifically
 * `st`
 * `sd`
 * `random`
+* `post`
+* `nopost`
+* `result`
 
 In addition to the regular Winboard commands, several other commands are
 available if you run the engine separately. The commands and their usage are
@@ -112,13 +115,6 @@ None that I know of right now, except that the engine sucks. :)
 	Currently the search is pure brute-force; the next step is to implement
 	alpha-beta pruning and halfway-intelligent move ordering to reduce the
 	search space.
-
-* Output thinking (pv) information
-
-	This is surprisingly tricky. I implemented this, but the code was very
-	clunky and I wasn't even sure that it was printing out the line the
-	engine was actually looking at so I took it out and I'll revisit this
-	again in the future.
 
 
 ## Acknowledgements

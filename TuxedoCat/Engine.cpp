@@ -30,6 +30,7 @@
 #include <sstream>
 #include <stack>
 #include <chrono>
+#include <algorithm>
 
 using namespace TuxedoCat;
 
@@ -37,6 +38,9 @@ Board currentPosition;
 TimeControl currentClock;
 
 static uint64_t nodeCount;
+static std::vector<std::vector<Move>> pvArrays;
+static int currentMaxDepth;
+static int currentBestScore;
 
 void Engine::InitializeEngine()
 {
@@ -115,17 +119,24 @@ int Engine::EvaluatePosition(Board& position)
 	whitePassedPawns = Position::GetPassedPawns(position, PieceColor::WHITE);
 	blackPassedPawns = Position::GetPassedPawns(position, PieceColor::BLACK);
 
-	score += (20 * (Utility::PopCount(whitePassedPawns) - Utility::PopCount(blackPassedPawns)));
+	score += (8 * (Utility::PopCount(whitePassedPawns) - Utility::PopCount(blackPassedPawns)));
 
-	score += (10 * (Utility::PopCount(whitePassedPawns & 0x00FF000000000000ULL) - Utility::PopCount(blackPassedPawns & 0x000000000000FF00ULL)));
+	score += (32 * (Utility::PopCount(whitePassedPawns & 0x00FF000000000000ULL) - Utility::PopCount(blackPassedPawns & 0x000000000000FF00ULL)));
 
-	score += (5 * (Utility::PopCount(whitePassedPawns & 0x0000FF0000000000ULL) - Utility::PopCount(blackPassedPawns & 0x0000000000FF0000ULL)));
+	score += (24 * (Utility::PopCount(whitePassedPawns & 0x0000FF0000000000ULL) - Utility::PopCount(blackPassedPawns & 0x0000000000FF0000ULL)));
 
-	score += (2 * (Utility::PopCount(whitePassedPawns & 0x000000FF00000000ULL) - Utility::PopCount(blackPassedPawns & 0x00000000FF000000ULL)));
+	score += (16 * (Utility::PopCount(whitePassedPawns & 0x000000FF00000000ULL) - Utility::PopCount(blackPassedPawns & 0x00000000FF000000ULL)));
 
 	// doubled pawns
 
-	score -= (3 * (Position::GetDoubledPawnCount(position, PieceColor::WHITE) - Position::GetDoubledPawnCount(position, PieceColor::BLACK)));
+	score -= (5 * (Position::GetDoubledPawnCount(position, PieceColor::WHITE) - Position::GetDoubledPawnCount(position, PieceColor::BLACK)));
+
+	// knight positioning
+	score += (5 * (Utility::PopCount(position.WhiteKnights & 0x00003C3C3C3C0000ULL) - Utility::PopCount(position.BlackKnights & 0x00003C3C3C3C0000ULL)));
+
+	// bishop mobility
+
+	score += (static_cast<int>(MoveGenerator::GenerateMoves(position, PieceRank::BISHOP).size()));
 
 	return (score * sideToMoveFactor);
 }
@@ -173,17 +184,38 @@ uint64_t Engine::GetAvailableSearchTime(TimeControl& clock, Board& position)
 	}
 	else if (clock.type == TimeControlType::TIME_PER_MOVE)
 	{
-		availableTime = clock.remainingTime - 10;
+		if (clock.remainingTime > 10)
+		{
+			availableTime = clock.remainingTime - 10;
+		}
+		else
+		{
+			availableTime = 0;
+		}
 	}
 
 	return availableTime;
+}
+
+std::string Engine::BuildPVString()
+{
+	std::stringstream ss;
+
+	if (pvArrays.size() > 0)
+	{
+		for (auto it = pvArrays[0].begin(); it != pvArrays[0].end(); it++)
+		{
+			ss << " " << Utility::GenerateXBoardNotation(*it);
+		}
+	}
+
+	return ss.str();
 }
 
 Move Engine::SearchRoot(Board& position, TimeControl& clock)
 {
 	int max = 0;
 	int depth = 1;
-	int currentScore = 0;
 	std::vector<Move> availableMoves;
 	Move bestMove;
 	std::default_random_engine generator(static_cast<unsigned int>(std::time(0)));
@@ -202,6 +234,8 @@ Move Engine::SearchRoot(Board& position, TimeControl& clock)
 	long long msecs;
 	uint64_t nodesPerMillisecond;
 	std::stringstream logText;
+	int alpha;
+	int beta;
 
 	availableSearchTime = GetAvailableSearchTime(clock, position);
 	predictedSearchTime = 0;
@@ -209,33 +243,78 @@ Move Engine::SearchRoot(Board& position, TimeControl& clock)
 	nodeCountOfPreviousIteration = 0;
 
 	start = std::chrono::high_resolution_clock::now();
-	
-	while (predictedSearchTime < availableSearchTime)
-	{
-		max = -3000000;
-		bestMove.TargetLocation = 0;
-		nodeCountAtBeginningOfIteration = nodeCount;
 
-		availableMoves = MoveGenerator::GenerateMoves(position);
-	
+	logText << "available time for search: " << availableSearchTime;
+	Utility::WriteLog(logText.str());
+	logText.clear();
+	logText.str("");
+
+	bestMove.TargetLocation = 0;
+	availableMoves = MoveGenerator::GenerateMoves(position);
+	std::sort(availableMoves.begin(), availableMoves.end(), MoveUtil::compareMoves);
+
+	do
+	{
+		nodeCountAtBeginningOfIteration = nodeCount;
+		alpha = -3000000;
+		beta = 3000000;
+		currentMaxDepth = depth;
+
+		std::vector<Move> newLevelVector;
+		pvArrays.push_back(newLevelVector);
+
+		if (pvArrays[0].size() > 0)
+		{
+			auto it = std::find(availableMoves.begin(), availableMoves.end(), pvArrays[0][0]);
+
+			availableMoves.erase(it);
+			availableMoves.insert(availableMoves.begin(), pvArrays[0][0]);
+		}
+
+		for (auto it = pvArrays.begin(); it != pvArrays.end(); it++)
+		{
+			it->clear();
+		}
+
 		for (auto it = availableMoves.begin(); it != availableMoves.end(); it++)
 		{
 			Position::Make(position, *it);
 			nodeCount++;
 
-			currentScore = -Search(position, depth - 1);
+			currentBestScore = -Search(position, depth - 1);
 
 			Position::Unmake(position, *it);
 
 			if (randomMode)
 			{
-				currentScore += dist(generator);
+				currentBestScore += dist(generator);
 			}
 
-			if (currentScore > max)
+			if (currentBestScore > alpha)
 			{
-				max = currentScore;
+				alpha = currentBestScore;
 				bestMove = *it;
+
+				pvArrays[0].clear();
+				pvArrays[0].push_back(*it);
+
+				if (pvArrays.size() > 1)
+				{
+					pvArrays[0].insert(pvArrays[0].end(), pvArrays[1].begin(), pvArrays[1].end());
+				}
+
+				currentTime = std::chrono::high_resolution_clock::now();
+				elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - start);
+				msecs = elapsedTime.count();
+
+				if (showThinkingOutput)
+				{
+					logText << depth << " " << alpha << " " << msecs / 10 << " " << nodeCount << BuildPVString();
+					std::cout << logText.str() << std::endl;
+					Utility::WriteLog(logText.str());
+					logText.clear();
+					logText.str("");
+				}
 			}
 		}
 
@@ -263,26 +342,52 @@ Move Engine::SearchRoot(Board& position, TimeControl& clock)
 
 		if (msecs == 0)
 		{
-			nodesPerMillisecond = 0x7FFFFFFFFFFFFFFFULL;
+			nodesPerMillisecond = 0x00FFFFFFFFFFFFFFULL;
 		}
 		else
 		{
 			nodesPerMillisecond = nodeCount / msecs;
+
+			if (availableSearchTime > static_cast<uint64_t>(msecs / 10))
+			{
+				availableSearchTime = availableSearchTime - (msecs / 10);
+			}
+			else
+			{
+				availableSearchTime = 0;
+			}
+
+			if (nodesPerMillisecond == 0)
+			{
+				nodesPerMillisecond = 0x00FFFFFFFFFFFFFFULL;
+			}
 		}
 
 		predictedSearchTime = (predictedNodesOfNextIteration / (nodesPerMillisecond * 10)) + (msecs / 10);
 
+		logText << "elapsed time: " << msecs / 10 << "cs, predicted time: " << predictedSearchTime << "cs, effective branching factor: " << effectiveBranchingFactor;
+		Utility::WriteLog(logText.str());
+		logText.clear();
+		logText.str("");
+
 		depth++;
-	}
+
+		if (depth > maxSearchDepth)
+		{
+			break;
+		}
+	} while (predictedSearchTime < availableSearchTime);
+
+	pvArrays.clear();
 
 	return bestMove;	
 }
 
 int Engine::Search(Board& position, int depth)
 {
-	int max = 0;
 	int currentScore = 0;
 	std::vector<Move> availableMoves;
+	int max = -3000000;
 
 	if (depth == 0)
 	{
@@ -290,9 +395,8 @@ int Engine::Search(Board& position, int depth)
 	}
 	else
 	{
-		max = -1999999;
-
 		availableMoves = MoveGenerator::GenerateMoves(position);
+		std::sort(availableMoves.begin(), availableMoves.end(), MoveUtil::compareMoves);
 
 		if (availableMoves.size() > 0)
 		{
@@ -307,23 +411,17 @@ int Engine::Search(Board& position, int depth)
 
 				if (currentScore > max)
 				{
+					pvArrays[currentMaxDepth - depth].clear();
+					pvArrays[currentMaxDepth - depth].push_back(*it);
+
+					if (pvArrays.size() > ((currentMaxDepth - depth) + 1))
+					{
+						pvArrays[currentMaxDepth - depth].insert(pvArrays[currentMaxDepth - depth].end(),
+							pvArrays[(currentMaxDepth - depth) + 1].begin(), pvArrays[(currentMaxDepth - depth) + 1].end());
+					}
+
 					max = currentScore;
 				}
-			}
-		}
-		else
-		{		
-			if (position.ColorToMove == PieceColor::WHITE && !MoveGenerator::IsSquareAttacked(position.WhiteKing, position))
-			{
-				max = 0;
-			}
-			else if (position.ColorToMove == PieceColor::BLACK && !MoveGenerator::IsSquareAttacked(position.BlackKing, position))
-			{
-				max = 0;
-			}
-			else
-			{
-				max = max - depth;
 			}
 		}
 

@@ -310,7 +310,7 @@ uint64_t RayAttacksSW[64] = {
 
 };
 
-std::vector<Move> MoveGenerator::GenerateMoves(Board& position)
+std::vector<Move> MoveGenerator::GenerateMoves(Board& position, PieceRank rankFilter)
 {
 	uint64_t pieces = position.ColorToMove == PieceColor::WHITE ? position.WhitePieces : position.BlackPieces;
 	uint64_t currentPiece;
@@ -323,6 +323,31 @@ std::vector<Move> MoveGenerator::GenerateMoves(Board& position)
 		PieceColor::WHITE ? position.WhiteKing : position.BlackKing, position))
 	{
 		inCheck = true;
+	}
+
+	if (rankFilter == PieceRank::PAWN)
+	{
+		pieces = pieces & (position.WhitePawns | position.BlackPawns);
+	}
+	else if (rankFilter == PieceRank::KNIGHT)
+	{
+		pieces = pieces & (position.WhiteKnights | position.BlackKnights);
+	}
+	else if (rankFilter == PieceRank::BISHOP)
+	{
+		pieces = pieces & (position.WhiteBishops | position.BlackBishops);
+	}
+	else if (rankFilter == PieceRank::ROOK)
+	{
+		pieces = pieces & (position.WhiteRooks | position.BlackRooks);
+	}
+	else if (rankFilter == PieceRank::QUEEN)
+	{
+		pieces = pieces & (position.WhiteQueens | position.BlackQueens);
+	}
+	else if (rankFilter == PieceRank::KING)
+	{
+		pieces = pieces & (position.WhiteKing | position.BlackKing);
 	}
 
 	while (pieces != 0x0000000000000000ULL)

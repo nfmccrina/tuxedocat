@@ -40,21 +40,30 @@ void MoveUtil::InitializeMove(Move& move, uint64_t tgt, uint64_t src, uint64_t c
 	move.CastlingStatus = cs;
 }
 
-bool MoveUtil::AreEqual(const Move& move1, const Move& move2)
+bool MoveUtil::compareMoves(Move& m1, Move& m2)
 {
 	bool result = false;
 
-	if (move1.CapturedPiece == move2.CapturedPiece
-		&& move1.CastlingStatus == move2.CastlingStatus
-		&& move1.CurrentEnPassant == move2.CurrentEnPassant
-		&& move1.CurrentHalfMoves == move2.CurrentHalfMoves
-		&& move1.MoveColor == move2.MoveColor
-		&& move1.MovingPiece == move2.MovingPiece
-		&& move1.PromotedRank == move2.PromotedRank
-		&& move1.SourceLocation == move2.SourceLocation
-		&& move1.TargetLocation == move2.TargetLocation)
+	if (m1.CapturedPiece != PieceRank::NONE)
 	{
-		result = true;
+		if (m2.CapturedPiece == PieceRank::NONE)
+		{
+			result = true;
+		}
+		else
+		{
+			if (Utility::ComparePieces(m2.CapturedPiece, m1.CapturedPiece))
+			{
+				result = true;
+			}
+			else if (!Utility::ComparePieces(m1.CapturedPiece, m2.CapturedPiece))
+			{
+				if (Utility::ComparePieces(m1.MovingPiece, m2.MovingPiece))
+				{
+					result = true;
+				}
+			}
+		}
 	}
 
 	return result;

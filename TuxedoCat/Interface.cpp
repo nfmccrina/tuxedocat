@@ -35,6 +35,7 @@ using namespace TuxedoCat;
 extern struct Board currentPosition;
 int maxSearchDepth;
 bool randomMode;
+bool showThinkingOutput;
 
 static bool winboardMode;
 static bool forceMode;
@@ -66,6 +67,9 @@ void Interface::OutputFeatures()
 {
 	std::cout << "feature done=0" << std::endl;
 	Utility::WriteLog("engine -> interface: feature done = 0");
+
+	std::cout << "feature debug=1" << std::endl;
+	Utility::WriteLog("engine -> interface: feature debug=1");
 
 	std::cout << "feature setboard=1" << std::endl;
 	Utility::WriteLog("engine -> interface: feature setboard=1");
@@ -111,6 +115,7 @@ void Interface::Run()
 	forceMode = false;
 	computerIsBlack = true;
 	randomMode = false;
+	showThinkingOutput = false;
 	
 	std::string input;
 	std::string command;
@@ -150,6 +155,24 @@ void Interface::Run()
 			output.str("");
 
 			break;
+		}
+		else if (command == "post")
+		{
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			showThinkingOutput = true;
+		}
+		else if (command == "nopost")
+		{
+			output << "interface -> engine: " << input;
+			Utility::WriteLog(output.str());
+			output.clear();
+			output.str("");
+
+			showThinkingOutput = false;
 		}
 		else if (command == "xboard")
 		{
@@ -586,6 +609,10 @@ void Interface::Run()
 									Utility::WriteLog("engine -> interface: " + output.str());
 									output.clear();
 									output.str("");
+								}
+								else
+								{
+									Utility::WriteLog("entered wormhole");
 								}
 							}
 							else

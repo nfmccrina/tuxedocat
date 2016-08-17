@@ -270,7 +270,7 @@ TuxedoCat::Move Utility::GetMoveFromXBoardNotation(Board& position, std::string 
 
 	for (auto it = legalMoves.begin(); it != legalMoves.end(); it++)
 	{
-		if (MoveUtil::AreEqual(move, *it))
+		if (move == *it)
 		{
 			isLegalMove = true;
 			break;
@@ -675,4 +675,37 @@ void Utility::WriteLog(std::string msg)
     #endif
 
 	fout.close();
+}
+
+bool Utility::ComparePieces(PieceRank pr1, PieceRank pr2)
+{
+	bool result = false;
+
+	if (pr1 == PieceRank::PAWN && pr2 != PieceRank::PAWN)
+	{
+		result = true;
+	}
+	else if (pr1 == PieceRank::KNIGHT && (pr2 != PieceRank::PAWN && pr2 != PieceRank::KNIGHT))
+	{
+		result = true;
+	}
+	else if (pr1 == PieceRank::BISHOP && (pr2 != PieceRank::PAWN
+		&& pr2 != PieceRank::KNIGHT && pr2 != PieceRank::BISHOP))
+	{
+		result = true;
+	}
+	else if (pr1 == PieceRank::ROOK && (pr2 != PieceRank::PAWN
+		&& pr2 != PieceRank::KNIGHT && pr2 != PieceRank::BISHOP
+		&& pr2 != PieceRank::ROOK))
+	{
+		result = true;
+	}
+	else if (pr1 == PieceRank::QUEEN && (pr2 != PieceRank::PAWN
+		&& pr2 != PieceRank::KNIGHT && pr2 != PieceRank::BISHOP
+		&& pr2 != PieceRank::ROOK && pr2 != PieceRank::QUEEN))
+	{
+		result = true;
+	}
+
+	return result;
 }

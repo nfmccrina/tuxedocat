@@ -96,11 +96,23 @@ namespace TuxedoCat
 	PieceColor GetPieceColorFromChar(char piece);
 	PieceRank GetPieceRankFromChar(char piece);
 
+	inline bool operator==(const Move& lhs, const Move& rhs) {
+		return (lhs.CapturedPiece == rhs.CapturedPiece
+			&& lhs.CastlingStatus == rhs.CastlingStatus
+			&& lhs.CurrentEnPassant == rhs.CurrentEnPassant
+			&& lhs.CurrentHalfMoves == rhs.CurrentHalfMoves
+			&& lhs.MoveColor == rhs.MoveColor
+			&& lhs.MovingPiece == rhs.MovingPiece
+			&& lhs.PromotedRank == rhs.PromotedRank
+			&& lhs.SourceLocation == rhs.SourceLocation
+			&& lhs.TargetLocation == rhs.TargetLocation);
+	}
+
 	namespace MoveUtil
 	{
+		bool compareMoves(Move& m1, Move& m2);
 		void InitializeMove(Move& move, uint64_t tgt, uint64_t src, uint64_t cep, PieceColor mc, PieceRank mp,
 			PieceRank cp, PieceRank pr, int chm, int cs);
-		bool AreEqual(const Move& move1, const Move& move2);
 	}
 
 	namespace Position
@@ -132,7 +144,7 @@ namespace TuxedoCat
 		void GenerateKnightMovesAt(uint64_t location, Board& position, bool evade);
 		void GenerateKingMovesAt(uint64_t location, Board& position, bool evade);
 		bool IsSquareAttacked(uint64_t square, Board& position);
-		std::vector<Move> GenerateMoves(Board& position);
+		std::vector<Move> GenerateMoves(Board& position, PieceRank rankFilter = PieceRank::NONE);
 	}
 
 	namespace Utility
@@ -153,6 +165,7 @@ namespace TuxedoCat
 		std::string ColorToString(PieceColor color);
 		std::string CastlingStatusToString(int flags);
 		void WriteLog(std::string msg);
+		bool ComparePieces(PieceRank pr1, PieceRank pr2);
 	}
 
 	namespace Engine
@@ -168,6 +181,7 @@ namespace TuxedoCat
 		int Search(Board& position, int depth);
 		Move SearchRoot(Board& position, TimeControl& clock);
 		uint64_t GetAvailableSearchTime(TimeControl& clock, Board& position);
+		std::string BuildPVString();
 	}
 
 	namespace Interface
@@ -207,6 +221,7 @@ extern struct TuxedoCat::Board currentPosition;
 extern struct TuxedoCat::TimeControl currentClock;
 extern int maxSearchDepth;
 extern bool randomMode;
+extern bool showThinkingOutput;
 extern uint64_t KnightAttacks[64];
 extern uint64_t KingAttacks[64];
 extern uint64_t RayAttacksN[64];
