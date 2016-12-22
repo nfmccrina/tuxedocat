@@ -1,0 +1,6 @@
+CC=clang++
+CFLAGS=-Wall -Werror -pedantic -std=c++11
+BUILDDIR=build
+SRCDIR=src
+TESTDIR=test_src
+INCLUDES=-Igoogletest/include
