@@ -1,5 +1,16 @@
 # TuxedoCat
 
+## NOTE!!!
+I've been making some time to work on TuxedoCat, but I decided to go back
+and refactor the work I've already done to make it more maintainable and
+easier to understand. So, a lot of the info below is outdated. If you
+want to follow along with the refactoring work there is a "refactor"
+branch that I'm actively working on. Also, I am not planning to provide
+a Visual Studio solution in the future, as I don't have a Windows computer
+and it was too much effort to keep it simultaneously building on Linux
+and Windows. The code should still work in Windows but you'll have to
+build it yourself. Fair warning!
+
 ## About
 
 TuxedoCat is a chess engine. I am developing it as a hobby; it isn't crazy
