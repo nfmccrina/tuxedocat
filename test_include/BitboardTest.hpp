@@ -26,7 +26,7 @@
 #pragma once
 
 #include "../include/Bitboard.hpp"
-#include "../googletest/include/gtest/gtest.h"
+#include "../include/gtest/gtest.h"
 
 class BitboardTest : public ::testing::Test
 {

@@ -24,7 +24,7 @@
 */
 
 #include "../test_include/BitboardTest.hpp"
-#include "../googletest/include/gtest/gtest.h"
+#include "../include/gtest/gtest.h"
 #include <sstream>
 
 void BitboardTest::SetUp()
