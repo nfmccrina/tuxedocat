@@ -20,26 +20,33 @@
 * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 * DEALINGS IN THE SOFTWARE.
-*
 */
 
 #pragma once
 
+#include "Bitboard.hpp"
 #include <string>
 #include <cstdint>
+#include <utility>
 
 namespace TuxedoCat
 {
     class Square
     {
     public:
-        Square();
         Square(std::string s);
-        Square(uint8_t row, uint8_t column);
-        Square(uint64_t bitboard);
-        uint64_t getLocation() const;
+        Square(std::pair<int, int> coord);
+        Square(Bitboard bitboard);
+
+        Bitboard toBitboard() const;
+        std::pair<int, int> toCoordinates() const;
+        std::string toString() const;
 
     private:
-        uint64_t location;
+        bool areCoordinatesValid(std::pair<int, int> coord) const;
+        bool isAlgebraicDescValid(std::string s) const;
+        bool isBitboardValid(Bitboard b) const;
+    
+        Bitboard location;
     };
 }

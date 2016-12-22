@@ -25,6 +25,7 @@
 
 #include "../include/Bitboard.hpp"
 #include "../include/LookupData.hpp"
+#include "../include/BitboardConversionException.hpp"
 #include <sstream>
 
 // begin constructors
@@ -122,10 +123,69 @@ int TuxedoCat::Bitboard::popcount() const
     */
 }
 
+std::string TuxedoCat::Bitboard::toAlgebraicCoordinate() const
+{
+    std::string msg {"Bitboard::toAlgebraicCoordinate: Bitboard must only have one bit set to generate an algebraic coordinate"};
+    Bitboard mask {0x00000000000000FFULL};
+    int rank {0};
+    int file {0};
+
+    if (popcount() != 1)
+    {
+        throw BitboardConversionException(msg);
+    }
+
+    while ((bitboard & mask) == 0x00ULL)
+    {
+        rank++;
+        mask <<= 8;
+    }
+
+    mask.setValue(0x0101010101010101ULL);
+
+    while ((bitboard & mask) == 0x00ULL)
+    {
+        file++;
+        mask <<= 1;
+    }
+
+    return std::string(1, static_cast<char>(file + 97)) +
+        std::to_string(rank + 1);
+}
+
+std::pair<int, int> TuxedoCat::Bitboard::toCoordinates() const
+{
+    std::string msg {"Bitboard::toCoordinates: Bitboard must only have one bit set to generate a coordinate"};
+    Bitboard mask {0x00000000000000FFULL};
+    int rank {0};
+    int file {0};
+
+    if (popcount() != 1)
+    {
+        throw BitboardConversionException(msg);
+    }
+
+    while ((bitboard & mask) == 0x00ULL)
+    {
+        rank++;
+        mask <<= 8;
+    }
+
+    mask.setValue(0x0101010101010101ULL);
+
+    while ((bitboard & mask) == 0x00ULL)
+    {
+        file++;
+        mask <<= 1;
+    }
+
+    return std::pair<int, int>(rank, file);
+}
+
 std::string TuxedoCat::Bitboard::toString() const
 {
     std::stringstream ss;
-    uint64_t currentValue = 0x0100000000000000ULL;
+    uint64_t currentValue {0x0100000000000000ULL};
 
     for (int row = 7; row >= 0; row--)
     {

@@ -24,8 +24,10 @@
 */
 
 #include "../test_include/BitboardTest.hpp"
+#include "../include/BitboardConversionException.hpp"
 #include "../include/gtest/gtest.h"
 #include <sstream>
+#include <utility>
 
 void BitboardTest::SetUp()
 {
@@ -292,4 +294,57 @@ TEST_F(BitboardTest, ShiftLEqOp_DoesNotModifyBitboardIfNegativeShift)
     bitboard.setValue(0x0000000000000001ULL);
 
     EXPECT_EQ(0x0000000000000001ULL, (bitboard <<= -4).getValue());
+}
+
+TEST_F(BitboardTest,
+    toAlgebraicCoordinate_ReturnsAnAlgebraicCoordinateIfOneBitSet)
+{
+    bitboard.setValue(0x0000080000000000ULL);
+
+    EXPECT_EQ("d6", bitboard.toAlgebraicCoordinate());
+}
+
+TEST_F(BitboardTest,
+    toAlgebraicCoordinate_ThrowsExceptionIfMultipleBitsSet)
+{
+    bitboard.setValue(0x0000080000000F00ULL);
+
+    EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
+        TuxedoCat::BitboardConversionException);
+}
+
+TEST_F(BitboardTest, toAlgebraicCoordinate_ThrowsExceptionIfEmpty)
+{
+    bitboard.setValue(0x0000000000000000ULL);
+
+    EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
+        TuxedoCat::BitboardConversionException);
+}
+
+TEST_F(BitboardTest,
+    toCoordinates_ReturnsACoordinatePairIfOneBitSet)
+{
+    bitboard.setValue(0x0000080000000000ULL);
+    
+    std::pair<int, int> result { bitboard.toCoordinates() };
+
+    EXPECT_EQ(5, result.first);
+    EXPECT_EQ(3, result.second);
+}
+
+TEST_F(BitboardTest,
+    toCoordinates_ThrowsExceptionIfMultipleBitsSet)
+{
+    bitboard.setValue(0x0000080000000F00ULL);
+
+    EXPECT_THROW(bitboard.toCoordinates(),
+        TuxedoCat::BitboardConversionException);
+}
+
+TEST_F(BitboardTest, toCoordinates_ThrowsExceptionIfEmpty)
+{
+    bitboard.setValue(0x0000000000000000ULL);
+
+    EXPECT_THROW(bitboard.toCoordinates(),
+        TuxedoCat::BitboardConversionException);
 }

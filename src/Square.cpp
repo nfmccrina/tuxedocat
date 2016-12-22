@@ -24,53 +24,110 @@
 */
 
 #include "Square.hpp"
+#include "../include/InvalidSquareException.hpp"
 
-TuxedoCat::Square::Square()
-{
-    this->location = 0x00;
-}
+// begin constructors
 
 TuxedoCat::Square::Square(std::string s)
 {
-    int rank = 0;
-    int file = static_cast<int>(s[0]);
+    int rank {0};
+    int file {0};
+    std::string msg = "Square(std::string): could not convert " + s +
+        " to a square";
+    InvalidSquareException ex(msg);
 
-    file -= 97;
-
-    if (std::isdigit(s[1]))
+    if (!isAlgebraicDescValid(s))
     {
-        rank = std::stoi(s.substr(1)) - 1;
+        throw ex;
     }
 
-    this->location = 0x0000000000000001ULL << ((rank * 8) + file);
-}
+    file = static_cast<int>(s[0]);
 
-TuxedoCat::Square::Square(uint8_t row, uint8_t column)
-{
-    this->location = 0x00;
-
-    if (row < 8 && column < 8)
+    if (file > 96 && file < 105)
     {
-        this->location = 0x01;
-
-        for (uint8_t count = 0; count < row; count++)
-        {
-            this->location = this->location << 8;
-        }
-
-        for (uint8_t count = 0; count < column; count++)
-        {
-            this->location = this->location << 1;
-        }
+        file -= 96;
     }
+    else if (file > 64 && file < 73)
+    {
+        file -= 64;
+    }
+    else
+    {
+        throw ex;
+    }
+
+    rank = std::stoi(s.substr(1)) - 1;
+
+    this->location = Bitboard(0x0000000000000001ULL << ((rank * 8) + file));
 }
 
-TuxedoCat::Square::Square(uint64_t bitboard)
+TuxedoCat::Square::Square(std::pair<int, int> coord)
 {
-    this->location = bitboard;
+    std::string msg = "Square(std::pair<int, int>): could not convert (" +
+        std::to_string(coord.first) + ", " +
+        std::to_string(coord.second) + ") to a square";
+    InvalidSquareException ex(msg);
+    
+    if (!areCoordinatesValid(coord))
+    {
+        throw ex;
+    }
+
+    this->location = 0x01;
+    this->location <<= (coord.first * 8);
+    this->location <<= coord.second;
 }
 
-uint64_t TuxedoCat::Square::getLocation() const
+TuxedoCat::Square::Square(Bitboard bitboard)
 {
-    return this->location;
+    std::string exMsg {"Square(Bitboard): could not convert bitboard to square"};
+
+    if (!isBitboardValid(bitboard))
+    {
+        throw InvalidSquareException(exMsg);
+    }
+
+    location = bitboard;
 }
+
+// end constructors
+
+// begin public methods
+
+TuxedoCat::Bitboard TuxedoCat::Square::toBitboard() const
+{
+    return location;
+}
+
+std::pair<int, int> TuxedoCat::Square::toCoordinates() const
+{
+    return location.toCoordinates();
+}
+
+std::string TuxedoCat::Square::toString() const
+{
+    return location.toAlgebraicCoordinate();
+}
+
+// end public methods
+
+// begin private methods
+
+bool TuxedoCat::Square::areCoordinatesValid(std::pair<int, int> coord) const
+{
+    return coord.first >= 0 && coord.first < 8 &&
+        coord.second >= 0 && coord.second < 8;
+}
+
+bool TuxedoCat::Square::isAlgebraicDescValid(std::string s) const
+{
+    return s.find_first_of("abcdefghABCDEFGH") == 0 &&
+        s.find_first_of("12345678") == 1;
+}
+
+bool TuxedoCat::Square::isBitboardValid(Bitboard b) const
+{
+    return b.popcount() == 1;
+}
+
+// end private methods

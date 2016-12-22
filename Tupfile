@@ -1,6 +1,6 @@
 include_rules
 
-cpp_files=$(SRCDIR)/LookupData.cpp $(SRCDIR)/Bitboard.cpp $(SRCDIR)/Main.cpp $(TESTDIR)/*.cpp
+cpp_files=$(SRCDIR)/LookupData.cpp $(SRCDIR)/Bitboard.cpp $(SRCDIR)/Square.cpp $(SRCDIR)/Main.cpp $(TESTDIR)/*.cpp
 
 : foreach $(cpp_files) |> $(CC) $(CFLAGS) $(INCLUDES) -c %f -o %o |> $(BUILDDIR)/%B.o
 

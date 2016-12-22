@@ -25,7 +25,9 @@
 
 #pragma once
 
-// master include for test fixtures
+#include "../include/gtest/gtest.h"
 
-#include "BitboardTest.hpp"
-#include "SquareTest.hpp"
+class SquareTest : public ::testing::Test
+{
+};
+

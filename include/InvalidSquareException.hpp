@@ -24,46 +24,16 @@
 
 #pragma once
 
-#include <cstdint>
-#include <string>
-#include <utility>
+#include <stdexcept>
 
 namespace TuxedoCat
 {
-    class Bitboard
+    class InvalidSquareException : public std::logic_error
     {
     public:
-        Bitboard();
-        Bitboard(uint64_t num);
-
-        uint64_t getValue() const;
-        void setValue(uint64_t value);
-
-        int lsb() const;
-        int msb() const;
-        int popcount() const;
-        std::string toAlgebraicCoordinate() const;
-        std::pair<int, int> toCoordinates() const;
-        std::string toString() const;
-
-        Bitboard operator~();
-        Bitboard& operator&=(Bitboard other);
-        Bitboard& operator|=(Bitboard other);
-        Bitboard& operator<<=(int num);
-        Bitboard& operator>>=(int num);
-
-    private:
-        uint64_t bitboard;
+        InvalidSquareException(const std::string& what_arg)
+            : std::logic_error(what_arg)
+        {
+        }
     };
-
-    Bitboard operator&(Bitboard a, Bitboard b);
-    Bitboard operator|(Bitboard a, Bitboard b);
-    bool operator==(Bitboard a, Bitboard b);
-    bool operator!=(Bitboard a, Bitboard b);
-    bool operator>(Bitboard a, Bitboard b);
-    bool operator<(Bitboard a, Bitboard b);
-    bool operator>=(Bitboard a, Bitboard b);
-    bool operator<=(Bitboard a, Bitboard b);
-    Bitboard operator<<(Bitboard a, int num);
-    Bitboard operator>>(Bitboard a, int num);
 }
