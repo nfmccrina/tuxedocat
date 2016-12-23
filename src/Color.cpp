@@ -25,17 +25,24 @@
 #include "Color.hpp"
 #include <cctype>
 
-TuxedoCat::Color TuxedoCat::getColorFromChar(char ch)
+boost::optional<TuxedoCat::Color> TuxedoCat::getColorFromString(std::string s)
 {
-    Color color;
+    boost::optional<Color> color;
 
-    if (std::isupper(ch))
+    if (s.length() == 1)
     {
-        color = Color::WHITE;
+        if (std::isupper(s[0]))
+        {
+            color = Color::WHITE;
+        }
+        else
+        {
+            color = Color::BLACK;
+        }
     }
     else
     {
-        color = Color::BLACK;
+        color = boost::none;
     }
 
     return color;

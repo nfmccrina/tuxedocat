@@ -25,11 +25,12 @@
 #pragma once
 
 #include <string>
+#include <boost/optional.hpp>
 
 namespace TuxedoCat
 {
     enum class Rank { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
 
-    Rank getRankFromChar(char ch);
+    boost::optional<Rank> getRankFromString(std::string s);
     std::string rankToString(Rank r);
 }

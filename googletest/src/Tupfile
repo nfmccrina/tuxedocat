@@ -1,0 +1,6 @@
+include_rules
+
+GTEST_DIR=..
+
+: gtest-all.cc |> $(CC) -isystem $(GTEST_DIR)/include -I$(GTEST_DIR) -pthread -c %f |> %B.o
+: gtest-all.o |> ar -rv %o %f |> libgtest.a

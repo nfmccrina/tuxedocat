@@ -22,15 +22,13 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "Piece.hpp"
+#include "../include/Piece.hpp"
 #include <boost/algorithm/string.hpp>
 #include <cctype>
 
 TuxedoCat::Piece::Piece(Color c, Rank r, Square s)
+    : color(c), rank(r), square(s)
 {
-    setColor(c);
-    setRank(r);
-    setLocation(s);
 }
 
 TuxedoCat::Color TuxedoCat::Piece::getColor() const
@@ -43,24 +41,9 @@ TuxedoCat::Rank TuxedoCat::Piece::getRank() const
     return this->rank;
 }
 
-TuxedoCat::Square TuxedoCat::Piece::getLocation() const
+TuxedoCat::Square TuxedoCat::Piece::getSquare() const
 {
-    return this->location;
-}
-
-void TuxedoCat::Piece::setColor(Color value)
-{
-    this->color = value;
-}
-
-void TuxedoCat::Piece::setRank(Rank value)
-{
-    this->rank = value;
-}
-
-void TuxedoCat::Piece::setLocation(Square value)
-{
-    this->location = value;
+    return this->square;
 }
 
 std::string TuxedoCat::Piece::toString() const

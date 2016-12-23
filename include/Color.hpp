@@ -25,12 +25,13 @@
 #pragma once
 
 #include <string>
+#include <boost/optional.hpp>
 
 namespace TuxedoCat
 {
     enum class Color { WHITE, BLACK };
     
-    Color getColorFromChar(char ch);
+    boost::optional<Color> getColorFromString(std::string s);
     std::string colorToString(Color);
 }
 

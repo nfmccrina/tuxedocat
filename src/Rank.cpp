@@ -22,51 +22,49 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "Rank.hpp"
+#include "../include/Rank.hpp"
 #include <iostream>
 #include <cctype>
 
-TuxedoCat::Rank TuxedoCat::getRankFromChar(char ch)
+boost::optional<TuxedoCat::Rank> TuxedoCat::getRankFromString(std::string s)
 {
-    Rank rank;
+    boost::optional<Rank> rank;
 
-    switch (std::toupper(ch))
+    if (s.length() != 1)
     {
-        case 'P':
+        rank = boost::none;
+    }
+    else
+    {
+        if (s == "p" || s == "P")
         {
             rank = Rank::PAWN;
         }
-        break;
-        case 'N':
+
+        if (s == "n" || s == "N")
         {
             rank = Rank::KNIGHT;
         }
-        break;
-        case 'B':
+
+        if (s == "b" || s == "B")
         {
             rank = Rank::BISHOP;
         }
-        break;
-        case 'R':
+
+        if (s == "r" || s == "R")
         {
             rank = Rank::ROOK;
         }
-        break;
-        case 'Q':
+
+        if (s == "q" || s == "Q")
         {
             rank = Rank::QUEEN;
         }
-        break;
-        case 'K':
+
+        if (s == "k" || s == "K")
         {
             rank = Rank::KING;
         }
-        break;
-        default:
-        {
-            rank = Rank::PAWN;
-        }
-        break;
     }
 
     return rank;

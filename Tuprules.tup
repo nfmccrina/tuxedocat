@@ -1,5 +1,7 @@
 CC=clang++
-CFLAGS=-Wall -Werror -pedantic -std=c++11
+CXXFLAGS=-Wall -Werror -pedantic -std=c++11
+LDFLAGS=
+LIBS=-lboost_system
 BUILDDIR=build
 SRCDIR=src
 TESTDIR=test_src

@@ -1,3 +1,5 @@
 .tup/
 build/
 log.txt
+*.o
+*.a

@@ -38,15 +38,12 @@ namespace TuxedoCat
         Piece(Color c, Rank r, Square s);
         Color getColor() const;
         Rank getRank() const;
-        Square getLocation() const;
-        void setColor(Color value);
-        void setRank(Rank value);
-        void setLocation(Square value);
+        Square getSquare() const;
         std::string toString() const;
 
     private:
         Color color;
         Rank rank;
-        Square location;
+        Square square;
     };
 }
