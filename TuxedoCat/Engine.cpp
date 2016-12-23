@@ -214,7 +214,6 @@ std::string Engine::BuildPVString()
 
 Move Engine::SearchRoot(Board& position, TimeControl& clock)
 {
-	int max = 0;
 	int depth = 1;
 	std::vector<Move> availableMoves;
 	Move bestMove;
@@ -235,7 +234,6 @@ Move Engine::SearchRoot(Board& position, TimeControl& clock)
 	uint64_t nodesPerMillisecond;
 	std::stringstream logText;
 	int alpha;
-	int beta;
 
 	availableSearchTime = GetAvailableSearchTime(clock, position);
 	predictedSearchTime = 0;
@@ -257,7 +255,6 @@ Move Engine::SearchRoot(Board& position, TimeControl& clock)
 	{
 		nodeCountAtBeginningOfIteration = nodeCount;
 		alpha = -3000000;
-		beta = 3000000;
 		currentMaxDepth = depth;
 
 		std::vector<Move> newLevelVector;
@@ -414,7 +411,7 @@ int Engine::Search(Board& position, int depth)
 					pvArrays[currentMaxDepth - depth].clear();
 					pvArrays[currentMaxDepth - depth].push_back(*it);
 
-					if (pvArrays.size() > ((currentMaxDepth - depth) + 1))
+					if (static_cast<int>(pvArrays.size()) > ((currentMaxDepth - depth) + 1))
 					{
 						pvArrays[currentMaxDepth - depth].insert(pvArrays[currentMaxDepth - depth].end(),
 							pvArrays[(currentMaxDepth - depth) + 1].begin(), pvArrays[(currentMaxDepth - depth) + 1].end());
