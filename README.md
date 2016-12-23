@@ -34,9 +34,17 @@ to build Windows versions of TuxedoCat if you are sufficiently ambitious. :)
 
 ### Linux
 
-cd into the toplevel directory and run
+TuxedoCat requires Tup (build system) and Boost libraries.
 
-`tup init`
+Instructions for installing Tup can be found at http://gittup.org/tup/index.html
+
+Installing Boost varies by OS or distro. In Ubuntu, it can be installed with
+`sudo apt-get install libboost-all-dev`
+
+To build TuxedoCat, cd into the toplevel directory and run
+
+`tup init` (if building for the first time)
+
 `tup`
 
 The executable (named "tuxedocat") will be in the build/ directory.
