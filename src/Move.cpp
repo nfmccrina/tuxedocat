@@ -25,14 +25,8 @@
 #include "Move.hpp"
 
 TuxedoCat::Move::Move(Piece mp, Square tl, boost::optional<Rank> pr)
-    : movingPiece(mp)
+    : movingPiece(mp), targetSquare(tl), promotedRank(pr)
 {
-    setTargetLocation(tl);
-    
-    if (pr)
-    {
-        setPromotedRank(*pr);
-    }
 }
 
 TuxedoCat::Piece TuxedoCat::Move::getMovingPiece() const
@@ -40,28 +34,12 @@ TuxedoCat::Piece TuxedoCat::Move::getMovingPiece() const
     return this->movingPiece;
 }
 
-TuxedoCat::Square TuxedoCat::Move::getTargetLocation() const
+TuxedoCat::Square TuxedoCat::Move::getTargetSquare() const
 {
-    return this->targetLocation;
+    return this->targetSquare;
 }
 
 boost::optional<TuxedoCat::Rank> TuxedoCat::Move::getPromotedRank() const
 {
     return this->promotedRank;
 }
-
-void TuxedoCat::Move::setMovingPiece(Piece p)
-{
-    this->movingPiece = p;
-}
-
-void TuxedoCat::Move::setTargetLocation(Square l)
-{
-    this->targetLocation = l;
-}
-
-void TuxedoCat::Move::setPromotedRank(Rank r)
-{
-    this->promotedRank = r;
-}
-

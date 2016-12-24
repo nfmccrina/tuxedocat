@@ -29,6 +29,8 @@
 #include <sstream>
 #include <utility>
 
+using namespace TuxedoCat;
+
 void BitboardTest::SetUp()
 {
     bitboard.setValue(0x00ULL);
@@ -37,7 +39,7 @@ void BitboardTest::SetUp()
 TEST_F(BitboardTest,
     getValue_WhenBitboardInitializedNotEmpty_ReturnsTheCorrectValue)
 {
-    TuxedoCat::Bitboard b(0x02ULL);
+    Bitboard b(0x02ULL);
 
     EXPECT_EQ (0x02ULL, b.getValue());
 }
@@ -45,14 +47,14 @@ TEST_F(BitboardTest,
 TEST_F(BitboardTest,
     getValue_WhenBitboardInitializedEmpty_ReturnsTheCorrectValue)
 {
-    TuxedoCat::Bitboard b;
+    Bitboard b;
 
     EXPECT_EQ (0x00ULL, b.getValue());
 }
 
 TEST_F(BitboardTest, setValue_UpdatesTheBitboardCorrectly)
 {
-    TuxedoCat::Bitboard b;
+    Bitboard b;
     b.setValue(0x0503ULL);
 
     EXPECT_EQ (0x0503ULL, b.getValue());
@@ -127,24 +129,24 @@ TEST_F(BitboardTest, tilde_ReturnsTheComplementOfTheBitboard)
 
 TEST_F(BitboardTest, EqualsOp_ComparesBitboardsCorrectly)
 {
-    TuxedoCat::Bitboard b1(0x8F729262B65A6DC3ULL);
-    TuxedoCat::Bitboard b2(0x8F729262B65A6DC3ULL);
+    Bitboard b1(0x8F729262B65A6DC3ULL);
+    Bitboard b2(0x8F729262B65A6DC3ULL);
 
     EXPECT_EQ(true, b1 == b2);
 }
 
 TEST_F(BitboardTest, NotEqualsOp_ComparesBitboardsCorrectly)
 {
-    TuxedoCat::Bitboard b1(0x8F729262B65A6DC3ULL);
-    TuxedoCat::Bitboard b2(0x8F729162B65A6DC3ULL);
+    Bitboard b1(0x8F729262B65A6DC3ULL);
+    Bitboard b2(0x8F729162B65A6DC3ULL);
 
     EXPECT_EQ(true, b1 != b2);
 }
 
 TEST_F(BitboardTest, AmpersandOp_ReturnsTheIntersectionOfTwoBitboards)
 {
-    TuxedoCat::Bitboard b1(0x010040F00F010263ULL);
-    TuxedoCat::Bitboard b2(0x0080420010410280ULL);
+    Bitboard b1(0x010040F00F010263ULL);
+    Bitboard b2(0x0080420010410280ULL);
 
     EXPECT_EQ(0x0000400000010200ULL, (b1 & b2).getValue());
 }
@@ -152,24 +154,24 @@ TEST_F(BitboardTest, AmpersandOp_ReturnsTheIntersectionOfTwoBitboards)
 TEST_F(BitboardTest,
     AmpersandEqualsOp_SetsTheBitboardToTheIntersectionOfTwoBitboards)
 {
-    TuxedoCat::Bitboard b1(0x010040F00F010263ULL);
-    TuxedoCat::Bitboard b2(0x0080420010410280ULL);
+    Bitboard b1(0x010040F00F010263ULL);
+    Bitboard b2(0x0080420010410280ULL);
 
     EXPECT_EQ(0x0000400000010200ULL, (b1 &= b2).getValue());
 }
 
 TEST_F(BitboardTest, PipeOp_ReturnsTheUnionOfTwoBitboards)
 {
-    TuxedoCat::Bitboard b1(0x010040F00F010263ULL);
-    TuxedoCat::Bitboard b2(0x0080420010410280ULL);
+    Bitboard b1(0x010040F00F010263ULL);
+    Bitboard b2(0x0080420010410280ULL);
 
     EXPECT_EQ(0x018042F01F4102E3ULL, (b1 | b2).getValue());
 }
 
 TEST_F(BitboardTest, PipeEqualsOp_SetsTheBitboardToTheUnionOfTwoBitboards)
 {
-    TuxedoCat::Bitboard b1(0x010040F00F010263ULL);
-    TuxedoCat::Bitboard b2(0x0080420010410280ULL);
+    Bitboard b1(0x010040F00F010263ULL);
+    Bitboard b2(0x0080420010410280ULL);
 
     EXPECT_EQ(0x018042F01F4102E3ULL, (b1 |= b2).getValue());
 }
@@ -310,7 +312,7 @@ TEST_F(BitboardTest,
     bitboard.setValue(0x0000080000000F00ULL);
 
     EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
-        TuxedoCat::BitboardConversionException);
+        BitboardConversionException);
 }
 
 TEST_F(BitboardTest, toAlgebraicCoordinate_ThrowsExceptionIfEmpty)
@@ -318,7 +320,7 @@ TEST_F(BitboardTest, toAlgebraicCoordinate_ThrowsExceptionIfEmpty)
     bitboard.setValue(0x0000000000000000ULL);
 
     EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
-        TuxedoCat::BitboardConversionException);
+        BitboardConversionException);
 }
 
 TEST_F(BitboardTest,
@@ -338,7 +340,7 @@ TEST_F(BitboardTest,
     bitboard.setValue(0x0000080000000F00ULL);
 
     EXPECT_THROW(bitboard.toCoordinates(),
-        TuxedoCat::BitboardConversionException);
+        BitboardConversionException);
 }
 
 TEST_F(BitboardTest, toCoordinates_ThrowsExceptionIfEmpty)
@@ -346,5 +348,14 @@ TEST_F(BitboardTest, toCoordinates_ThrowsExceptionIfEmpty)
     bitboard.setValue(0x0000000000000000ULL);
 
     EXPECT_THROW(bitboard.toCoordinates(),
-        TuxedoCat::BitboardConversionException);
+        BitboardConversionException);
+}
+
+TEST_F(BitboardTest, uint64_t_IsConvertedToBitboardImplicitly)
+{
+    Bitboard b(0x0250492803434000ULL);
+    Bitboard b2(0x0000000040000000ULL);
+
+    EXPECT_EQ(true, b == 0x0250492803434000ULL);
+    EXPECT_EQ(0x0000000044000000ULL, b2 | 0x0000000004000000ULL);
 }

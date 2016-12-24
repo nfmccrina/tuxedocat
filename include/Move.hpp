@@ -38,15 +38,12 @@ namespace TuxedoCat
     public:
         Move(Piece mp, Square tl, boost::optional<Rank> pr);
         Piece getMovingPiece() const;
-        Square getTargetLocation() const;
+        Square getTargetSquare() const;
         boost::optional<Rank> getPromotedRank() const;
-        void setMovingPiece(Piece p);
-        void setTargetLocation(Square l);
-        void setPromotedRank(Rank r);
 
     private:
         Piece movingPiece;
-        Square targetLocation;
+        Square targetSquare;
         boost::optional<Rank> promotedRank;
     };
 }

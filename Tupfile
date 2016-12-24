@@ -1,6 +1,6 @@
 include_rules
 
-cpp_files=$(SRCDIR)/LookupData.cpp $(SRCDIR)/Bitboard.cpp $(SRCDIR)/Square.cpp $(SRCDIR)/Main.cpp $(TESTDIR)/*.cpp $(SRCDIR)/Rank.cpp $(SRCDIR)/Color.cpp $(SRCDIR)/Piece.cpp
+cpp_files=$(SRCDIR)/LookupData.cpp $(SRCDIR)/Bitboard.cpp $(SRCDIR)/Square.cpp $(SRCDIR)/Main.cpp $(TESTDIR)/*.cpp $(SRCDIR)/Rank.cpp $(SRCDIR)/Color.cpp $(SRCDIR)/Piece.cpp $(SRCDIR)/CastlingStatus.cpp $(SRCDIR)/Move.cpp
 
 GTESTDIR=googletest/src
 

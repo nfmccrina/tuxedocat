@@ -45,11 +45,11 @@ TuxedoCat::Square::Square(std::string s)
 
     if (file > 96 && file < 105)
     {
-        file -= 96;
+        file -= 97;
     }
     else if (file > 64 && file < 73)
     {
-        file -= 64;
+        file -= 65;
     }
     else
     {

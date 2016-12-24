@@ -28,42 +28,51 @@
 #include "../include/gtest/gtest.h"
 #include "../include/InvalidSquareException.hpp"
 
+using namespace TuxedoCat;
+
+TEST_F(SquareTest, Constructor_ShouldInitializeFromStringCorrectly)
+{
+    Square s("b1");
+
+    EXPECT_EQ(Bitboard(0x0000000000000002ULL), s.toBitboard());
+}
+
 TEST_F(SquareTest, WhenUsingStringCtor_ShouldThrowExceptionIfInvalid)
 {
-    EXPECT_THROW (TuxedoCat::Square("b9"),
-        TuxedoCat::InvalidSquareException);
+    EXPECT_THROW (Square("b9"),
+        InvalidSquareException);
 }
 
 TEST_F(SquareTest, WhenUsingStringCtor_ShouldThrowExceptionIfEmpty)
 {
-    EXPECT_THROW (TuxedoCat::Square(""),
-        TuxedoCat::InvalidSquareException);
+    EXPECT_THROW (Square(""),
+        InvalidSquareException);
 }
 
 TEST_F(SquareTest, WhenUsingPairCtor_ShouldThrowExceptionIfInvalid)
 {
-    EXPECT_THROW (TuxedoCat::Square(std::pair<int, int>(-1, 5)),
-        TuxedoCat::InvalidSquareException);
+    EXPECT_THROW (Square(std::pair<int, int>(-1, 5)),
+        InvalidSquareException);
 }
 
 TEST_F(SquareTest, WhenUsingBitboardCtor_ShouldThrowExceptionIfInvalid)
 {
-    EXPECT_THROW(TuxedoCat::Square(TuxedoCat::Bitboard(0x00ULL)),
-        TuxedoCat::InvalidSquareException);
+    EXPECT_THROW(Square(Bitboard(0x00ULL)),
+        InvalidSquareException);
 }
 
 TEST_F(SquareTest, toBitboard_ShouldConvertToBitboardCorrectly)
 {
-    TuxedoCat::Bitboard b {0x0000000020000000ULL};
-    TuxedoCat::Square s {b};
+    Bitboard b {0x0000000020000000ULL};
+    Square s {b};
 
     EXPECT_EQ(b, s.toBitboard());
 }
 
 TEST_F(SquareTest, toCoordinates_ShouldConvertToCoordinatesCorrectly)
 {
-    TuxedoCat::Bitboard b {0x0000000020000000ULL};
-    TuxedoCat::Square s {b};
+    Bitboard b {0x0000000020000000ULL};
+    Square s {b};
 
     std::pair<int, int> result = s.toCoordinates();
 
@@ -73,8 +82,8 @@ TEST_F(SquareTest, toCoordinates_ShouldConvertToCoordinatesCorrectly)
 
 TEST_F(SquareTest, toString_ShouldConvertToAlgebraicNotationCorrectly)
 {
-    TuxedoCat::Bitboard b {0x0000000020000000ULL};
-    TuxedoCat::Square s {b};
+    Bitboard b {0x0000000020000000ULL};
+    Square s {b};
 
     EXPECT_EQ("f4", s.toString());
 }
