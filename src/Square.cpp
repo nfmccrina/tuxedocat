@@ -26,9 +26,11 @@
 #include "Square.hpp"
 #include "../include/InvalidSquareException.hpp"
 
+using namespace TuxedoCat;
+
 // begin constructors
 
-TuxedoCat::Square::Square(std::string s)
+Square::Square(std::string s)
 {
     int rank {0};
     int file {0};
@@ -61,7 +63,7 @@ TuxedoCat::Square::Square(std::string s)
     this->location = Bitboard(0x0000000000000001ULL << ((rank * 8) + file));
 }
 
-TuxedoCat::Square::Square(std::pair<int, int> coord)
+Square::Square(std::pair<int, int> coord)
 {
     std::string msg = "Square(std::pair<int, int>): could not convert (" +
         std::to_string(coord.first) + ", " +
@@ -78,7 +80,7 @@ TuxedoCat::Square::Square(std::pair<int, int> coord)
     this->location <<= coord.second;
 }
 
-TuxedoCat::Square::Square(Bitboard bitboard)
+Square::Square(Bitboard bitboard)
 {
     std::string exMsg {"Square(Bitboard): could not convert bitboard to square"};
 
@@ -94,17 +96,17 @@ TuxedoCat::Square::Square(Bitboard bitboard)
 
 // begin public methods
 
-TuxedoCat::Bitboard TuxedoCat::Square::toBitboard() const
+Bitboard Square::toBitboard() const
 {
     return location;
 }
 
-std::pair<int, int> TuxedoCat::Square::toCoordinates() const
+std::pair<int, int> Square::toCoordinates() const
 {
     return location.toCoordinates();
 }
 
-std::string TuxedoCat::Square::toString() const
+std::string Square::toString() const
 {
     return location.toAlgebraicCoordinate();
 }
@@ -113,21 +115,35 @@ std::string TuxedoCat::Square::toString() const
 
 // begin private methods
 
-bool TuxedoCat::Square::areCoordinatesValid(std::pair<int, int> coord) const
+bool Square::areCoordinatesValid(std::pair<int, int> coord) const
 {
     return coord.first >= 0 && coord.first < 8 &&
         coord.second >= 0 && coord.second < 8;
 }
 
-bool TuxedoCat::Square::isAlgebraicDescValid(std::string s) const
+bool Square::isAlgebraicDescValid(std::string s) const
 {
     return s.find_first_of("abcdefghABCDEFGH") == 0 &&
         s.find_first_of("12345678") == 1;
 }
 
-bool TuxedoCat::Square::isBitboardValid(Bitboard b) const
+bool Square::isBitboardValid(Bitboard b) const
 {
     return b.popcount() == 1;
 }
 
 // end private methods
+
+// begin overloaded operators
+
+bool TuxedoCat::operator==(Square a, Square b)
+{
+    return a.toBitboard() == b.toBitboard();
+}
+
+bool TuxedoCat::operator!=(Square a, Square b)
+{
+    return !(a == b);
+}
+
+// end overloaded operators

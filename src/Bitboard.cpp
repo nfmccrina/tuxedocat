@@ -28,14 +28,16 @@
 #include "../include/BitboardConversionException.hpp"
 #include <sstream>
 
+using namespace TuxedoCat;
+
 // begin constructors
 
-TuxedoCat::Bitboard::Bitboard()
+Bitboard::Bitboard()
     : bitboard(0x0000000000000000ULL)
 {
 }
 
-TuxedoCat::Bitboard::Bitboard(uint64_t num)
+Bitboard::Bitboard(uint64_t num)
     : bitboard(num)
 {
 }
@@ -44,12 +46,12 @@ TuxedoCat::Bitboard::Bitboard(uint64_t num)
 
 // begin accessors/mutators
 
-uint64_t TuxedoCat::Bitboard::getValue() const
+uint64_t Bitboard::getValue() const
 {
     return bitboard;
 }
 
-void TuxedoCat::Bitboard::setValue(uint64_t value)
+void Bitboard::setValue(uint64_t value)
 {
     bitboard = value;
 }
@@ -58,7 +60,17 @@ void TuxedoCat::Bitboard::setValue(uint64_t value)
 
 // begin public methods
 
-int TuxedoCat::Bitboard::lsb() const
+Bitboard& Bitboard::flipBit(int bitIndex)
+{
+    if (bitIndex >= 0 && bitIndex < 64)
+    {
+        bitboard ^= (0x01ULL << bitIndex);
+    }
+
+    return *this;
+}
+
+int Bitboard::lsb() const
 {
     /*
     * begin wiki code
@@ -77,7 +89,7 @@ int TuxedoCat::Bitboard::lsb() const
     */
 }
 
-int TuxedoCat::Bitboard::msb() const
+int Bitboard::msb() const
 {
     /*
     * begin wiki code
@@ -103,7 +115,7 @@ int TuxedoCat::Bitboard::msb() const
     */
 }
 
-int TuxedoCat::Bitboard::popcount() const
+int Bitboard::popcount() const
 {
     /*
     * begin wiki code
@@ -123,7 +135,7 @@ int TuxedoCat::Bitboard::popcount() const
     */
 }
 
-std::string TuxedoCat::Bitboard::toAlgebraicCoordinate() const
+std::string Bitboard::toAlgebraicCoordinate() const
 {
     std::string msg {"Bitboard::toAlgebraicCoordinate: Bitboard must only have one bit set to generate an algebraic coordinate"};
     Bitboard mask {0x00000000000000FFULL};
@@ -153,7 +165,7 @@ std::string TuxedoCat::Bitboard::toAlgebraicCoordinate() const
         std::to_string(rank + 1);
 }
 
-std::pair<int, int> TuxedoCat::Bitboard::toCoordinates() const
+std::pair<int, int> Bitboard::toCoordinates() const
 {
     std::string msg {"Bitboard::toCoordinates: Bitboard must only have one bit set to generate a coordinate"};
     Bitboard mask {0x00000000000000FFULL};
@@ -182,7 +194,7 @@ std::pair<int, int> TuxedoCat::Bitboard::toCoordinates() const
     return std::pair<int, int>(rank, file);
 }
 
-std::string TuxedoCat::Bitboard::toString() const
+std::string Bitboard::toString() const
 {
     std::stringstream ss;
     uint64_t currentValue {0x0100000000000000ULL};
@@ -222,29 +234,29 @@ std::string TuxedoCat::Bitboard::toString() const
 
 // begin operator overloads
 
-TuxedoCat::Bitboard TuxedoCat::Bitboard::operator~()
+Bitboard Bitboard::operator~()
 {
     return Bitboard(~bitboard);
 }
 
-TuxedoCat::Bitboard& TuxedoCat::Bitboard::operator&=(Bitboard other)
+Bitboard& Bitboard::operator&=(Bitboard other)
 {
     bitboard = bitboard & other.getValue();
     return *this;
 }
 
-TuxedoCat::Bitboard& TuxedoCat::Bitboard::operator|=(Bitboard other)
+Bitboard& Bitboard::operator|=(Bitboard other)
 {
     bitboard = bitboard | other.getValue();
     return *this;
 }
 
-TuxedoCat::Bitboard TuxedoCat::operator&(Bitboard a, Bitboard b)
+Bitboard TuxedoCat::operator&(Bitboard a, Bitboard b)
 {
     return Bitboard(a.getValue() & b.getValue());
 }
 
-TuxedoCat::Bitboard TuxedoCat::operator|(Bitboard a, Bitboard b)
+Bitboard TuxedoCat::operator|(Bitboard a, Bitboard b)
 {
     return Bitboard(a.getValue() | b.getValue());
 }
@@ -279,7 +291,7 @@ bool TuxedoCat::operator<=(Bitboard a, Bitboard b)
     return a.getValue() < b.getValue() || a.getValue() == b.getValue();
 }
 
-TuxedoCat::Bitboard TuxedoCat::operator<<(Bitboard a, int num)
+Bitboard TuxedoCat::operator<<(Bitboard a, int num)
 {
     if (num < 0)
     {
@@ -291,7 +303,7 @@ TuxedoCat::Bitboard TuxedoCat::operator<<(Bitboard a, int num)
     }
 }
 
-TuxedoCat::Bitboard TuxedoCat::operator>>(Bitboard a, int num)
+Bitboard TuxedoCat::operator>>(Bitboard a, int num)
 {
     if (num < 0)
     {
@@ -303,7 +315,7 @@ TuxedoCat::Bitboard TuxedoCat::operator>>(Bitboard a, int num)
     }
 }
 
-TuxedoCat::Bitboard& TuxedoCat::Bitboard::operator<<=(int num)
+Bitboard& TuxedoCat::Bitboard::operator<<=(int num)
 {
     if (num >= 0)
     {
@@ -313,7 +325,7 @@ TuxedoCat::Bitboard& TuxedoCat::Bitboard::operator<<=(int num)
     return *this;
 }
 
-TuxedoCat::Bitboard& TuxedoCat::Bitboard::operator>>=(int num)
+Bitboard& TuxedoCat::Bitboard::operator>>=(int num)
 {
     if (num >= 0)
     {

@@ -87,3 +87,19 @@ TEST_F(SquareTest, toString_ShouldConvertToAlgebraicNotationCorrectly)
 
     EXPECT_EQ("f4", s.toString());
 }
+
+TEST_F(SquareTest, operatorEQ_ShouldCorrectlyCompareObjects)
+{
+    Square s1("a3");
+    Square s2("a3");
+
+    EXPECT_EQ(true, s1 == s2);
+}
+
+TEST_F(SquareTest, operatorNEQ_ShouldCorrectlyCompareObjects)
+{
+    Square s1("a3");
+    Square s2("b7");
+
+    EXPECT_EQ(true, s1 != s2);
+}

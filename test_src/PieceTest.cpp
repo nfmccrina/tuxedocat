@@ -136,3 +136,19 @@ TEST_F(PieceTest, getRank_ShouldReturnTheCorrectRank)
 
     EXPECT_EQ(Rank::QUEEN, p.getRank());
 }
+
+TEST_F(PieceTest, operatorEQ_ShouldReturnTrueForIdenticalPieces)
+{
+    Piece p1(Color::BLACK, Rank::KNIGHT, Square("e4"));
+    Piece p2(Color::BLACK, Rank::KNIGHT, Square("e4"));
+
+    EXPECT_EQ(true, p1 == p2);
+}
+
+TEST_F(PieceTest, operatorNEQ_ShouldReturnTrueForIdenticalPieces)
+{
+    Piece p1(Color::BLACK, Rank::KNIGHT, Square("e4"));
+    Piece p2(Color::BLACK, Rank::PAWN, Square("e4"));
+
+    EXPECT_EQ(true, p1 != p2);
+}

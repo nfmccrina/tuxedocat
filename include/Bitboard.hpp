@@ -39,6 +39,7 @@ namespace TuxedoCat
         uint64_t getValue() const;
         void setValue(uint64_t value);
 
+        Bitboard& flipBit(int bitIndex);
         int lsb() const;
         int msb() const;
         int popcount() const;

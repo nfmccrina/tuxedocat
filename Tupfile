@@ -1,9 +1,10 @@
 include_rules
 
-cpp_files=$(SRCDIR)/LookupData.cpp $(SRCDIR)/Bitboard.cpp $(SRCDIR)/Square.cpp $(SRCDIR)/Main.cpp $(TESTDIR)/*.cpp $(SRCDIR)/Rank.cpp $(SRCDIR)/Color.cpp $(SRCDIR)/Piece.cpp $(SRCDIR)/CastlingStatus.cpp $(SRCDIR)/Move.cpp
-
 GTESTDIR=googletest/src
+TESTDIR=test_src
 
-: foreach $(cpp_files) |> $(CC) $(CXXFLAGS) $(INCLUDES) -c %f -o %o |> $(BUILDDIR)/%B.o
+cpp_files=$(SRCDIR)/*.cpp $(TESTDIR)/*.cpp
+
+: foreach $(cpp_files)  |> $(CC) $(CXXFLAGS) $(INCLUDES) -c %f -o %o |> $(BUILDDIR)/%B.o
 
 : $(BUILDDIR)/*.o $(GTESTDIR)/libgtest.a |> $(CC) %f $(LDFLAGS) -pthread $(LIBS) -o %o |> $(BUILDDIR)/tuxedocat

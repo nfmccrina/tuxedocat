@@ -46,4 +46,7 @@ namespace TuxedoCat
         Rank rank;
         Square square;
     };
+
+    bool operator==(Piece a, Piece b);
+    bool operator!=(Piece a, Piece b);
 }

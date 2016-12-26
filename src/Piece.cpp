@@ -26,27 +26,29 @@
 #include <boost/algorithm/string.hpp>
 #include <cctype>
 
-TuxedoCat::Piece::Piece(Color c, Rank r, Square s)
+using namespace TuxedoCat;
+
+Piece::Piece(Color c, Rank r, Square s)
     : color(c), rank(r), square(s)
 {
 }
 
-TuxedoCat::Color TuxedoCat::Piece::getColor() const
+Color Piece::getColor() const
 {
     return this->color;
 }
 
-TuxedoCat::Rank TuxedoCat::Piece::getRank() const
+Rank Piece::getRank() const
 {
     return this->rank;
 }
 
-TuxedoCat::Square TuxedoCat::Piece::getSquare() const
+Square Piece::getSquare() const
 {
     return this->square;
 }
 
-std::string TuxedoCat::Piece::toString() const
+std::string Piece::toString() const
 {
     std::string chRank = rankToString(rank);
 
@@ -56,4 +58,16 @@ std::string TuxedoCat::Piece::toString() const
     }
 
     return chRank;
+}
+
+bool TuxedoCat::operator==(Piece a, Piece b)
+{
+    return a.getColor() == b.getColor() &&
+        a.getRank() == b.getRank() &&
+        a.getSquare() == b.getSquare();
+}
+
+bool TuxedoCat::operator!=(Piece a, Piece b)
+{
+    return !(a == b);
 }

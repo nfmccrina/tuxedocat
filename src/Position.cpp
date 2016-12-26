@@ -24,22 +24,24 @@
 */
 
 #include "Position.hpp"
-#include "BitOperations.hpp"
 #include "LookupData.hpp"
 #include <sstream>
 #include <iostream>
 #include <vector>
 #include <boost/algorithm/string.hpp>
+#include <utility>
+
+using namespace TuxedoCat;
 
 // begin constructors
 
-TuxedoCat::Position::Position(std::string fen)
+Position::Position(std::string fen)
     : castlingStatus(CastlingStatus(false, false, false, false))
 {
-    setupPositionFromFen(fen);
+    parseFEN(fen);
 }
 
-TuxedoCat::Position::Position(const Position& p)
+/*Position::Position(const Position& p)
     : castlingStatus(p.castlingStatus)
 {
     whitePawns = p.whitePawns;
@@ -63,16 +65,47 @@ TuxedoCat::Position::Position(const Position& p)
 }
 
 // end constructors
-
+*/
 // begin public methods
 
-bool TuxedoCat::Position::isMoveValid(const Move& m)
+std::vector<Move> Position::generateMoves() const
+{
+    std::vector<Move> moves;
+    std::vector<Move> pawnCaptures;
+    Bitboard pieces;
+    Bitboard currentSquare;
+    int currentIndex;
+
+    if (colorToMove == Color::WHITE)
+    {
+        pieces = whitePieces;
+    }
+    else
+    {
+        pieces = blackPieces;
+    }
+
+    while (pieces != 0x00ULL)
+    {
+        currentIndex = pieces.lsb();
+        currentSquare = 0x01ULL << currentIndex;
+
+        pawnCaptures = generatePawnCapturesAt(currentSquare);
+        moves.insert(moves.end(), pawnCaptures.begin(),
+            pawnCaptures.end());
+
+        pieces.flipBit(currentIndex);
+    }
+
+    return moves;
+}
+
+/*bool Position::isMoveValid(const Move& m)
 {
     Piece p = m.getMovingPiece();
     std::vector<Square> kingLocationVector =
         findPiece(p.getColor(), Rank::KING);
 
-    Square kingLocation;
     bool result = false;
 
     if (kingLocationVector.empty())
@@ -80,7 +113,7 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
         return false;
     }
 
-    kingLocation = kingLocationVector[0];
+    Square kingLocation = kingLocationVector[0];
 
     if (!isSquareAttacked(kingLocation))
     {
@@ -90,19 +123,19 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
         }
         else
         {
-            uint64_t kingBitmask = kingLocation.getLocation();
-            uint64_t targetBitmask = m.getTargetLocation().getLocation();
+            Bitboard kingBitmask = kingLocation.toBitboard();
+            Bitboard targetBitmask = m.getTargetSquare().toBitboard();
 
             if (
                 m.getMovingPiece().getRank() == Rank::KING &&
                 kingBitmask == 0x0000000000000010ULL &&
                 targetBitmask == 0x0000000000000040ULL &&
                 castlingStatus.getWhiteKingSide() &&
-                !getPieceAt(Square(0, 5)) &&
-                !getPieceAt(Square(0, 6)) &&
+                !getPieceAt(Square(std::pair<int, int>(0, 5))) &&
+                !getPieceAt(Square(std::pair<int, int>(0, 6))) &&
                 !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(0, 5)) &&
-                !isSquareAttacked(Square(0, 6))
+                !isSquareAttacked(Square(std::pair<int, int>(0, 5))) &&
+                !isSquareAttacked(Square(std::pair<int, int>(0, 6)))
                 )
             {
                 result = true;
@@ -112,12 +145,12 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
                 kingBitmask == 0x0000000000000010ULL &&
                 targetBitmask == 0x0000000000000004ULL &&
                 castlingStatus.getWhiteQueenSide() &&
-                !getPieceAt(Square(0, 1)) &&
-                !getPieceAt(Square(0, 2)) &&
-                !getPieceAt(Square(0, 3)) &&
+                !getPieceAt(Square(std::pair<int, int>(0, 1))) &&
+                !getPieceAt(Square(std::pair<int, int>(0, 2))) &&
+                !getPieceAt(Square(std::pair<int, int>(0, 3))) &&
                 !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(0, 3)) &&
-                !isSquareAttacked(Square(0, 2))
+                !isSquareAttacked(Square(std::pair<int, int>(0, 3))) &&
+                !isSquareAttacked(Square(std::pair<int, int>(0, 2)))
                 )
             {
                 result = true;
@@ -127,11 +160,11 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
                 kingBitmask == 0x1000000000000000ULL &&
                 targetBitmask == 0x4000000000000000ULL &&
                 castlingStatus.getBlackKingSide() &&
-                !getPieceAt(Square(7, 5)) &&
-                !getPieceAt(Square(7, 6)) &&
+                !getPieceAt(Square(std::pair<int, int>(7, 5))) &&
+                !getPieceAt(Square(std::pair<int, int>(7, 6))) &&
                 !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(7, 5)) &&
-                !isSquareAttacked(Square(7, 6))
+                !isSquareAttacked(Square(std::pair<int, int>(7, 5))) &&
+                !isSquareAttacked(Square(std::pair<int, int>(7, 6)))
                 )
             {
                 result = true;
@@ -141,17 +174,17 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
                 kingBitmask == 0x1000000000000000ULL &&
                 targetBitmask == 0x0400000000000000ULL &&
                 castlingStatus.getBlackQueenSide()
-                !getPieceAt(Square(7, 1)) &&
-                !getPieceAt(Square(7, 2)) &&
-                !getPieceAt(Square(7, 3)) &&
+                !getPieceAt(Square(std::pair<int, int>(7, 1))) &&
+                !getPieceAt(Square(std::pair<int, int>(7, 2))) &&
+                !getPieceAt(Square(std::pair<int, int>(7, 3))) &&
                 !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(7, 3)) &&
-                !isSquareAttacked(Square(7, 2))
+                !isSquareAttacked(Square(std::pair<int, int>(7, 3))) &&
+                !isSquareAttacked(Square(std::pair<int, int>(7, 2)))
                 )
             {
                 result = true;
             }
-            else if (!isSquareAttacked(m.getTargetLocation()))
+            else if (!isSquareAttacked(m.getTargetSquare()))
             {
                 result = true;
             }
@@ -171,7 +204,7 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
         }
         else
         {
-            if (!isSquareAttacked(m.getTargetLocation()))
+            if (!isSquareAttacked(m.getTargetSquare()))
             {
                 result = true;
             }
@@ -184,11 +217,11 @@ bool TuxedoCat::Position::isMoveValid(const Move& m)
     return result;
 }
 
-void TuxedoCat::Position::makeMove(boost::optional<const Move&> move)
+void Position::makeMove(boost::optional<const Move&> move)
 {
-    uint64_t sourceLocation;
-    uint64_t targetLocation;
-    uint64_t tmpEnPassant;
+    Bitboard sourceLocation;
+    Bitboard targetLocation;
+    Bitboard tmpEnPassant;
     Color sourceColor;
     Rank sourceRank;
     boost::optional<Rank> promotedRank;
@@ -211,8 +244,8 @@ void TuxedoCat::Position::makeMove(boost::optional<const Move&> move)
         return;
     }
 
-    sourceLocation = move->getMovingPiece().getLocation().getLocation();
-    targetLocation = move->getTargetLocation().getLocation();
+    sourceLocation = move->getMovingPiece().getSquare().toBitboard();
+    targetLocation = move->getTargetSquare().toBitboard();
     sourceColor = move->getMovingPiece().getColor();
     sourceRank = move->getMovingPiece().getRank();
     capturedPiece = getPieceAt(Square(targetLocation));
@@ -403,7 +436,7 @@ void TuxedoCat::Position::makeMove(boost::optional<const Move&> move)
     }
 }
 
-std::string TuxedoCat::Position::toString() const
+std::string Position::toString() const
 {
     boost::optional<Piece> currentPiece;
     std::stringstream ss;
@@ -435,7 +468,7 @@ std::string TuxedoCat::Position::toString() const
     return ss.str();
 }
 
-void TuxedoCat::Position::unmakeMove()
+void Position::unmakeMove()
 {
     if (!positionStack.empty())
     {
@@ -466,10 +499,10 @@ void TuxedoCat::Position::unmakeMove()
 }
 
 // end public methods
-
+*/
 // begin private methods
 
-void TuxedoCat::Position::addPieceAt(uint64_t loc, Color c, Rank r)
+void Position::addPieceAt(Bitboard loc, Color c, Rank r)
 {
     if (r == Rank::QUEEN)
     {
@@ -541,12 +574,72 @@ void TuxedoCat::Position::addPieceAt(uint64_t loc, Color c, Rank r)
     updatePieces();
 }
 
-std::vector<TuxedoCat::Square> TuxedoCat::Position::findPiece(Color c,
+std::vector<Move> Position::generatePawnCapturesAt(Bitboard b) const
+{
+    std::vector<Move> captures;
+    Bitboard validRankMask;
+    Bitboard validCaptureLeftMask;
+    Bitboard validCaptureRightMask;
+    Bitboard captureLeftTarget;
+    Bitboard captureRightTarget;
+    Bitboard targets;
+    Bitboard currentSquare;
+    Bitboard opposingPieces;
+    int currentIndex;
+    boost::optional<Piece> movePiece = getPieceAt(Square(b));
+
+    if (!movePiece)
+    {
+        return captures;
+    }
+
+    if (colorToMove == Color::WHITE)
+    {
+        validRankMask.setValue(0x00FFFFFFFFFFFFFFULL);
+        validCaptureLeftMask.setValue(0xFEFEFEFEFEFEFEFEULL);
+        validCaptureRightMask.setValue(0x7F7F7F7F7F7F7F7FULL);
+        captureLeftTarget = ((b & validRankMask) & validCaptureLeftMask)
+            << 7;
+        captureRightTarget = ((b & validRankMask) & validCaptureRightMask)
+            << 9;
+
+        opposingPieces = blackPieces;
+    }
+    else
+    {
+        validRankMask.setValue(0xFFFFFFFFFFFFFF00ULL);
+        validCaptureLeftMask.setValue(0x7F7F7F7F7F7F7F7FULL);
+        validCaptureRightMask.setValue(0xFEFEFEFEFEFEFEFEULL);
+        captureLeftTarget = ((b & validRankMask) & validCaptureLeftMask)
+            >> 7;
+        captureRightTarget = ((b & validRankMask) & validCaptureRightMask)
+            >> 9;
+
+        opposingPieces = whitePieces;
+    }
+
+    targets = (captureLeftTarget | captureRightTarget) & opposingPieces;
+
+    while (targets != 0x00ULL)
+    {
+        currentIndex = targets.lsb();
+        currentSquare = 0x01ULL << currentIndex;
+
+        captures.push_back(Move(*movePiece, currentSquare, boost::none));
+
+        targets.flipBit(currentIndex);
+    }
+
+    return captures;
+}
+
+/*
+std::vector<Square> Position::findPiece(Color c,
     Rank r) const
 {
     std::vector<Square> locations;
-    uint64_t bitboard;
-    uint64_t currentLocation;
+    Bitboard bitboard;
+    Bitboard currentLocation;
 
     if (r == Rank::PAWN)
     {
@@ -584,7 +677,7 @@ std::vector<TuxedoCat::Square> TuxedoCat::Position::findPiece(Color c,
 
     while (bitboard != 0x00)
     {
-        currentLocation = 0x01ULL << BitOperations::getLSB(bitboard);
+        currentLocation = 0x01ULL << bitboard.lsb();
 
         locations.push_back(Square(currentLocation));
 
@@ -601,13 +694,15 @@ std::vector<Move> generateCastles() const
 
     if (colorToMove == Color::WHITE)
     {
-        piece = getPieceAt(Square(0, 4));
+        piece = getPieceAt(Square(std::pair<int, int>(0, 4)));
 
         if (piece && piece->getRank() == Rank::KING &&
             piece->getColor() == Color::WHITE)
         {
-            Move castleKingSide(piece, Square(0, 6), boost::none);
-            Move castleQueenSide(piece, Square(0, 2), boost::none);
+            Move castleKingSide(piece, Square(std::pair<int, int>(0, 6)),
+                boost::none);
+            Move castleQueenSide(piece, Square(std::pair<int, int>(0, 2)),
+                boost::none);
 
             if (isMoveValid(castleKingSide))
             {
@@ -622,13 +717,15 @@ std::vector<Move> generateCastles() const
     }
     else
     {
-        piece = getPieceAt(Square(7, 4));
+        piece = getPieceAt(Square(std::pair<int, int>(7, 4)));
 
         if (piece && piece->getRank() == Rank::KING &&
             piece->getColor() == Color::BLACK)
         {
-            Move castleKingSide(piece, Square(7, 6), boost::none);
-            Move castleQueenSide(piece, Square(7, 2), boost::none);
+            Move castleKingSide(piece, Square(std::pair<int, int>(7, 6)),
+                boost::none);
+            Move castleQueenSide(piece, Square(std::pair<int, int>(7, 2)),
+                boost::none);
 
             if (isMoveValid(castleKingSide))
             {
@@ -650,11 +747,11 @@ std::vector<Move> generateKingMovesAt(const Square& s) const
     std::vector<Move> moves;
     int locationIndex;
     boost::optional<Piece> piece = getPieceAt(s);
-    uint64_t location = s.getLocation();
-    uint64_t moveMask = 0x0000000000000000ULL;
-    uint64_t currentMove;
+    Bitboard location = s.toBitboard();
+    Bitboard moveMask = 0x0000000000000000ULL;
+    Bitboard currentMove;
     Color color;
-    uint64_t ownPieces;
+    Bitboard ownPieces;
 
     if (!piece || piece->getRank() != Rank::KING)
     {
@@ -675,13 +772,13 @@ std::vector<Move> generateKingMovesAt(const Square& s) const
     std::vector<Move> castles = generateCastles();
     moves.insert(std::end(moves), std::begin(castles), std::end(castles));
 
-    locationIndex = GetLSB(location);
+    locationIndex = location.lsb();
     moveMask = LookupData::kingAttacks[locationIndex] & (~ownPieces);
 
     while (moveMask != 0x0000000000000000ULL)
     {
         currentMove =
-            0x0000000000000001ULL << BitOperations::getLSB(moveMask);
+            0x0000000000000001ULL << moveMask.lsb();
         Move m(piece, currentMove, boost::none);
 
         if (isMoveValid(m))
@@ -693,17 +790,17 @@ std::vector<Move> generateKingMovesAt(const Square& s) const
     }
 }
 
-std::vector<TuxedoCat::Move> generateKnightMovesAt(const Square& s,
+std::vector<Move> generateKnightMovesAt(const Square& s,
     bool inCheck) const
 {
     std::vector<Move> moves;
     boost::optional<Piece> piece = getPieceAt(s);
-    uint64_t location = s.getLocation();
+    Bitboard location = s.toBitboard();
     int locationIndex;
-    uint64_t moveMask = 0x0000000000000000ULL;
-    uint64_t currentMove;
+    Bitboard moveMask = 0x0000000000000000ULL;
+    Bitboard currentMove;
     Color color;
-    uint64_t ownPieces;
+    Bitboard ownPieces;
 
     if (
         !piece ||
@@ -730,13 +827,13 @@ std::vector<TuxedoCat::Move> generateKnightMovesAt(const Square& s,
         ownPieces = blackPieces;
     }
 
-    locationIndex = BitOperations::getLSB(location);
+    locationIndex = location.lsb();
 
     moveMask = LookupData::knightAttacks[locationIndex] & (~ownPieces);
 
     while (moveMask != 0x0000000000000000ULL)
     {
-        currentMove = 0x0000000000000001ULL << GetLSB(moveMask);
+        currentMove = 0x0000000000000001ULL << moveMask.lsb();
         Move m(piece, Square(currentMove), boost::none);
 
         if ((inCheck && isMoveValid(m)) || !inCheck)
@@ -754,20 +851,20 @@ std::vector<TuxedoCat::Move> generateKnightMovesAt(const Square& s,
 
 std::vector<Move> generatePawnMovesAt(const Square& s, bool inCheck) const
 {
-    uint64_t location = s.getLocation();
-    uint64_t advancedLocation;
-    uint64_t doubleAdvancedLocation;
-    uint64_t captureLeftLocation;
-    uint64_t captureRightLocation;
-    uint64_t startRankMask;
-    uint64_t backRankMask;
-    uint64_t leftEdgeMask;
-    uint64_t rightEdgeMask;
-    uint64_t opposingPieces;
-    uint64_t leftBackMask;
-    uint64_t rightBackMask;
-    uint64_t allTargets;
-    uint64_t allPieces = whitePieces | blackPieces;
+    Bitboard location = s.toBitboard();
+    Bitboard advancedLocation;
+    Bitboard doubleAdvancedLocation;
+    Bitboard captureLeftLocation;
+    Bitboard captureRightLocation;
+    Bitboard startRankMask;
+    Bitboard backRankMask;
+    Bitboard leftEdgeMask;
+    Bitboard rightEdgeMask;
+    Bitboard opposingPieces;
+    Bitboard leftBackMask;
+    Bitboard rightBackMask;
+    Bitboard allTargets;
+    Bitboard allPieces = whitePieces | blackPieces;
     boost::optional<Piece> piece = getPieceAt(s);
     std::vector<Move> moves;
 
@@ -923,57 +1020,57 @@ std::vector<Move> generatePawnMovesAt(const Square& s, bool inCheck) const
     }
 
     return moves;
-}
+}*/
 
-boost::optional<TuxedoCat::Piece> TuxedoCat::Position::getPieceAt(Square s) const
+boost::optional<Piece> Position::getPieceAt(Square s) const
 {
     if (!isSquareEmpty(s))
     {
-        if ((whitePawns & s.getLocation()) != 0x00)
+        if ((whitePawns & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::PAWN, s);
         }
-        else if ((whiteKnights & s.getLocation()) != 0x00)
+        else if ((whiteKnights & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::KNIGHT, s);
         }
-        else if ((whiteBishops & s.getLocation()) != 0x00)
+        else if ((whiteBishops & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::BISHOP, s);
         }
-        else if ((whiteRooks & s.getLocation()) != 0x00)
+        else if ((whiteRooks & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::ROOK, s);
         }
-        else if ((whiteQueens & s.getLocation()) != 0x00)
+        else if ((whiteQueens & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::QUEEN, s);
         }
-        else if ((whiteKing & s.getLocation()) != 0x00)
+        else if ((whiteKing & s.toBitboard()) != 0x00)
         {
             return Piece(Color::WHITE, Rank::KING, s);
         }
-        else if ((blackPawns & s.getLocation()) != 0x00)
+        else if ((blackPawns & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::PAWN, s);
         }
-        else if ((blackKnights & s.getLocation()) != 0x00)
+        else if ((blackKnights & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::KNIGHT, s);
         }
-        else if ((blackBishops & s.getLocation()) != 0x00)
+        else if ((blackBishops & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::BISHOP, s);
         }
-        else if ((blackRooks & s.getLocation()) != 0x00)
+        else if ((blackRooks & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::ROOK, s);
         }
-        else if ((blackQueens & s.getLocation()) != 0x00)
+        else if ((blackQueens & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::QUEEN, s);
         }
-        else if ((blackKing & s.getLocation()) != 0x00)
+        else if ((blackKing & s.toBitboard()) != 0x00)
         {
             return Piece(Color::BLACK, Rank::KING, s);
         }
@@ -988,22 +1085,22 @@ boost::optional<TuxedoCat::Piece> TuxedoCat::Position::getPieceAt(Square s) cons
     }
 }
 
-bool TuxedoCat::Position::isPiecePinned(const Piece& pinnedPiece,
+/*bool Position::isPiecePinned(const Piece& pinnedPiece,
     Direction direction)
 {
-    uint64_t location = pinnedPiece.getLocation().getLocation();
+    Bitboard location = pinnedPiece.getSquare().toBitboard();
     bool result = true;
     int locationMaskIndex;
     Color pinnedColor = pinnedPiece->getColor();
     Color pinningColor = pinnedColor == Color::WHITE ?
         Color::BLACK : Color::WHITE;
 
-    uint64_t pinMask;
-    uint64_t pinnedKingLocation;
-    uint64_t mask;
-    uint64_t occupancy;
-    uint64_t tmpLocation;
-    uint64_t guard = 0x00;
+    Bitboard pinMask;
+    Bitboard pinnedKingLocation;
+    Bitboard mask;
+    Bitboard occupancy;
+    Bitboard tmpLocation;
+    Bitboard guard = 0x00;
     int offset;
     bool goUp;
 
@@ -1034,7 +1131,7 @@ bool TuxedoCat::Position::isPiecePinned(const Piece& pinnedPiece,
         pinnedKingLocation = whiteKing;
     }
 
-    locationMaskIndex = BitOperations::getLSB(location);
+    locationMaskIndex = location.lsb();
 
     if (direction == Direction::NS)
     {
@@ -1164,19 +1261,19 @@ bool TuxedoCat::Position::isPiecePinned(const Piece& pinnedPiece,
     return result;
 }
 
-bool TuxedoCat::Position::isSquareAttacked(Square s) const        
+bool Position::isSquareAttacked(Square s) const        
 {
     bool result = false;
-    int squareIndex = BitOperations::getLSB(s.getLocation());
-    uint64_t square = s.getLocation();
+    int squareIndex = s.toBitboard().lsb();
+    Bitboard square = s.toBitboard();
     int blockerIndex;
-    uint64_t opposingKnights =
+    Bitboard opposingKnights =
         colorToMove == Color::WHITE ? blackKnights : whiteKnights;
-    uint64_t opposingBishops =
+    Bitboard opposingBishops =
         colorToMove == Color::WHITE ? blackBishops : whiteBishops;
-    uint64_t opposingRooks =
+    Bitboard opposingRooks =
         colorToMove == Color::WHITE ? blackRooks : whiteBishops;
-    uint64_t opposingQueens =
+    Bitboard opposingQueens =
         colorToMove == Color::WHITE ? blackQueens : whiteKnights;
 
     if ((LookupData::knightAttacks[squareIndex] & opposingKnights) !=
@@ -1185,9 +1282,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         result = true;
     }
 
-    blockerIndex = BitOperations::getLSB(
-        LookupData::rayAttacksN[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = (LookupData::rayAttacksN[squareIndex] &
+        (whitePieces | blackPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1198,9 +1294,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getLSB(
-        LookupData::rayAttacksNE[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksNE[squareIndex] &
+        (whitePieces | blackPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1211,9 +1306,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getLSB(
-        LookupData::rayAttacksE[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksE[squareIndex] &
+        (whitePieces | blackPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1224,9 +1318,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getMSB(
-        LookupData::rayAttacksSE[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksSE[squareIndex] &
+        (whitePieces | blackPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1237,9 +1330,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getMSB(
-        LookupData::rayAttacksS[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksS[squareIndex] &
+        (whitePieces | blackPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1250,9 +1342,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getMSB(
-        LookupData::rayAttacksSW[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksSW[squareIndex] &
+        (whitePieces | blackPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1263,9 +1354,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getMSB(
-        LookupData::rayAttacksW[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksW[squareIndex] &
+        (whitePieces | blackPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1276,9 +1366,8 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = BitOperations::getLSB(
-        LookupData::rayAttacksNW[squareIndex] &
-        (whitePieces | blackPieces));
+    blockerIndex = Bitboard(LookupData::rayAttacksNW[squareIndex] &
+        (whitePieces | blackPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1323,14 +1412,14 @@ bool TuxedoCat::Position::isSquareAttacked(Square s) const
     }
 
     return result;
-}
+}*/
 
-bool TuxedoCat::Position::isSquareEmpty(Square s) const
+bool Position::isSquareEmpty(Square s) const
 {
-    return ((whitePieces | blackPieces) && s.getLocation()) == 0x00;
+    return ((whitePieces | blackPieces) & s.toBitboard()) == 0x00;
 }
 
-void TuxedoCat::Position::removePieceAt(uint64_t loc)
+/*void Position::removePieceAt(Bitboard loc)
 {
     whitePawns = whitePawns & (~loc);
     whiteKnights = whiteKnights & (~loc);
@@ -1347,13 +1436,16 @@ void TuxedoCat::Position::removePieceAt(uint64_t loc)
     blackKing = blackKing & (~loc);
 
     updatePieces();
-}
+}*/
 
-void TuxedoCat::Position::setupPositionFromFen(std::string fen)
+void Position::parseFEN(std::string fen)
 {
     std::vector<std::string> fenParts;
     std::vector<std::string> rankInfo;
-    uint64_t currentSquare = 0x0000000000000000ULL;
+    Bitboard currentSquare = 0x0000000000000000ULL;
+    std::string currentCharacter;
+    boost::optional<Color> currentColor {boost::none};
+    boost::optional<Rank> currentRank {boost::none};
 
     whitePawns = 0x0000000000000000ULL;
     whiteKnights = 0x0000000000000000ULL;
@@ -1392,16 +1484,21 @@ void TuxedoCat::Position::setupPositionFromFen(std::string fen)
 
         for (size_t j = 0; j < rankInfo[i].length(); j++)
         {
-            char currentCharacter = rankInfo[i][j];
-            if (currentCharacter > 47 && currentCharacter < 58)
+            currentCharacter = rankInfo[i].substr(j, 1);
+            if (currentCharacter[0] > 47 && currentCharacter[0] < 58)
             {
-                currentSquare = currentSquare << (currentCharacter - 48);
+                currentSquare = currentSquare <<
+                    (currentCharacter[0] - 48);
             }
             else
             {
-                addPieceAt(currentSquare,
-                    getColorFromChar(currentCharacter),
-                    getRankFromChar(currentCharacter));
+                currentColor = getColorFromString(currentCharacter);
+                currentRank = getRankFromString(currentCharacter);
+
+                if (currentColor && currentRank)
+                {
+                    addPieceAt(currentSquare, *currentColor, *currentRank);
+                }
                         
                 currentSquare = currentSquare << 1;
             }
@@ -1443,7 +1540,7 @@ void TuxedoCat::Position::setupPositionFromFen(std::string fen)
     }
     else
     {
-        uint64_t epLoc = Square(fenParts[3]).getLocation();
+        Bitboard epLoc = Square(fenParts[3]).toBitboard();
         
         if (epLoc != 0x00)
         {
@@ -1459,7 +1556,7 @@ void TuxedoCat::Position::setupPositionFromFen(std::string fen)
     fullMoveCounter = std::stoi(fenParts[5]);
 }
 
-void TuxedoCat::Position::updatePieces()
+void Position::updatePieces()
 {
     whitePieces = (whitePawns
         | whiteKnights

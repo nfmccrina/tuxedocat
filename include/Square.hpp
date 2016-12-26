@@ -49,4 +49,7 @@ namespace TuxedoCat
     
         Bitboard location;
     };
+
+    bool operator==(Square a, Square b);
+    bool operator!=(Square a, Square b);
 }

@@ -41,47 +41,50 @@ namespace TuxedoCat
     {
     public:
         Position(std::string fen);
-        Position(const Position& p);
+
+        std::vector<Move> generateMoves() const;
+        /*Position(const Position& p);
 
         bool isMoveValid(const Move& m);
         void makeMove(boost::optional<const Move&> move);
         std::string toString() const;
-        void unmakeMove();
+        void unmakeMove();*/
     private:
-        void addPieceAt(uint64_t location, Color c, Rank r);
-        std::vector<Square> findPiece(Color c, Rank r) const;
+        void addPieceAt(Bitboard location, Color c, Rank r);
+        std::vector<Move> generatePawnCapturesAt(Bitboard b) const;
+        /*std::vector<Square> findPiece(Color c, Rank r) const;
         std::vector<Move> generateCastles() const;
         std::vector<Move> generateKingMovesAt(const Square& s) const;
         std::vector<Move> generateKnightMovesAt(const Square& s,
             bool inCheck) const;
-        std::vector<Move> generatePawnMovesAt(const Square& s) const;
+        std::vector<Move> generatePawnMovesAt(const Square& s) const;*/
         boost::optional<Piece> getPieceAt(Square s) const;
-        bool isPiecePinned(const Piece& pinnedPiece, Direction direction);
-        bool isSquareAttacked(Square s) const;        
+        /*bool isPiecePinned(const Piece& pinnedPiece, Direction direction);
+        bool isSquareAttacked(Square s) const;*/
         bool isSquareEmpty(Square s) const;
-        void removePieceAt(uint64_t location);
-        void setupPositionFromFen(std::string fen);
+        /*void removePieceAt(Bitboard location);*/
+        void parseFEN(std::string fen);
         void updatePieces();
 
-        uint64_t blackBishops;
-        uint64_t blackKing;
-        uint64_t blackKnights;
-        uint64_t blackPawns;
-        uint64_t blackPieces;
-        uint64_t blackQueens;
-        uint64_t blackRooks;
+        Bitboard blackBishops;
+        Bitboard blackKing;
+        Bitboard blackKnights;
+        Bitboard blackPawns;
+        Bitboard blackPieces;
+        Bitboard blackQueens;
+        Bitboard blackRooks;
         CastlingStatus castlingStatus;
         Color colorToMove;
-        boost::optional<uint64_t> enPassantTarget;
+        boost::optional<Bitboard> enPassantTarget;
         uint32_t fullMoveCounter;
         uint32_t halfMoveCounter;
         std::stack<Position> positionStack;
-        uint64_t whiteBishops;
-        uint64_t whiteKing;
-        uint64_t whiteKnights;
-        uint64_t whitePawns;
-        uint64_t whitePieces;
-        uint64_t whiteQueens;
-        uint64_t whiteRooks;
+        Bitboard whiteBishops;
+        Bitboard whiteKing;
+        Bitboard whiteKnights;
+        Bitboard whitePawns;
+        Bitboard whitePieces;
+        Bitboard whiteQueens;
+        Bitboard whiteRooks;
     };
 }

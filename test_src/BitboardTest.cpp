@@ -359,3 +359,30 @@ TEST_F(BitboardTest, uint64_t_IsConvertedToBitboardImplicitly)
     EXPECT_EQ(true, b == 0x0250492803434000ULL);
     EXPECT_EQ(0x0000000044000000ULL, b2 | 0x0000000004000000ULL);
 }
+
+TEST_F(BitboardTest, uint64_t_CanBeAssignedToBitboardVariable)
+{
+    Bitboard b;
+
+    b = 0x0000000F00000000ULL;
+
+    EXPECT_EQ(true, b.getValue() == 0x0000000F00000000ULL);
+}
+
+TEST_F(BitboardTest, flipBit_WhenValidIndex_ShouldFlipTheCorrectBit)
+{
+    Bitboard b(0x40F2012900B3CC24ULL);
+
+    b.flipBit(40);
+
+    EXPECT_EQ(true, b.getValue() == 0x40F2002900B3CC24ULL);
+}
+
+TEST_F(BitboardTest, flipBit_WhenInvalidIndex_ShouldNotModifyBitboard)
+{
+    Bitboard b(0x40F2012900B3CC24ULL);
+
+    b.flipBit(74);
+
+    EXPECT_EQ(true, b.getValue() == 0x40F2012900B3CC24ULL);
+}
