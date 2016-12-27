@@ -51,6 +51,8 @@ namespace TuxedoCat
         void unmakeMove();*/
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
+        Bitboard computePinningPieceMask(Direction direction) const;
+        std::vector<Move> generatePawnAdvancesAt(Bitboard b) const;
         std::vector<Move> generatePawnCapturesAt(Bitboard b) const;
         /*std::vector<Square> findPiece(Color c, Rank r) const;
         std::vector<Move> generateCastles() const;
@@ -58,9 +60,11 @@ namespace TuxedoCat
         std::vector<Move> generateKnightMovesAt(const Square& s,
             bool inCheck) const;
         std::vector<Move> generatePawnMovesAt(const Square& s) const;*/
+        int getOffsetFromDirection(Direction direction) const;
         boost::optional<Piece> getPieceAt(Square s) const;
-        /*bool isPiecePinned(const Piece& pinnedPiece, Direction direction);
-        bool isSquareAttacked(Square s) const;*/
+        bool isPiecePinned(const Piece pinnedPiece,
+            Direction direction) const;
+        /*bool isSquareAttacked(Square s) const;*/
         bool isSquareEmpty(Square s) const;
         /*void removePieceAt(Bitboard location);*/
         void parseFEN(std::string fen);

@@ -33,9 +33,9 @@
 using namespace TuxedoCat;
 
 TEST_F(PositionTest,
-    generateMoves_PawnCaptures_IfExist_ShouldGenerateCaptures)
+    generateMoves_PawnCaptures_IfExistLeft_ShouldGenerateCaptures)
 {
-    Position p("8/8/2n5/3P4/8/8/8/8 w - - 0 1");
+    Position p("8/8/2nN4/3P4/8/8/8/8 w - - 0 1");
 
     std::vector<Move> captures = p.generateMoves();
 
@@ -49,4 +49,187 @@ TEST_F(PositionTest,
             captures[0].getMovingPiece());
         EXPECT_EQ(boost::none, captures[0].getPromotedRank());
     }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnCaptures_IfExistRight_ShouldGenerateCaptures)
+{
+    Position p("8/8/3rb3/3P4/8/8/8/8 w - - 0 1");
+
+    std::vector<Move> captures = p.generateMoves();
+
+    EXPECT_EQ(1, captures.size());
+
+    if (captures.size() > 0)
+    {
+        EXPECT_EQ(0x0000100000000000ULL,
+            captures[0].getTargetSquare().toBitboard());
+        EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
+            captures[0].getMovingPiece());
+        EXPECT_EQ(boost::none, captures[0].getPromotedRank());
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnCaptures_IfNotExist_ShouldGenerateCaptures)
+{
+    Position p("8/8/3K4/3P4/8/8/8/8 w - - 0 1");
+
+    std::vector<Move> captures = p.generateMoves();
+
+    EXPECT_EQ(0, captures.size());
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnCaptures_IfPromotion_ShouldGenerateCapturePromotions)
+{
+    Position p("8/8/8/8/8/8/1p6/QN6 b - - 0 1");
+
+    std::vector<Move> captures = p.generateMoves();
+
+    Piece mp(Color::BLACK, Rank::PAWN, Square("b2"));
+    Square s("a1");
+    bool hasQueen = false;
+    bool hasRook = false;
+    bool hasBishop = false;
+    bool hasKnight = false;
+
+    EXPECT_EQ(4, captures.size());
+
+    if (captures.size() > 0)
+    {
+        for (size_t count = 0; count < captures.size(); count++)
+        {
+            if (*(captures[count].getPromotedRank()) == Rank::QUEEN)
+            {
+                hasQueen = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::ROOK)
+            {
+                hasRook = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::BISHOP)
+            {
+                hasBishop = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::KNIGHT)
+            {
+                hasKnight = true;
+            }
+
+            EXPECT_EQ(captures[count].getTargetSquare(), s);
+            EXPECT_EQ(captures[count].getMovingPiece(), mp);
+        }
+
+        EXPECT_EQ(true, hasQueen);
+        EXPECT_EQ(true, hasRook);
+        EXPECT_EQ(true, hasBishop);
+        EXPECT_EQ(true, hasKnight);
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnCaptures_IfExistEnPassant_ShouldGenerateCaptures)
+{
+    Position p("8/8/8/8/2pP4/2R5/8/8 b - d3 0 1");
+
+    std::vector<Move> captures = p.generateMoves();
+
+    EXPECT_EQ(1, captures.size());
+
+    if (captures.size() > 0)
+    {
+        EXPECT_EQ(0x0000000000080000ULL,
+            captures[0].getTargetSquare().toBitboard());
+        EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
+            captures[0].getMovingPiece());
+        EXPECT_EQ(boost::none, captures[0].getPromotedRank());
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfNotBlocked_ShouldGenerateAdvance)
+{
+    Position p("8/8/8/8/2p5/8/8/8 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(1, advances.size());
+
+    if (advances.size() > 0)
+    {
+        EXPECT_EQ(0x0000000000040000ULL,
+            advances[0].getTargetSquare().toBitboard());
+        EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
+            advances[0].getMovingPiece());
+        EXPECT_EQ(boost::none, advances[0].getPromotedRank());
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfPromotion_ShouldGeneratePromotions)
+{
+    Position p("8/3P4/8/8/8/8/8/8 w - - 0 1");
+
+    std::vector<Move> captures = p.generateMoves();
+
+    Piece mp(Color::WHITE, Rank::PAWN, Square("d7"));
+    Square s("d8");
+    bool hasQueen = false;
+    bool hasRook = false;
+    bool hasBishop = false;
+    bool hasKnight = false;
+
+    EXPECT_EQ(4, captures.size());
+
+    if (captures.size() > 0)
+    {
+        for (size_t count = 0; count < captures.size(); count++)
+        {
+            if (*(captures[count].getPromotedRank()) == Rank::QUEEN)
+            {
+                hasQueen = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::ROOK)
+            {
+                hasRook = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::BISHOP)
+            {
+                hasBishop = true;
+            }
+            else if (*(captures[count].getPromotedRank()) == Rank::KNIGHT)
+            {
+                hasKnight = true;
+            }
+
+            EXPECT_EQ(captures[count].getTargetSquare(), s);
+            EXPECT_EQ(captures[count].getMovingPiece(), mp);
+        }
+
+        EXPECT_EQ(true, hasQueen);
+        EXPECT_EQ(true, hasRook);
+        EXPECT_EQ(true, hasBishop);
+        EXPECT_EQ(true, hasKnight);
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfPinned_ShouldNotGenerateAdvance)
+{
+    Position p("8/8/8/8/k1p2R2/8/8/8 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(0, advances.size());
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfPinnedDiag_ShouldNotGenerateAdvance)
+{
+    Position p("8/8/8/8/k7/1p6/8/3B4 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(0, advances.size());
 }

@@ -386,3 +386,17 @@ TEST_F(BitboardTest, flipBit_WhenInvalidIndex_ShouldNotModifyBitboard)
 
     EXPECT_EQ(true, b.getValue() == 0x40F2012900B3CC24ULL);
 }
+
+TEST_F(BitboardTest, inMask_ReturnsTrueIfMatchesMask)
+{
+    Bitboard b(0x0000000000000010ULL);
+
+    EXPECT_EQ(true, b.inMask(0x00000000000000FFULL));
+}
+
+TEST_F(BitboardTest, inMask_ReturnsFalseIfNotMatchesMask)
+{
+    Bitboard b(0x0000000007000010ULL);
+
+    EXPECT_EQ(false, b.inMask(0x00000000000000FFULL));
+}

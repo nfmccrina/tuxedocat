@@ -72,6 +72,7 @@ std::vector<Move> Position::generateMoves() const
 {
     std::vector<Move> moves;
     std::vector<Move> pawnCaptures;
+    std::vector<Move> pawnAdvances;
     Bitboard pieces;
     Bitboard currentSquare;
     int currentIndex;
@@ -91,8 +92,12 @@ std::vector<Move> Position::generateMoves() const
         currentSquare = 0x01ULL << currentIndex;
 
         pawnCaptures = generatePawnCapturesAt(currentSquare);
+        pawnAdvances = generatePawnAdvancesAt(currentSquare);
+
         moves.insert(moves.end(), pawnCaptures.begin(),
             pawnCaptures.end());
+        moves.insert(moves.end(), pawnAdvances.begin(),
+            pawnAdvances.end());
 
         pieces.flipBit(currentIndex);
     }
@@ -574,6 +579,80 @@ void Position::addPieceAt(Bitboard loc, Color c, Rank r)
     updatePieces();
 }
 
+Bitboard Position::computePinningPieceMask(Direction direction) const
+{
+    Bitboard mask;
+
+    if (colorToMove == Color::BLACK)
+    {
+        if (direction == Direction::NS || direction == Direction::EW) 
+        {
+            mask = whiteQueens | whiteRooks;
+        }
+        else
+        {
+            mask = whiteQueens | whiteBishops;
+        }
+    }
+    else
+    {
+        if (direction == Direction::NS || direction == Direction::EW)
+        {
+            mask = blackQueens | blackRooks;
+        }
+        else
+        {
+            mask = blackQueens | blackBishops;
+        }
+    }
+
+    return mask;
+}
+
+std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b) const
+{
+    std::vector<Move> moves;
+    Bitboard legalMask;
+    Bitboard target;
+    boost::optional<Piece> movingPiece = getPieceAt(Square(b));
+
+    if (!movingPiece || movingPiece->getRank() != Rank::PAWN ||
+        isPiecePinned(*movingPiece, Direction::EW) ||
+        isPiecePinned(*movingPiece, Direction::NWSE) ||
+        isPiecePinned(*movingPiece, Direction::SWNE))
+    {
+        return moves;
+    }
+
+    if (colorToMove == Color::WHITE)
+    {
+        legalMask = 0x00FFFFFFFFFFFFFFULL;
+        target = b << 8;
+    }
+    else
+    {
+        legalMask = 0xFFFFFFFFFFFFFF00ULL;
+        target = b >> 8;
+    }
+
+    if (b.inMask(legalMask) && !target.inMask(whitePieces | blackPieces))
+    {
+        if (target.inMask(0xFF000000000000FFULL))
+        {
+            moves.push_back(Move(*movingPiece, target, Rank::QUEEN));
+            moves.push_back(Move(*movingPiece, target, Rank::ROOK));
+            moves.push_back(Move(*movingPiece, target, Rank::BISHOP));
+            moves.push_back(Move(*movingPiece, target, Rank::KNIGHT));
+        }
+        else
+        {
+            moves.push_back(Move(*movingPiece, target, boost::none));
+        }
+    }
+
+    return moves;
+}
+
 std::vector<Move> Position::generatePawnCapturesAt(Bitboard b) const
 {
     std::vector<Move> captures;
@@ -588,7 +667,7 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b) const
     int currentIndex;
     boost::optional<Piece> movePiece = getPieceAt(Square(b));
 
-    if (!movePiece)
+    if (!movePiece || movePiece->getRank() != Rank::PAWN)
     {
         return captures;
     }
@@ -620,12 +699,27 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b) const
 
     targets = (captureLeftTarget | captureRightTarget) & opposingPieces;
 
+    if (enPassantTarget)
+    {
+        targets |= *enPassantTarget;
+    }
+
     while (targets != 0x00ULL)
     {
         currentIndex = targets.lsb();
         currentSquare = 0x01ULL << currentIndex;
 
-        captures.push_back(Move(*movePiece, currentSquare, boost::none));
+        if (currentSquare.inMask(0xFF000000000000FFULL))
+        {
+            captures.push_back(Move(*movePiece, currentSquare, Rank::QUEEN));
+            captures.push_back(Move(*movePiece, currentSquare, Rank::ROOK));
+            captures.push_back(Move(*movePiece, currentSquare, Rank::BISHOP));
+            captures.push_back(Move(*movePiece, currentSquare, Rank::KNIGHT));
+        }
+        else
+        {
+            captures.push_back(Move(*movePiece, currentSquare, boost::none));
+        }
 
         targets.flipBit(currentIndex);
     }
@@ -1022,6 +1116,30 @@ std::vector<Move> generatePawnMovesAt(const Square& s, bool inCheck) const
     return moves;
 }*/
 
+int Position::getOffsetFromDirection(Direction direction) const
+{
+    int offset = 0;
+    
+    if (direction == Direction::NS)
+    {
+        offset = 8;
+    }
+    else if (direction == Direction::EW)
+    {
+        offset = 1;
+    }
+    else if (direction == Direction::SWNE)
+    {
+        offset = 9;
+    }
+    else if (direction == Direction::NWSE)
+    {
+        offset = 7;
+    }
+
+    return offset;
+}
+
 boost::optional<Piece> Position::getPieceAt(Square s) const
 {
     if (!isSquareEmpty(s))
@@ -1085,183 +1203,86 @@ boost::optional<Piece> Position::getPieceAt(Square s) const
     }
 }
 
-/*bool Position::isPiecePinned(const Piece& pinnedPiece,
-    Direction direction)
+bool Position::isPiecePinned(const Piece pinnedPiece,
+    Direction direction) const
 {
     Bitboard location = pinnedPiece.getSquare().toBitboard();
-    bool result = true;
-    int locationMaskIndex;
-    Color pinnedColor = pinnedPiece->getColor();
-    Color pinningColor = pinnedColor == Color::WHITE ?
-        Color::BLACK : Color::WHITE;
-
-    Bitboard pinMask;
+    bool result = false;
+    Bitboard pinningPieceMask;
     Bitboard pinnedKingLocation;
-    Bitboard mask;
-    Bitboard occupancy;
-    Bitboard tmpLocation;
-    Bitboard guard = 0x00;
+    Bitboard tmp;
+    Bitboard highMask = 0x00ULL;
+    Bitboard lowMask = 0x00ULL;
     int offset;
-    bool goUp;
 
-    if (pinningColor == Color::WHITE)
+    if (colorToMove == Color::WHITE)
     {
-        if (direction == Direction::NS || direction == Direction::EW) 
-        {
-            pinMask = whiteQueens | whiteRooks;
-        }
-        else
-        {
-            pinMask = whiteQueens | whiteBishops;
-        }
-
-        pinnedKingLocation = blackKing;
-    }
-    else
-    {
-        if (direction == Direction::NS || direction == Direction::EW)
-        {
-            pinMask = blackQueens | blackRooks;
-        }
-        else
-        {
-            pinMask = blackQueens | blackBishops;
-        }
-
         pinnedKingLocation = whiteKing;
     }
-
-    locationMaskIndex = location.lsb();
-
-    if (direction == Direction::NS)
-    {
-        mask = LookupData::fileMask[locationMaskIndex];
-        offset = 8;
-    }
-    else if (direction == Direction::EW)
-    {
-        mask = LookupData::rankMask[locationMaskIndex];
-        offset = 1;
-    }
-    else if (direction == Direction::SWNE)
-    {
-        mask = LookupData::swneMask[locationMaskIndex];
-        offset = 9;
-    }
-    else if (direction == Direction::NWSE)
-    {
-        mask = LookupData::nwseMask[locationMaskIndex];
-        offset = 7;
-    }
     else
     {
-        mask = 0x0000000000000000UL;
+        pinnedKingLocation = blackKing;
     }
 
-    if ((mask & pinnedKingLocation) != 0x0000000000000000UL &&
-        (mask & pinMask) != 0x0000000000000000UL)
+    pinningPieceMask = computePinningPieceMask(direction);
+
+    offset = getOffsetFromDirection(direction);
+
+    highMask = 0x00ULL;
+    lowMask = 0x00ULL;
+    tmp = location << offset;
+
+    while (tmp != 0x00ULL)
     {
-        occupancy = (whitePieces | blackPieces) & mask;
-
-        if (pinnedKingLocation < location)
+        if (tmp.inMask(pinningPieceMask) ||
+            tmp.inMask(pinnedKingLocation))
         {
-            goUp = true;
+            highMask = highMask | tmp;
+            break;
         }
-        else
+        else if (tmp.inMask(blackPieces | whitePieces))
         {
-            goUp = false;
-        }
-
-        if (direction == Direction::SWNE)
-        {
-            guard = goUp ? 0xFF80808080808080UL : 0x01010101010101FFUL;
-        }
-        else if (direction == Direction::EW)
-        {
-            guard = goUp ? 0x8080808080808080UL : 0x0101010101010101UL;
-        }
-        else if (direction == Direction::NS)
-        {
-            guard = goUp ? 0xFF00000000000000UL : 0x00000000000000FFUL;
-        }
-        else if (direction == Direction::NWSE)
-        {
-            guard = goUp ? 0xFF01010101010101UL : 0x80808080808080FFUL;
+            break;
         }
 
-        if ((pinnedKingLocation & guard) == 0x0000000000000000UL)
-        {
-            tmpLocation = goUp ? pinnedKingLocation << offset :
-                pinnedKingLocation >> offset;
-
-            while (tmpLocation != location)
-            {
-                if ((tmpLocation & occupancy) != 0x0000000000000000UL)
-                {
-                    result = false;
-                    break;
-                }
-
-                tmpLocation = goUp ? tmpLocation << offset :
-                    tmpLocation >> offset;
-            }
-
-            if (result && (tmpLocation & guard) == 0x0000000000000000UL)
-            {
-                tmpLocation = goUp ? tmpLocation << offset :
-                    tmpLocation >> offset;
-
-                while (true)
-                {
-                    if ((tmpLocation & occupancy) !=
-                        0x0000000000000000UL)
-                    {
-                        if ((tmpLocation & pinMask) ==
-                            0x0000000000000000UL)
-                        {
-                            result = false;
-                            break;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                    else
-                    {
-                        if ((tmpLocation & guard) != 0x0000000000000000UL)
-                        {
-                            tmpLocation = goUp ?
-                                tmpLocation << offset :
-                                tmpLocation >> offset;
-                        }
-                        else
-                        {
-                            result = false;
-                            break;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                result = false;
-            }
-        }
-        else
-        {
-            result = false;
-        }
+        tmp = tmp << offset;
     }
-    else
+
+    tmp = location >> offset;
+
+    while (tmp != 0x00ULL)
     {
-        result = false;
+        if (tmp.inMask(pinningPieceMask) ||
+            tmp.inMask(pinnedKingLocation))
+        {
+            lowMask = lowMask | tmp;
+            break;
+        }
+        else if (tmp.inMask(blackPieces | whitePieces))
+        {
+            break;
+        }
+
+        tmp = tmp >> offset;
+    }
+
+    if (pinnedKingLocation.inMask(lowMask) &&
+        !pinnedKingLocation.inMask(highMask) &&
+        highMask != 0x00ULL)
+    {
+        result = true;
+    }
+    else if (pinnedKingLocation.inMask(highMask) &&
+        !pinnedKingLocation.inMask(lowMask) &&
+        lowMask != 0x00ULL)
+    {
+        result = true;
     }
 
     return result;
 }
 
-bool Position::isSquareAttacked(Square s) const        
+/*bool Position::isSquareAttacked(Square s) const        
 {
     bool result = false;
     int squareIndex = s.toBitboard().lsb();

@@ -70,6 +70,11 @@ Bitboard& Bitboard::flipBit(int bitIndex)
     return *this;
 }
 
+bool Bitboard::inMask(Bitboard b) const
+{
+    return (bitboard & b) == bitboard;
+}
+
 int Bitboard::lsb() const
 {
     /*

@@ -40,6 +40,7 @@ namespace TuxedoCat
         void setValue(uint64_t value);
 
         Bitboard& flipBit(int bitIndex);
+        bool inMask(Bitboard b) const;
         int lsb() const;
         int msb() const;
         int popcount() const;
