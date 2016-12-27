@@ -233,3 +233,43 @@ TEST_F(PositionTest,
 
     EXPECT_EQ(0, advances.size());
 }
+
+TEST_F(PositionTest,
+    generateMoves_PawnDoubleAdv_ShouldAdvanceTwoIfFirstMove)
+{
+    Position p("8/4p3/8/8/8/8/8/8 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(2, advances.size());
+
+    Piece mp(Color::BLACK, Rank::PAWN, Square("e7"));
+    bool normalAdvanceExists = false;
+    bool doubleAdvanceExists = false;
+
+    for (size_t count = 0; count < advances.size(); count++)
+    {
+        if (advances[count].getTargetSquare() == Square("e6"))
+        {
+            normalAdvanceExists = true;
+        }
+
+        if (advances[count].getTargetSquare() == Square("e5"))
+        {
+            doubleAdvanceExists = true;
+        }
+    }
+
+    EXPECT_EQ(true, normalAdvanceExists);
+    EXPECT_EQ(true, doubleAdvanceExists);
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnDblAdvances_IfBlocked_ShouldNotGenerateAdvance)
+{
+    Position p("8/8/8/8/1N6/8/1P6/8 w - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(1, advances.size());
+}

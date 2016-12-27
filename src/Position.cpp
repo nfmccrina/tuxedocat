@@ -73,6 +73,7 @@ std::vector<Move> Position::generateMoves() const
     std::vector<Move> moves;
     std::vector<Move> pawnCaptures;
     std::vector<Move> pawnAdvances;
+    std::vector<Move> pawnDblAdvances;
     Bitboard pieces;
     Bitboard currentSquare;
     int currentIndex;
@@ -93,11 +94,14 @@ std::vector<Move> Position::generateMoves() const
 
         pawnCaptures = generatePawnCapturesAt(currentSquare);
         pawnAdvances = generatePawnAdvancesAt(currentSquare);
+        pawnDblAdvances = generatePawnDblAdvancesAt(currentSquare);
 
         moves.insert(moves.end(), pawnCaptures.begin(),
             pawnCaptures.end());
         moves.insert(moves.end(), pawnAdvances.begin(),
             pawnAdvances.end());
+        moves.insert(moves.end(), pawnDblAdvances.begin(),
+            pawnDblAdvances.end());
 
         pieces.flipBit(currentIndex);
     }
@@ -725,6 +729,44 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b) const
     }
 
     return captures;
+}
+
+std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b) const
+{
+    std::vector<Move> moves;
+    Bitboard legalMask;
+    Bitboard target;
+    Bitboard firstSquare;
+    boost::optional<Piece> movingPiece = getPieceAt(Square(b));
+
+    if (!movingPiece || movingPiece->getRank() != Rank::PAWN ||
+        isPiecePinned(*movingPiece, Direction::EW) ||
+        isPiecePinned(*movingPiece, Direction::NWSE) ||
+        isPiecePinned(*movingPiece, Direction::SWNE))
+    {
+        return moves;
+    }
+
+    if (colorToMove == Color::WHITE)
+    {
+        legalMask = 0x000000000000FF00ULL;
+        target = b << 16;
+        firstSquare = b << 8;
+    }
+    else
+    {
+        legalMask = 0x00FF000000000000ULL;
+        target = b >> 16;
+        firstSquare = b >> 8;
+    }
+
+    if (b.inMask(legalMask) && !firstSquare.inMask(whitePieces | blackPieces) &&
+        !target.inMask(whitePieces | blackPieces))
+    {
+        moves.push_back(Move(*movingPiece, target, boost::none));
+    }
+
+    return moves;
 }
 
 /*

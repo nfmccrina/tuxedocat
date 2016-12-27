@@ -54,6 +54,7 @@ namespace TuxedoCat
         Bitboard computePinningPieceMask(Direction direction) const;
         std::vector<Move> generatePawnAdvancesAt(Bitboard b) const;
         std::vector<Move> generatePawnCapturesAt(Bitboard b) const;
+        std::vector<Move> generatePawnDblAdvancesAt(Bitboard b) const;
         /*std::vector<Square> findPiece(Color c, Rank r) const;
         std::vector<Move> generateCastles() const;
         std::vector<Move> generateKingMovesAt(const Square& s) const;
