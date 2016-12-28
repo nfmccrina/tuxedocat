@@ -42,32 +42,30 @@ namespace TuxedoCat
     public:
         Position(std::string fen);
 
-        std::vector<Move> generateMoves() const;
-        /*Position(const Position& p);
+        std::vector<Move> generateMoves();
+        Position(const Position& p);
 
-        bool isMoveValid(const Move& m);
         void makeMove(boost::optional<const Move&> move);
         std::string toString() const;
-        void unmakeMove();*/
+        void unmakeMove();
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
         Bitboard computePinningPieceMask(Direction direction) const;
-        std::vector<Move> generatePawnAdvancesAt(Bitboard b) const;
-        std::vector<Move> generatePawnCapturesAt(Bitboard b) const;
-        std::vector<Move> generatePawnDblAdvancesAt(Bitboard b) const;
-        /*std::vector<Square> findPiece(Color c, Rank r) const;
-        std::vector<Move> generateCastles() const;
-        std::vector<Move> generateKingMovesAt(const Square& s) const;
-        std::vector<Move> generateKnightMovesAt(const Square& s,
-            bool inCheck) const;
-        std::vector<Move> generatePawnMovesAt(const Square& s) const;*/
+        std::vector<Square> findPiece(Color c, Rank r) const;
+        std::vector<Move> generatePawnAdvancesAt(Bitboard b);
+        std::vector<Move> generatePawnCapturesAt(Bitboard b);
+        std::vector<Move> generatePawnDblAdvancesAt(Bitboard b);
+        /*std::vector<Move> generateCastles() const;
+        std::vector<Move> generateKingMovesAt(const Square& s) const;*/
+        std::vector<Move> generateKnightMovesAt(Square s);
         int getOffsetFromDirection(Direction direction) const;
         boost::optional<Piece> getPieceAt(Square s) const;
+        bool isMoveValid(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
             Direction direction) const;
-        /*bool isSquareAttacked(Square s) const;*/
+        bool isSquareAttacked(Square s) const;
         bool isSquareEmpty(Square s) const;
-        /*void removePieceAt(Bitboard location);*/
+        void removePieceAt(Bitboard location);
         void parseFEN(std::string fen);
         void updatePieces();
 

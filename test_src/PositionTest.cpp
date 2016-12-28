@@ -35,7 +35,7 @@ using namespace TuxedoCat;
 TEST_F(PositionTest,
     generateMoves_PawnCaptures_IfExistLeft_ShouldGenerateCaptures)
 {
-    Position p("8/8/2nN4/3P4/8/8/8/8 w - - 0 1");
+    Position p("8/8/2nB4/3P4/8/8/8/8 w - - 0 1");
 
     std::vector<Move> captures = p.generateMoves();
 
@@ -267,7 +267,27 @@ TEST_F(PositionTest,
 TEST_F(PositionTest,
     generateMoves_PawnDblAdvances_IfBlocked_ShouldNotGenerateAdvance)
 {
-    Position p("8/8/8/8/1N6/8/1P6/8 w - - 0 1");
+    Position p("8/8/8/8/1B6/8/1P6/8 w - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(1, advances.size());
+}
+
+TEST_F(PositionTest,
+    generateMoves_KnightMoves_ShouldCalculateMoves)
+{
+    Position p("1N6/8/8/8/1B6/3N4/1r3Q2/8 w - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves();
+
+    EXPECT_EQ(9, advances.size());
+}
+
+TEST_F(PositionTest,
+    generateMoves_KnightMoves_IfInCheck_ShouldOnlyFindCapture)
+{
+    Position p("1N6/8/8/8/1B6/3N4/1r3K2/8 w - - 0 1");
 
     std::vector<Move> advances = p.generateMoves();
 
