@@ -29,7 +29,15 @@
 
 namespace TuxedoCat
 {
-    enum class Rank { PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING };
+    enum class Rank
+    {
+        PAWN,
+        KNIGHT,
+        BISHOP,
+        ROOK,
+        QUEEN,
+        KING
+    };
 
     boost::optional<Rank> getRankFromString(std::string s);
     std::string rankToString(Rank r);

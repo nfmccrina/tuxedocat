@@ -42,7 +42,8 @@ namespace TuxedoCat
     public:
         Position(std::string fen);
 
-        std::vector<Move> generateMoves();
+        std::vector<Move> generateMoves(boost::optional<Rank> rank =
+            boost::none);
         Position(const Position& p);
 
         void makeMove(boost::optional<const Move&> move);

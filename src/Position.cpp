@@ -68,7 +68,7 @@ Position::Position(const Position& p)
 
 // begin public methods
 
-std::vector<Move> Position::generateMoves()
+std::vector<Move> Position::generateMoves(boost::optional<Rank> rank)
 {
     std::vector<Move> moves;
     std::vector<Move> pawnCaptures;
@@ -93,19 +93,27 @@ std::vector<Move> Position::generateMoves()
         currentIndex = pieces.lsb();
         currentSquare = 0x01ULL << currentIndex;
 
-        pawnCaptures = generatePawnCapturesAt(currentSquare);
-        pawnAdvances = generatePawnAdvancesAt(currentSquare);
-        pawnDblAdvances = generatePawnDblAdvancesAt(currentSquare);
-        knightMoves = generateKnightMovesAt(currentSquare);
+        if (!rank || *rank == Rank::PAWN)
+        {
+            pawnCaptures = generatePawnCapturesAt(currentSquare);
+            pawnAdvances = generatePawnAdvancesAt(currentSquare);
+            pawnDblAdvances = generatePawnDblAdvancesAt(currentSquare);
 
-        moves.insert(moves.end(), pawnCaptures.begin(),
-            pawnCaptures.end());
-        moves.insert(moves.end(), pawnAdvances.begin(),
-            pawnAdvances.end());
-        moves.insert(moves.end(), pawnDblAdvances.begin(),
-            pawnDblAdvances.end());
-        moves.insert(moves.end(), knightMoves.begin(),
-            knightMoves.end());
+            moves.insert(moves.end(), pawnCaptures.begin(),
+                pawnCaptures.end());
+            moves.insert(moves.end(), pawnAdvances.begin(),
+                pawnAdvances.end());
+            moves.insert(moves.end(), pawnDblAdvances.begin(),
+                pawnDblAdvances.end());
+        }
+
+        if (!rank || *rank == Rank::KNIGHT)
+        {
+            knightMoves = generateKnightMovesAt(currentSquare);
+
+            moves.insert(moves.end(), knightMoves.begin(),
+                knightMoves.end());
+        }
 
         pieces.flipBit(currentIndex);
     }
@@ -560,6 +568,7 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
     Bitboard legalMask;
     Bitboard target;
     boost::optional<Piece> movingPiece = getPieceAt(Square(b));
+    bool inCheck {false};
 
     if (!movingPiece || movingPiece->getRank() != Rank::PAWN ||
         isPiecePinned(*movingPiece, Direction::EW) ||
@@ -573,25 +582,60 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
     {
         legalMask = 0x00FFFFFFFFFFFFFFULL;
         target = b << 8;
+
+        if (whiteKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(whiteKing));
+        }
     }
     else
     {
         legalMask = 0xFFFFFFFFFFFFFF00ULL;
         target = b >> 8;
+
+        if (blackKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(blackKing));
+        }
     }
 
     if (b.inMask(legalMask) && !target.inMask(whitePieces | blackPieces))
     {
         if (target.inMask(0xFF000000000000FFULL))
         {
-            moves.push_back(Move(*movingPiece, target, Rank::QUEEN));
-            moves.push_back(Move(*movingPiece, target, Rank::ROOK));
-            moves.push_back(Move(*movingPiece, target, Rank::BISHOP));
-            moves.push_back(Move(*movingPiece, target, Rank::KNIGHT));
+            Move m1(*movingPiece, target, Rank::QUEEN);
+            Move m2(*movingPiece, target, Rank::ROOK);
+            Move m3(*movingPiece, target, Rank::BISHOP);
+            Move m4(*movingPiece, target, Rank::KNIGHT);
+
+            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            {
+                moves.push_back(m1);
+            }
+
+            if ((inCheck && isMoveValid(m2)) || !inCheck)
+            {
+                moves.push_back(m2);
+            }
+
+            if ((inCheck && isMoveValid(m3)) || !inCheck)
+            {
+                moves.push_back(m3);
+            }
+
+            if ((inCheck && isMoveValid(m4)) || !inCheck)
+            {
+                moves.push_back(m4);
+            }
         }
         else
         {
-            moves.push_back(Move(*movingPiece, target, boost::none));
+            Move m1(*movingPiece, target, boost::none);
+
+            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            {
+                moves.push_back(m1);
+            }
         }
     }
 
@@ -611,6 +655,7 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
     Bitboard opposingPieces;
     int currentIndex;
     boost::optional<Piece> movePiece = getPieceAt(Square(b));
+    bool inCheck {false};
 
     if (!movePiece || movePiece->getRank() != Rank::PAWN)
     {
@@ -628,6 +673,11 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
             << 9;
 
         opposingPieces = blackPieces;
+
+        if (whiteKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(whiteKing));
+        }
     }
     else
     {
@@ -640,6 +690,11 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
             >> 9;
 
         opposingPieces = whitePieces;
+
+        if (blackKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(blackKing));
+        }
     }
 
     targets = (captureLeftTarget | captureRightTarget) & opposingPieces;
@@ -656,19 +711,39 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
 
         if (currentSquare.inMask(0xFF000000000000FFULL))
         {
-            captures.push_back(Move(*movePiece, currentSquare,
-                Rank::QUEEN));
-            captures.push_back(Move(*movePiece, currentSquare,
-                Rank::ROOK));
-            captures.push_back(Move(*movePiece, currentSquare,
-                Rank::BISHOP));
-            captures.push_back(Move(*movePiece, currentSquare,
-                Rank::KNIGHT));
+            Move m1(*movePiece, currentSquare, Rank::QUEEN);
+            Move m2(*movePiece, currentSquare, Rank::ROOK);
+            Move m3(*movePiece, currentSquare, Rank::BISHOP);
+            Move m4(*movePiece, currentSquare, Rank::KNIGHT);
+
+            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            {
+                captures.push_back(m1);
+            }
+
+            if ((inCheck && isMoveValid(m2)) || !inCheck)
+            {
+                captures.push_back(m2);
+            }
+
+            if ((inCheck && isMoveValid(m3)) || !inCheck)
+            {
+                captures.push_back(m3);
+            }
+
+            if ((inCheck && isMoveValid(m4)) || !inCheck)
+            {
+                captures.push_back(m4);
+            }
         }
         else
         {
-            captures.push_back(Move(*movePiece, currentSquare,
-                boost::none));
+            Move m1(*movePiece, currentSquare, boost::none);
+
+            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            {
+                captures.push_back(m1);
+            }
         }
 
         targets.flipBit(currentIndex);
@@ -684,6 +759,7 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
     Bitboard target;
     Bitboard firstSquare;
     boost::optional<Piece> movingPiece = getPieceAt(Square(b));
+    bool inCheck {false};
 
     if (!movingPiece || movingPiece->getRank() != Rank::PAWN ||
         isPiecePinned(*movingPiece, Direction::EW) ||
@@ -698,18 +774,32 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
         legalMask = 0x000000000000FF00ULL;
         target = b << 16;
         firstSquare = b << 8;
+
+        if (whiteKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(whiteKing));
+        }
     }
     else
     {
         legalMask = 0x00FF000000000000ULL;
         target = b >> 16;
         firstSquare = b >> 8;
+
+        if (blackKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(blackKing));
+        }
     }
 
-    if (b.inMask(legalMask) && !firstSquare.inMask(whitePieces | blackPieces) &&
+    if (b.inMask(legalMask) &&
+        !firstSquare.inMask(whitePieces | blackPieces) &&
         !target.inMask(whitePieces | blackPieces))
     {
-        moves.push_back(Move(*movingPiece, target, boost::none));
+        Move m(*movingPiece, target, boost::none);
+
+        if ((inCheck && isMoveValid(m)) || !inCheck)
+        moves.push_back(m);
     }
 
     return moves;

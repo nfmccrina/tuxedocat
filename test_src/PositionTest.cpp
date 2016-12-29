@@ -81,6 +81,22 @@ TEST_F(PositionTest,
 }
 
 TEST_F(PositionTest,
+    generateMoves_PawnCaptures_IfInCheck_ShouldOnlyGenerateCapture)
+{
+    Position p("8/8/8/2b5/1P6/4K3/8/8 w - - 0 1");
+
+    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+
+    EXPECT_EQ(1, captures.size());
+    
+    if (captures.size() > 0)
+    {
+        EXPECT_EQ(0x0000000400000000ULL, captures[0].getTargetSquare()
+            .toBitboard());
+    }
+}
+
+TEST_F(PositionTest,
     generateMoves_PawnCaptures_IfPromotion_ShouldGenerateCapturePromotions)
 {
     Position p("8/8/8/8/8/8/1p6/QN6 b - - 0 1");
@@ -163,6 +179,32 @@ TEST_F(PositionTest,
         EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
             advances[0].getMovingPiece());
         EXPECT_EQ(boost::none, advances[0].getPromotedRank());
+    }
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfInCheck_ShouldNotGetUnhelpfulMoves)
+{
+    Position p("8/8/8/2B4p/8/4k3/8/8 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+
+    EXPECT_EQ(0, advances.size());
+}
+
+TEST_F(PositionTest,
+    generateMoves_PawnAdvances_IfInCheck_ShouldGetHelpfulMoves)
+{
+    Position p("8/8/8/2Bp3p/8/4k3/8/8 b - - 0 1");
+
+    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+
+    EXPECT_EQ(1, advances.size());
+
+    if (advances.size() > 0)
+    {
+        EXPECT_EQ(0x8000000ULL, advances[0].getTargetSquare()
+            .toBitboard());
     }
 }
 
