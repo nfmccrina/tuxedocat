@@ -59,8 +59,21 @@ namespace TuxedoCat
         std::vector<Move> generatePawnAdvancesAt(Bitboard b);
         std::vector<Move> generatePawnCapturesAt(Bitboard b);
         std::vector<Move> generatePawnDblAdvancesAt(Bitboard b);
+        std::vector<Move> generateSlidingMovesN(Bitboard b);
+        std::vector<Move> generateSlidingMovesS(Bitboard b);
+        std::vector<Move> generateSlidingMovesE(Bitboard b);
+        std::vector<Move> generateSlidingMovesW(Bitboard b);
+        std::vector<Move> generateSlidingMovesNE(Bitboard b);
+        std::vector<Move> generateSlidingMovesNW(Bitboard b);
+        std::vector<Move> generateSlidingMovesSE(Bitboard b);
+        std::vector<Move> generateSlidingMovesSW(Bitboard b);
+        std::vector<Move> getMovesFromMask(Bitboard mask, Piece p,
+            bool inCheck);
         int getOffsetFromDirection(Direction direction) const;
+        Bitboard getOpposingPieces(Color c) const;
+        Bitboard getOwnPieces(Color c) const;
         boost::optional<Piece> getPieceAt(Square s) const;
+        bool isInCheck(Color c) const;
         bool isMoveValid(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
             Direction direction) const;
