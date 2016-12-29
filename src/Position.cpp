@@ -75,6 +75,8 @@ std::vector<Move> Position::generateMoves(boost::optional<Rank> rank)
     std::vector<Move> pawnAdvances;
     std::vector<Move> pawnDblAdvances;
     std::vector<Move> knightMoves;
+    std::vector<Move> castles;
+    std::vector<Move> kingMoves;
     Bitboard pieces;
     Bitboard currentSquare;
     int currentIndex;
@@ -113,6 +115,17 @@ std::vector<Move> Position::generateMoves(boost::optional<Rank> rank)
 
             moves.insert(moves.end(), knightMoves.begin(),
                 knightMoves.end());
+        }
+
+        if (!rank || *rank == Rank::KING)
+        {
+            castles = generateCastles();
+            kingMoves = generateKingMovesAt(currentSquare);
+
+            moves.insert(moves.end(), castles.begin(),
+                castles.end());
+            moves.insert(moves.end(), kingMoves.begin(),
+                kingMoves.end());
         }
 
         pieces.flipBit(currentIndex);
@@ -562,6 +575,177 @@ std::vector<Square> Position::findPiece(Color c,
     return locations;
 }
 
+std::vector<Move> Position::generateCastles()
+{
+    std::vector<Move> moves;
+    boost::optional<Piece> piece;
+
+    if (colorToMove == Color::WHITE)
+    {
+        piece = getPieceAt(Square(std::pair<int, int>(0, 4)));
+
+        if (piece && piece->getRank() == Rank::KING &&
+            piece->getColor() == Color::WHITE)
+        {
+            Move castleKingSide(*piece, Square(std::pair<int, int>(0, 6)),
+                boost::none);
+            Move castleQueenSide(*piece, Square(std::pair<int, int>(0, 2)),
+                boost::none);
+
+            if (isMoveValid(castleKingSide))
+            {
+                moves.push_back(castleKingSide);
+            }
+
+            if (isMoveValid(castleQueenSide))
+            {
+                moves.push_back(castleQueenSide);
+            }
+        }
+    }
+    else
+    {
+        piece = getPieceAt(Square(std::pair<int, int>(7, 4)));
+
+        if (piece && piece->getRank() == Rank::KING &&
+            piece->getColor() == Color::BLACK)
+        {
+            Move castleKingSide(*piece, Square(std::pair<int, int>(7, 6)),
+                boost::none);
+            Move castleQueenSide(*piece, Square(std::pair<int, int>(7, 2)),
+                boost::none);
+
+            if (isMoveValid(castleKingSide))
+            {
+                moves.push_back(castleKingSide);
+            }
+
+            if (isMoveValid(castleQueenSide))
+            {
+                moves.push_back(castleQueenSide);
+            }
+        }
+    }
+
+    return moves;
+}
+
+std::vector<Move> Position::generateKingMovesAt(Square s)
+{
+    std::vector<Move> moves;
+    int locationIndex;
+    boost::optional<Piece> piece = getPieceAt(s);
+    Bitboard location = s.toBitboard();
+    Bitboard moveMask = 0x0000000000000000ULL;
+    Bitboard currentMove;
+    Color color;
+    Bitboard ownPieces;
+
+    if (!piece || piece->getRank() != Rank::KING)
+    {
+        return moves;
+    }
+
+    color = piece->getColor();
+
+    if (color == Color::WHITE)
+    {
+        ownPieces = whitePieces;
+    }
+    else
+    {
+        ownPieces = blackPieces;
+    }
+
+    std::vector<Move> castles = generateCastles();
+    moves.insert(std::end(moves), std::begin(castles), std::end(castles));
+
+    locationIndex = location.lsb();
+    moveMask = LookupData::kingAttacks[locationIndex] & (~ownPieces);
+
+    while (moveMask != 0x0000000000000000ULL)
+    {
+        currentMove = 0x01ULL << moveMask.lsb();
+        Move m(*piece, currentMove, boost::none);
+
+        if (isMoveValid(m))
+        {
+            moves.push_back(m);
+        }
+
+        moveMask = moveMask & (~currentMove);
+    }
+
+    return moves;
+}
+
+std::vector<Move> Position::generateKnightMovesAt(Square s)
+{
+    std::vector<Move> moves;
+    boost::optional<Piece> piece = getPieceAt(s);
+    Bitboard location = s.toBitboard();
+    int locationIndex;
+    Bitboard moveMask = 0x0000000000000000ULL;
+    Bitboard currentMove;
+    Color color;
+    Bitboard ownPieces;
+    int currentIndex;
+    bool inCheck {false};
+
+    if (
+        !piece ||
+        piece->getRank() != Rank::KNIGHT ||
+        isPiecePinned(*piece, Direction::NS) ||
+        isPiecePinned(*piece, Direction::EW) ||
+        isPiecePinned(*piece, Direction::SWNE) ||
+        isPiecePinned(*piece, Direction::NWSE)
+        )
+    {
+        return moves;
+    }
+
+    color = piece->getColor();
+
+    if (color == Color::WHITE)
+    {
+        ownPieces = whitePieces;
+
+        if (whiteKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(whiteKing));
+        }
+    }
+    else
+    {
+        ownPieces = blackPieces;
+
+        if (blackKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(Square(blackKing));
+        }
+    }
+
+    locationIndex = location.lsb();
+
+    moveMask = LookupData::knightAttacks[locationIndex] & (~ownPieces);
+
+    while (moveMask != 0x0000000000000000ULL)
+    {
+        currentIndex = moveMask.lsb();
+        currentMove = 0x01ULL << currentIndex;
+        Move m(*piece, Square(currentMove), boost::none);
+
+        if ((inCheck && isMoveValid(m)) || !inCheck)
+        {
+            moves.push_back(m);
+        }
+
+        moveMask = moveMask.flipBit(currentIndex);
+    }
+
+    return moves;
+}
+
 std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
 {
     std::vector<Move> moves;
@@ -800,176 +984,6 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
 
         if ((inCheck && isMoveValid(m)) || !inCheck)
         moves.push_back(m);
-    }
-
-    return moves;
-}
-
-/*std::vector<Move> generateCastles() const
-{
-    std::vector<Move> moves;
-    boost::optional<Piece> piece;
-
-    if (colorToMove == Color::WHITE)
-    {
-        piece = getPieceAt(Square(std::pair<int, int>(0, 4)));
-
-        if (piece && piece->getRank() == Rank::KING &&
-            piece->getColor() == Color::WHITE)
-        {
-            Move castleKingSide(piece, Square(std::pair<int, int>(0, 6)),
-                boost::none);
-            Move castleQueenSide(piece, Square(std::pair<int, int>(0, 2)),
-                boost::none);
-
-            if (isMoveValid(castleKingSide))
-            {
-                moves.push_back(castleKingSide);
-            }
-
-            if (isMoveValid(castleQueenSide))
-            {
-                moves.push_back(castleQueenSide);
-            }
-        }
-    }
-    else
-    {
-        piece = getPieceAt(Square(std::pair<int, int>(7, 4)));
-
-        if (piece && piece->getRank() == Rank::KING &&
-            piece->getColor() == Color::BLACK)
-        {
-            Move castleKingSide(piece, Square(std::pair<int, int>(7, 6)),
-                boost::none);
-            Move castleQueenSide(piece, Square(std::pair<int, int>(7, 2)),
-                boost::none);
-
-            if (isMoveValid(castleKingSide))
-            {
-                moves.push_back(castleKingSide);
-            }
-
-            if (isMoveValid(castleQueenSide))
-            {
-                moves.push_back(castleQueenSide);
-            }
-        }
-    }
-
-    return moves;
-}
-
-std::vector<Move> generateKingMovesAt(const Square& s) const
-{
-    std::vector<Move> moves;
-    int locationIndex;
-    boost::optional<Piece> piece = getPieceAt(s);
-    Bitboard location = s.toBitboard();
-    Bitboard moveMask = 0x0000000000000000ULL;
-    Bitboard currentMove;
-    Color color;
-    Bitboard ownPieces;
-
-    if (!piece || piece->getRank() != Rank::KING)
-    {
-        return moves;
-    }
-
-    color = piece->getColor();
-
-    if (color == Color::WHITE)
-    {
-        ownPieces = whitePieces;
-    }
-    else
-    {
-        ownPieces = blackPieces;
-    }
-
-    std::vector<Move> castles = generateCastles();
-    moves.insert(std::end(moves), std::begin(castles), std::end(castles));
-
-    locationIndex = location.lsb();
-    moveMask = LookupData::kingAttacks[locationIndex] & (~ownPieces);
-
-    while (moveMask != 0x0000000000000000ULL)
-    {
-        currentMove =
-            0x0000000000000001ULL << moveMask.lsb();
-        Move m(piece, currentMove, boost::none);
-
-        if (isMoveValid(m))
-        {
-            moves.push_back(m);
-        }
-
-        moveMask = moveMask & (~currentMove);
-    }
-}*/
-
-std::vector<Move> Position::generateKnightMovesAt(Square s)
-{
-    std::vector<Move> moves;
-    boost::optional<Piece> piece = getPieceAt(s);
-    Bitboard location = s.toBitboard();
-    int locationIndex;
-    Bitboard moveMask = 0x0000000000000000ULL;
-    Bitboard currentMove;
-    Color color;
-    Bitboard ownPieces;
-    int currentIndex;
-    bool inCheck {false};
-
-    if (
-        !piece ||
-        piece->getRank() != Rank::KNIGHT ||
-        isPiecePinned(*piece, Direction::NS) ||
-        isPiecePinned(*piece, Direction::EW) ||
-        isPiecePinned(*piece, Direction::SWNE) ||
-        isPiecePinned(*piece, Direction::NWSE)
-        )
-    {
-        return moves;
-    }
-
-    color = piece->getColor();
-
-    if (color == Color::WHITE)
-    {
-        ownPieces = whitePieces;
-
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(Square(whiteKing));
-        }
-    }
-    else
-    {
-        ownPieces = blackPieces;
-
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(Square(blackKing));
-        }
-    }
-
-    locationIndex = location.lsb();
-
-    moveMask = LookupData::knightAttacks[locationIndex] & (~ownPieces);
-
-    while (moveMask != 0x0000000000000000ULL)
-    {
-        currentIndex = moveMask.lsb();
-        currentMove = 0x01ULL << currentIndex;
-        Move m(*piece, Square(currentMove), boost::none);
-
-        if ((inCheck && isMoveValid(m)) || !inCheck)
-        {
-            moves.push_back(m);
-        }
-
-        moveMask = moveMask.flipBit(currentIndex);
     }
 
     return moves;

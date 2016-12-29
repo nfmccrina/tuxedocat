@@ -75,7 +75,7 @@ TEST_F(PositionTest,
 {
     Position p("8/8/3K4/3P4/8/8/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves();
+    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
 
     EXPECT_EQ(0, captures.size());
 }
@@ -261,7 +261,7 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/k1p2R2/8/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves();
+    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
 
     EXPECT_EQ(0, advances.size());
 }
@@ -271,7 +271,7 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/k7/1p6/8/3B4 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves();
+    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
 
     EXPECT_EQ(0, advances.size());
 }
@@ -331,7 +331,7 @@ TEST_F(PositionTest,
 {
     Position p("1N6/8/8/8/1B6/3N4/1r3K2/8 w - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves();
+    std::vector<Move> advances = p.generateMoves(Rank::KNIGHT);
 
     EXPECT_EQ(1, advances.size());
 }

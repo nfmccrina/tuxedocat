@@ -53,12 +53,12 @@ namespace TuxedoCat
         void addPieceAt(Bitboard location, Color c, Rank r);
         Bitboard computePinningPieceMask(Direction direction) const;
         std::vector<Square> findPiece(Color c, Rank r) const;
+        std::vector<Move> generateCastles();
+        std::vector<Move> generateKingMovesAt(Square s);
+        std::vector<Move> generateKnightMovesAt(Square s);
         std::vector<Move> generatePawnAdvancesAt(Bitboard b);
         std::vector<Move> generatePawnCapturesAt(Bitboard b);
         std::vector<Move> generatePawnDblAdvancesAt(Bitboard b);
-        /*std::vector<Move> generateCastles() const;
-        std::vector<Move> generateKingMovesAt(const Square& s) const;*/
-        std::vector<Move> generateKnightMovesAt(Square s);
         int getOffsetFromDirection(Direction direction) const;
         boost::optional<Piece> getPieceAt(Square s) const;
         bool isMoveValid(const Move& m);
