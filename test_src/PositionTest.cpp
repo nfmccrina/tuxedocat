@@ -27,7 +27,6 @@
 #include "../include/Position.hpp"
 #include "../include/Move.hpp"
 #include "../include/gtest/gtest.h"
-#include "boost/optional.hpp"
 #include <vector>
 
 using namespace TuxedoCat;
@@ -47,7 +46,7 @@ TEST_F(PositionTest,
             captures[0].getTargetSquare().toBitboard());
         EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
             captures[0].getMovingPiece());
-        EXPECT_EQ(boost::none, captures[0].getPromotedRank());
+        EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
     }
 }
 
@@ -66,7 +65,7 @@ TEST_F(PositionTest,
             captures[0].getTargetSquare().toBitboard());
         EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
             captures[0].getMovingPiece());
-        EXPECT_EQ(boost::none, captures[0].getPromotedRank());
+        EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
     }
 }
 
@@ -116,19 +115,19 @@ TEST_F(PositionTest,
     {
         for (size_t count = 0; count < captures.size(); count++)
         {
-            if (*(captures[count].getPromotedRank()) == Rank::QUEEN)
+            if (captures[count].getPromotedRank() == Rank::QUEEN)
             {
                 hasQueen = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::ROOK)
+            else if (captures[count].getPromotedRank() == Rank::ROOK)
             {
                 hasRook = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::BISHOP)
+            else if (captures[count].getPromotedRank() == Rank::BISHOP)
             {
                 hasBishop = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::KNIGHT)
+            else if (captures[count].getPromotedRank() == Rank::KNIGHT)
             {
                 hasKnight = true;
             }
@@ -159,7 +158,7 @@ TEST_F(PositionTest,
             captures[0].getTargetSquare().toBitboard());
         EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
             captures[0].getMovingPiece());
-        EXPECT_EQ(boost::none, captures[0].getPromotedRank());
+        EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
     }
 }
 
@@ -178,7 +177,7 @@ TEST_F(PositionTest,
             advances[0].getTargetSquare().toBitboard());
         EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
             advances[0].getMovingPiece());
-        EXPECT_EQ(boost::none, advances[0].getPromotedRank());
+        EXPECT_EQ(Rank::NONE, advances[0].getPromotedRank());
     }
 }
 
@@ -228,19 +227,19 @@ TEST_F(PositionTest,
     {
         for (size_t count = 0; count < captures.size(); count++)
         {
-            if (*(captures[count].getPromotedRank()) == Rank::QUEEN)
+            if (captures[count].getPromotedRank() == Rank::QUEEN)
             {
                 hasQueen = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::ROOK)
+            else if (captures[count].getPromotedRank() == Rank::ROOK)
             {
                 hasRook = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::BISHOP)
+            else if (captures[count].getPromotedRank() == Rank::BISHOP)
             {
                 hasBishop = true;
             }
-            else if (*(captures[count].getPromotedRank()) == Rank::KNIGHT)
+            else if (captures[count].getPromotedRank() == Rank::KNIGHT)
             {
                 hasKnight = true;
             }

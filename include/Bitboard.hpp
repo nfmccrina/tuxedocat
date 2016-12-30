@@ -41,6 +41,7 @@ namespace TuxedoCat
 
         Bitboard& flipBit(int bitIndex);
         bool inMask(Bitboard b) const;
+        bool isEmpty() const;
         int lsb() const;
         int msb() const;
         int popcount() const;

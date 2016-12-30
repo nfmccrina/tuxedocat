@@ -28,7 +28,6 @@
 #include "Piece.hpp"
 #include "Rank.hpp"
 #include "Square.hpp"
-#include <boost/optional.hpp>
 #include <cstdint>
 
 namespace TuxedoCat
@@ -36,14 +35,16 @@ namespace TuxedoCat
     class Move
     {
     public:
-        Move(Piece mp, Square tl, boost::optional<Rank> pr);
+        Move();
+        Move(Piece mp, Square tl, Rank pr);
         Piece getMovingPiece() const;
         Square getTargetSquare() const;
-        boost::optional<Rank> getPromotedRank() const;
+        Rank getPromotedRank() const;
+        bool isValid() const;
 
     private:
         Piece movingPiece;
         Square targetSquare;
-        boost::optional<Rank> promotedRank;
+        Rank promotedRank;
     };
 }

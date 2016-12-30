@@ -28,6 +28,11 @@
 
 using namespace TuxedoCat;
 
+Piece::Piece()
+    : color(Color::NONE), rank(Rank::NONE)
+{
+}
+
 Piece::Piece(Color c, Rank r, Square s)
     : color(c), rank(r), square(s)
 {
@@ -46,6 +51,13 @@ Rank Piece::getRank() const
 Square Piece::getSquare() const
 {
     return this->square;
+}
+
+bool Piece::isValid() const
+{
+    return color != Color::NONE &&
+        rank != Rank::NONE &&
+        square.isValid();
 }
 
 std::string Piece::toString() const

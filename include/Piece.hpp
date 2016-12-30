@@ -35,10 +35,12 @@ namespace TuxedoCat
     class Piece
     {
     public:
+        Piece();
         Piece(Color c, Rank r, Square s);
         Color getColor() const;
         Rank getRank() const;
         Square getSquare() const;
+        bool isValid() const;
         std::string toString() const;
 
     private:

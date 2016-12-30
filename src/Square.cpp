@@ -24,77 +24,48 @@
 */
 
 #include "Square.hpp"
-#include "../include/InvalidSquareException.hpp"
 
 using namespace TuxedoCat;
 
 // begin constructors
 
+Square::Square()
+    : location(0x00ULL)
+{
+}
+
 Square::Square(std::string s)
 {
-    int rank {0};
-    int file {0};
-    std::string msg = "Square(std::string): could not convert " + s +
-        " to a square";
-    InvalidSquareException ex(msg);
-
-    if (!isAlgebraicDescValid(s))
-    {
-        throw ex;
-    }
-
-    file = static_cast<int>(s[0]);
-
-    if (file > 96 && file < 105)
-    {
-        file -= 97;
-    }
-    else if (file > 64 && file < 73)
-    {
-        file -= 65;
-    }
-    else
-    {
-        throw ex;
-    }
-
-    rank = std::stoi(s.substr(1)) - 1;
-
-    this->location = Bitboard(0x0000000000000001ULL << ((rank * 8) + file));
+    initializeFromAlgebraicNotation(s);
 }
 
 Square::Square(std::pair<int, int> coord)
 {
-    std::string msg = "Square(std::pair<int, int>): could not convert (" +
-        std::to_string(coord.first) + ", " +
-        std::to_string(coord.second) + ") to a square";
-    InvalidSquareException ex(msg);
-    
     if (!areCoordinatesValid(coord))
     {
-        throw ex;
+        location = 0x00ULL;
     }
-
-    this->location = 0x01;
-    this->location <<= (coord.first * 8);
-    this->location <<= coord.second;
+    else
+    {
+        location = 0x01;
+        location <<= (coord.first * 8);
+        location <<= coord.second;
+    }
 }
 
 Square::Square(Bitboard bitboard)
+    : location(bitboard)
 {
-    std::string exMsg {"Square(Bitboard): could not convert bitboard to square"};
-
-    if (!isBitboardValid(bitboard))
-    {
-        throw InvalidSquareException(exMsg);
-    }
-
-    location = bitboard;
 }
 
 // end constructors
 
 // begin public methods
+
+bool Square::isValid() const
+{
+    return !location.isEmpty();
+}
 
 Bitboard Square::toBitboard() const
 {
@@ -121,15 +92,42 @@ bool Square::areCoordinatesValid(std::pair<int, int> coord) const
         coord.second >= 0 && coord.second < 8;
 }
 
+void Square::initializeFromAlgebraicNotation(std::string s)
+{
+    int rank {0};
+    int file {0};
+
+    if (!isAlgebraicDescValid(s))
+    {
+        location = 0x00ULL;
+        return;
+    }
+
+    file = static_cast<int>(s[0]);
+
+    if (file > 96 && file < 105)
+    {
+        file -= 97;
+    }
+    else if (file > 64 && file < 73)
+    {
+        file -= 65;
+    }
+    else
+    {
+        location = 0x00ULL;
+        return;
+    }
+
+    rank = std::stoi(s.substr(1)) - 1;
+
+    location = Bitboard(0x0000000000000001ULL << ((rank * 8) + file));
+}
+
 bool Square::isAlgebraicDescValid(std::string s) const
 {
     return s.find_first_of("abcdefghABCDEFGH") == 0 &&
         s.find_first_of("12345678") == 1;
-}
-
-bool Square::isBitboardValid(Bitboard b) const
-{
-    return b.popcount() == 1;
 }
 
 // end private methods

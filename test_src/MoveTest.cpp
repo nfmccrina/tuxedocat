@@ -30,14 +30,13 @@
 #include "../include/Rank.hpp"
 #include "../include/Square.hpp"
 #include "../include/gtest/gtest.h"
-#include "boost/optional.hpp"
 
 using namespace TuxedoCat;
 
 TEST_F(MoveTest, getMovingPiece_ShouldReturnTheMovingPiece)
 {
     Move m(Piece(Color::WHITE, Rank::KNIGHT, Square("b1")),
-        Square("a3"), boost::none);
+        Square("a3"), Rank::NONE);
 
     EXPECT_EQ(Color::WHITE, m.getMovingPiece().getColor());
     EXPECT_EQ(Rank::KNIGHT, m.getMovingPiece().getRank());
@@ -48,7 +47,7 @@ TEST_F(MoveTest, getMovingPiece_ShouldReturnTheMovingPiece)
 TEST_F(MoveTest, getTargetSquare_ShouldReturnTheTargetSquare)
 {
     Move m(Piece(Color::WHITE, Rank::KNIGHT, Square("b1")),
-        Square("a3"), boost::none);
+        Square("a3"), Rank::NONE);
 
     EXPECT_EQ(Bitboard(0x0000000000010000ULL),
         m.getTargetSquare().toBitboard());
@@ -60,4 +59,11 @@ TEST_F(MoveTest, getPromotedRank_ShouldReturnThePromotedRank)
         Square("b8"), Rank::QUEEN);
 
     EXPECT_EQ(Rank::QUEEN, m.getPromotedRank());
+}
+
+TEST_F(MoveTest, isValid_ShouldReturnFalseIfMemberIsInvalid)
+{
+    Move m {Piece(), Square {"e2"}, Rank::NONE};
+
+    EXPECT_EQ(false, m.isValid());
 }

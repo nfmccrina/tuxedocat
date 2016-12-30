@@ -152,3 +152,17 @@ TEST_F(PieceTest, operatorNEQ_ShouldReturnTrueForIdenticalPieces)
 
     EXPECT_EQ(true, p1 != p2);
 }
+
+TEST_F(PieceTest, isValid_ShouldReturnFalseIfMemberIsNull)
+{
+    Square s1;
+    Square s2 {"e3"};
+
+    Piece p1 {Color::BLACK, Rank::PAWN, s1};
+    Piece p2 {Color::WHITE, Rank::NONE, s2};
+    Piece p3 {Color::NONE, Rank::KING, s2};
+
+    EXPECT_EQ(false, p1.isValid());
+    EXPECT_EQ(false, p2.isValid());
+    EXPECT_EQ(false, p3.isValid());
+}

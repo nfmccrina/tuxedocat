@@ -26,45 +26,40 @@
 #include <iostream>
 #include <cctype>
 
-boost::optional<TuxedoCat::Rank> TuxedoCat::getRankFromString(std::string s)
+using namespace TuxedoCat;
+
+Rank TuxedoCat::getRankFromString(std::string s)
 {
-    boost::optional<Rank> rank;
+    Rank rank {Rank::NONE};
 
-    if (s.length() != 1)
+    if (s == "p" || s == "P")
     {
-        rank = boost::none;
+        rank = Rank::PAWN;
     }
-    else
+
+    if (s == "n" || s == "N")
     {
-        if (s == "p" || s == "P")
-        {
-            rank = Rank::PAWN;
-        }
+        rank = Rank::KNIGHT;
+    }
 
-        if (s == "n" || s == "N")
-        {
-            rank = Rank::KNIGHT;
-        }
+    if (s == "b" || s == "B")
+    {
+        rank = Rank::BISHOP;
+    }
 
-        if (s == "b" || s == "B")
-        {
-            rank = Rank::BISHOP;
-        }
+    if (s == "r" || s == "R")
+    {
+        rank = Rank::ROOK;
+    }
 
-        if (s == "r" || s == "R")
-        {
-            rank = Rank::ROOK;
-        }
+    if (s == "q" || s == "Q")
+    {
+        rank = Rank::QUEEN;
+    }
 
-        if (s == "q" || s == "Q")
-        {
-            rank = Rank::QUEEN;
-        }
-
-        if (s == "k" || s == "K")
-        {
-            rank = Rank::KING;
-        }
+    if (s == "k" || s == "K")
+    {
+        rank = Rank::KING;
     }
 
     return rank;
@@ -92,8 +87,12 @@ std::string TuxedoCat::rankToString(Rank r)
     {
         return "q";
     }
-    else
+    else if (r == Rank::KING)
     {
         return "k";
+    }
+    else
+    {
+        return "";
     }
 }

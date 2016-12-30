@@ -25,7 +25,6 @@
 
 #include "../include/Bitboard.hpp"
 #include "../include/LookupData.hpp"
-#include "../include/BitboardConversionException.hpp"
 #include <sstream>
 
 using namespace TuxedoCat;
@@ -73,6 +72,11 @@ Bitboard& Bitboard::flipBit(int bitIndex)
 bool Bitboard::inMask(Bitboard b) const
 {
     return (bitboard & b) == bitboard;
+}
+
+bool Bitboard::isEmpty() const
+{
+    return bitboard == 0x00ULL;
 }
 
 int Bitboard::lsb() const
@@ -142,14 +146,13 @@ int Bitboard::popcount() const
 
 std::string Bitboard::toAlgebraicCoordinate() const
 {
-    std::string msg {"Bitboard::toAlgebraicCoordinate: Bitboard must only have one bit set to generate an algebraic coordinate"};
     Bitboard mask {0x00000000000000FFULL};
     int rank {0};
     int file {0};
 
     if (popcount() != 1)
     {
-        throw BitboardConversionException(msg);
+        return "";
     }
 
     while ((bitboard & mask) == 0x00ULL)
@@ -179,7 +182,7 @@ std::pair<int, int> Bitboard::toCoordinates() const
 
     if (popcount() != 1)
     {
-        throw BitboardConversionException(msg);
+        return std::pair<int, int> {0, 0};
     }
 
     while ((bitboard & mask) == 0x00ULL)

@@ -30,7 +30,6 @@
 #include "Piece.hpp"
 #include "Move.hpp"
 #include "Direction.hpp"
-#include <boost/optional.hpp>
 #include <string>
 #include <vector>
 #include <stack>
@@ -42,11 +41,10 @@ namespace TuxedoCat
     public:
         Position(std::string fen);
 
-        std::vector<Move> generateMoves(boost::optional<Rank> rank =
-            boost::none);
+        std::vector<Move> generateMoves(Rank rank = Rank::NONE);
         Position(const Position& p);
 
-        void makeMove(boost::optional<const Move&> move);
+        void makeMove(Move move);
         std::string toString() const;
         void unmakeMove();
     private:
@@ -72,7 +70,7 @@ namespace TuxedoCat
         int getOffsetFromDirection(Direction direction) const;
         Bitboard getOpposingPieces(Color c) const;
         Bitboard getOwnPieces(Color c) const;
-        boost::optional<Piece> getPieceAt(Square s) const;
+        Piece getPieceAt(Square s) const;
         bool isInCheck(Color c) const;
         bool isMoveValid(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
@@ -92,7 +90,7 @@ namespace TuxedoCat
         Bitboard blackRooks;
         CastlingStatus castlingStatus;
         Color colorToMove;
-        boost::optional<Bitboard> enPassantTarget;
+        Bitboard enPassantTarget;
         uint32_t fullMoveCounter;
         uint32_t halfMoveCounter;
         std::stack<Position> positionStack;

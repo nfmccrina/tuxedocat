@@ -24,7 +24,6 @@
 */
 
 #include "../test_include/BitboardTest.hpp"
-#include "../include/BitboardConversionException.hpp"
 #include "../include/gtest/gtest.h"
 #include <sstream>
 #include <utility>
@@ -307,20 +306,18 @@ TEST_F(BitboardTest,
 }
 
 TEST_F(BitboardTest,
-    toAlgebraicCoordinate_ThrowsExceptionIfMultipleBitsSet)
+    toAlgebraicCoordinate_ReturnsEmptyStringIfMultipleBitsSet)
 {
     bitboard.setValue(0x0000080000000F00ULL);
 
-    EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
-        BitboardConversionException);
+    EXPECT_EQ("", bitboard.toAlgebraicCoordinate());
 }
 
-TEST_F(BitboardTest, toAlgebraicCoordinate_ThrowsExceptionIfEmpty)
+TEST_F(BitboardTest, toAlgebraicCoordinate_ReturnsEmptyStringIfEmpty)
 {
     bitboard.setValue(0x0000000000000000ULL);
 
-    EXPECT_THROW(bitboard.toAlgebraicCoordinate(),
-        BitboardConversionException);
+    EXPECT_EQ("", bitboard.toAlgebraicCoordinate());
 }
 
 TEST_F(BitboardTest,
@@ -335,20 +332,24 @@ TEST_F(BitboardTest,
 }
 
 TEST_F(BitboardTest,
-    toCoordinates_ThrowsExceptionIfMultipleBitsSet)
+    toCoordinates_ReturnsZeroIfMultipleBitsSet)
 {
     bitboard.setValue(0x0000080000000F00ULL);
 
-    EXPECT_THROW(bitboard.toCoordinates(),
-        BitboardConversionException);
+    std::pair<int, int> result = bitboard.toCoordinates();
+
+    EXPECT_EQ(0, result.first);
+    EXPECT_EQ(0, result.second);
 }
 
-TEST_F(BitboardTest, toCoordinates_ThrowsExceptionIfEmpty)
+TEST_F(BitboardTest, toCoordinates_ReturnsZeroIfEmpty)
 {
     bitboard.setValue(0x0000000000000000ULL);
 
-    EXPECT_THROW(bitboard.toCoordinates(),
-        BitboardConversionException);
+    std::pair<int, int> result = bitboard.toCoordinates();
+
+    EXPECT_EQ(0, result.first);
+    EXPECT_EQ(0, result.second);
 }
 
 TEST_F(BitboardTest, uint64_t_IsConvertedToBitboardImplicitly)
@@ -399,4 +400,18 @@ TEST_F(BitboardTest, inMask_ReturnsFalseIfNotMatchesMask)
     Bitboard b(0x0000000007000010ULL);
 
     EXPECT_EQ(false, b.inMask(0x00000000000000FFULL));
+}
+
+TEST_F(BitboardTest, isEmpty_ReturnsTrueIfNoBitsSet)
+{
+    Bitboard b {0x0000000000000000ULL};
+
+    EXPECT_EQ(true, b.isEmpty());
+}
+
+TEST_F(BitboardTest, isEmpty_ReturnsFalseIfBitsSet)
+{
+    Bitboard b {0x0000008000000000ULL};
+
+    EXPECT_EQ(false, b.isEmpty());
 }

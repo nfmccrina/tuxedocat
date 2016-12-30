@@ -24,22 +24,35 @@
 
 #include "Move.hpp"
 
-TuxedoCat::Move::Move(Piece mp, Square tl, boost::optional<Rank> pr)
+using namespace TuxedoCat;
+
+Move::Move()
+    : promotedRank(Rank::NONE)
+{
+}
+
+Move::Move(Piece mp, Square tl, Rank pr)
     : movingPiece(mp), targetSquare(tl), promotedRank(pr)
 {
 }
 
-TuxedoCat::Piece TuxedoCat::Move::getMovingPiece() const
+Piece Move::getMovingPiece() const
 {
     return this->movingPiece;
 }
 
-TuxedoCat::Square TuxedoCat::Move::getTargetSquare() const
+Square Move::getTargetSquare() const
 {
     return this->targetSquare;
 }
 
-boost::optional<TuxedoCat::Rank> TuxedoCat::Move::getPromotedRank() const
+Rank Move::getPromotedRank() const
 {
     return this->promotedRank;
+}
+
+bool Move::isValid() const
+{
+    return movingPiece.isValid() &&
+        targetSquare.isValid();
 }

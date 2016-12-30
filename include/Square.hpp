@@ -34,18 +34,20 @@ namespace TuxedoCat
     class Square
     {
     public:
+        Square();
         Square(std::string s);
         Square(std::pair<int, int> coord);
         Square(Bitboard bitboard);
 
+        bool isValid() const;
         Bitboard toBitboard() const;
         std::pair<int, int> toCoordinates() const;
         std::string toString() const;
 
     private:
         bool areCoordinatesValid(std::pair<int, int> coord) const;
+        void initializeFromAlgebraicNotation(std::string s);
         bool isAlgebraicDescValid(std::string s) const;
-        bool isBitboardValid(Bitboard b) const;
     
         Bitboard location;
     };

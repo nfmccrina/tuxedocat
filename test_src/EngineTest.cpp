@@ -26,7 +26,6 @@
 #include "../test_include/EngineTest.hpp"
 #include "../include/Engine.hpp"
 #include "../include/gtest/gtest.h"
-#include "../include/InvalidSquareException.hpp"
 
 using namespace TuxedoCat;
 

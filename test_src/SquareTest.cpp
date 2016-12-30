@@ -26,7 +26,6 @@
 #include "../test_include/SquareTest.hpp"
 #include "../include/Square.hpp"
 #include "../include/gtest/gtest.h"
-#include "../include/InvalidSquareException.hpp"
 
 using namespace TuxedoCat;
 
@@ -37,28 +36,32 @@ TEST_F(SquareTest, Constructor_ShouldInitializeFromStringCorrectly)
     EXPECT_EQ(Bitboard(0x0000000000000002ULL), s.toBitboard());
 }
 
-TEST_F(SquareTest, WhenUsingStringCtor_ShouldThrowExceptionIfInvalid)
+TEST_F(SquareTest, WhenUsingStringCtor_ShouldBeZeroIfInvalid)
 {
-    EXPECT_THROW (Square("b9"),
-        InvalidSquareException);
+    Square s {"b9"};
+
+    EXPECT_EQ(false, s.isValid());
 }
 
-TEST_F(SquareTest, WhenUsingStringCtor_ShouldThrowExceptionIfEmpty)
+TEST_F(SquareTest, WhenUsingStringCtor_ShouldBeZeroIfEmpty)
 {
-    EXPECT_THROW (Square(""),
-        InvalidSquareException);
+    Square s {""};
+
+    EXPECT_EQ(false, s.isValid());
 }
 
-TEST_F(SquareTest, WhenUsingPairCtor_ShouldThrowExceptionIfInvalid)
+TEST_F(SquareTest, WhenUsingPairCtor_ShouldBeZeroIfInvalid)
 {
-    EXPECT_THROW (Square(std::pair<int, int>(-1, 5)),
-        InvalidSquareException);
+    Square s {std::pair<int, int>(-1, 5)};
+
+    EXPECT_EQ(false, s.isValid());
 }
 
 TEST_F(SquareTest, WhenUsingBitboardCtor_ShouldThrowExceptionIfInvalid)
 {
-    EXPECT_THROW(Square(Bitboard(0x00ULL)),
-        InvalidSquareException);
+    Square s {Bitboard {0x00ULL}};
+
+    EXPECT_EQ(false, s.isValid());
 }
 
 TEST_F(SquareTest, toBitboard_ShouldConvertToBitboardCorrectly)
@@ -102,4 +105,11 @@ TEST_F(SquareTest, operatorNEQ_ShouldCorrectlyCompareObjects)
     Square s2("b7");
 
     EXPECT_EQ(true, s1 != s2);
+}
+
+TEST_F(SquareTest, isValid_ShouldReturnFalseIfZero)
+{
+    Square s;
+
+    EXPECT_EQ(false, s.isValid());
 }

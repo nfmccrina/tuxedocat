@@ -25,7 +25,6 @@
 #pragma once
 
 #include <string>
-#include <boost/optional.hpp>
 
 namespace TuxedoCat
 {
@@ -36,9 +35,10 @@ namespace TuxedoCat
         BISHOP,
         ROOK,
         QUEEN,
-        KING
+        KING,
+        NONE
     };
 
-    boost::optional<Rank> getRankFromString(std::string s);
+    Rank getRankFromString(std::string s);
     std::string rankToString(Rank r);
 }
