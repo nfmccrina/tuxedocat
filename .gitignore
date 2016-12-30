@@ -1,5 +1,10 @@
 .tup/
 build/
+.vs/
 log.txt
 *.o
 *.a
+*.vcxproj.filters
+*.vcxproj.user
+*.db
+*.opendb
