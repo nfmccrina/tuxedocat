@@ -33,6 +33,7 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <array>
 
 namespace TuxedoCat
 {
@@ -49,6 +50,9 @@ namespace TuxedoCat
         void unmakeMove();
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
+        std::vector<Move> computeSlidingMoves(int index, Piece p,
+            const std::array<uint64_t, 64>& rayMask);
+
         Bitboard computePinningPieceMask(Direction direction) const;
         std::vector<Square> findPiece(Color c, Rank r) const;
         std::vector<Move> generateCastles();
@@ -71,6 +75,7 @@ namespace TuxedoCat
         Bitboard getOpposingPieces(Color c) const;
         Bitboard getOwnPieces(Color c) const;
         Piece getPieceAt(Square s) const;
+        bool isCastleLegal(Square s) const;
         bool isInCheck(Color c) const;
         bool isMoveValid(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
@@ -81,6 +86,7 @@ namespace TuxedoCat
         void parseFEN(std::string fen);
         void updatePieces();
 
+        Bitboard allPieces;
         Bitboard blackBishops;
         Bitboard blackKing;
         Bitboard blackKnights;

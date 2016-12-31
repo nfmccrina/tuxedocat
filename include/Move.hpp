@@ -41,6 +41,7 @@ namespace TuxedoCat
         Square getTargetSquare() const;
         Rank getPromotedRank() const;
         bool isValid() const;
+        bool isCastle() const;
 
     private:
         Piece movingPiece;

@@ -503,6 +503,7 @@ void Position::unmakeMove()
         halfMoveCounter = p.halfMoveCounter;
         fullMoveCounter = p.fullMoveCounter;
         colorToMove = p.colorToMove;
+        allPieces = p.allPieces;
 
         positionStack.pop();
     }
@@ -582,6 +583,30 @@ void Position::addPieceAt(Bitboard loc, Color c, Rank r)
     }
 
     updatePieces();
+}
+
+std::vector<Move> Position::computeSlidingMoves(int index, Piece p,
+    const std::array<uint64_t, 64>& rayMask)
+{
+    Bitboard moveMask {0x0000000000000000ULL};
+    Bitboard opposingPieces;
+    Bitboard ownPieces;
+    int blockerIndex;
+    bool inCheck {false};
+
+    opposingPieces = getOpposingPieces(colorToMove);
+    ownPieces = getOwnPieces(colorToMove);
+    inCheck = isInCheck(colorToMove);
+    moveMask = rayMask[index];
+    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
+
+    if (blockerIndex != -1)
+    {
+        moveMask = moveMask & (~rayMask[blockerIndex]);
+        moveMask = moveMask & (~ownPieces);
+    }
+
+    return getMovesFromMask(moveMask, p, inCheck);
 }
 
 Bitboard Position::computePinningPieceMask(Direction direction) const
@@ -863,7 +888,7 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
         }
     }
 
-    if (b.inMask(legalMask) && !target.inMask(whitePieces | blackPieces))
+    if (b.inMask(legalMask) && !target.inMask(allPieces))
     {
         if (target.inMask(0xFF000000000000FFULL))
         {
@@ -1057,8 +1082,8 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
     }
 
     if (b.inMask(legalMask) &&
-        !firstSquare.inMask(whitePieces | blackPieces) &&
-        !target.inMask(whitePieces | blackPieces))
+        !firstSquare.inMask(allPieces) &&
+        !target.inMask(allPieces))
     {
         Move m(movingPiece, target, Rank::NONE);
 
@@ -1072,12 +1097,6 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
 std::vector<Move> Position::generateSlidingMovesN(Bitboard b)
 {
     Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
 
     if (!piece.isValid() ||
         isPiecePinned(piece, Direction::NWSE) ||
@@ -1087,20 +1106,7 @@ std::vector<Move> Position::generateSlidingMovesN(Bitboard b)
         return std::vector<Move>();
     }
 
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksN[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).lsb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksN[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
+    return computeSlidingMoves(b.lsb(), piece, LookupData::rayAttacksN);
 }
 
 std::vector<Move> Position::generateSlidingMovesS(Bitboard b)
@@ -1126,7 +1132,7 @@ std::vector<Move> Position::generateSlidingMovesS(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksS[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).msb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1160,7 +1166,7 @@ std::vector<Move> Position::generateSlidingMovesE(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).lsb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1194,7 +1200,7 @@ std::vector<Move> Position::generateSlidingMovesW(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).msb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1228,7 +1234,7 @@ std::vector<Move> Position::generateSlidingMovesNE(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksNE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).lsb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1262,7 +1268,7 @@ std::vector<Move> Position::generateSlidingMovesNW(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksNW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).lsb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1296,7 +1302,7 @@ std::vector<Move> Position::generateSlidingMovesSE(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksSE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).msb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1330,7 +1336,7 @@ std::vector<Move> Position::generateSlidingMovesSW(Bitboard b)
     inCheck = isInCheck(colorToMove);
     locationIndex = b.lsb();
     moveMask = LookupData::rayAttacksSW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (whitePieces | blackPieces)).msb();
+    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1556,6 +1562,58 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
     return result;
 }
 
+bool Position::isCastleLegal(Square s) const
+{
+    bool result = false;
+
+    if (s.toBitboard() == 0x0000000000000040ULL)
+    {
+        result = colorToMove == Color::WHITE &&
+            castlingStatus.getWhiteKingSide() &&
+            isSquareEmpty(Square {"f1"}) &&
+            isSquareEmpty(Square {"g1"}) &&
+            !isSquareAttacked(Square {"e1"}) &&
+            !isSquareAttacked(Square {"f1"}) &&
+            !isSquareAttacked(Square {"g1"}); 
+    }
+    else if (s.toBitboard() == 0x0000000000000004ULL)
+    {
+        result = colorToMove == Color::WHITE &&
+            castlingStatus.getWhiteQueenSide() &&
+            isSquareEmpty(Square {"d1"}) &&
+            isSquareEmpty(Square {"c1"}) &&
+            isSquareEmpty(Square {"b1"}) &&
+            !isSquareAttacked(Square {"e1"}) &&
+            !isSquareAttacked(Square {"d1"}) &&
+            !isSquareAttacked(Square {"c1"}) &&
+            !isSquareAttacked(Square {"b1"}); 
+    }
+    else if (s.toBitboard() == 0x4000000000000000ULL)
+    {
+        result = colorToMove == Color::BLACK &&
+            castlingStatus.getBlackKingSide() &&
+            isSquareEmpty(Square {"f8"}) &&
+            isSquareEmpty(Square {"g8"}) &&
+            !isSquareAttacked(Square {"e8"}) &&
+            !isSquareAttacked(Square {"f8"}) &&
+            !isSquareAttacked(Square {"g8"});
+    }
+    else if (s.toBitboard() == 0x0400000000000000ULL)
+    {
+        result = colorToMove == Color::BLACK &&
+            castlingStatus.getBlackQueenSide() &&
+            isSquareEmpty(Square {"d8"}) &&
+            isSquareEmpty(Square {"c8"}) &&
+            isSquareEmpty(Square {"b8"}) &&
+            !isSquareAttacked(Square {"e8"}) &&
+            !isSquareAttacked(Square {"d8"}) &&
+            !isSquareAttacked(Square {"c8"}) &&
+            !isSquareAttacked(Square {"b8"}); 
+    }
+
+    return result;
+}
+
 bool Position::isInCheck(Color c) const
 {
     bool inCheck {false};
@@ -1601,71 +1659,11 @@ bool Position::isMoveValid(const Move& m)
         }
         else
         {
-            Bitboard kingBitmask = kingLocation.toBitboard();
-            Bitboard targetBitmask = m.getTargetSquare().toBitboard();
-
-            if (
-                m.getMovingPiece().getRank() == Rank::KING &&
-                kingBitmask == 0x0000000000000010ULL &&
-                targetBitmask == 0x0000000000000040ULL &&
-                castlingStatus.getWhiteKingSide() &&
-                !getPieceAt(Square(std::pair<int, int>(0, 5))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(0, 6))).isValid() &&
-                !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(std::pair<int, int>(0, 5))) &&
-                !isSquareAttacked(Square(std::pair<int, int>(0, 6)))
-                )
+            if (m.isCastle())
             {
-                result = true;
+                result = isCastleLegal(m.getTargetSquare());
             }
-            else if (
-                m.getMovingPiece().getRank() == Rank::KING &&
-                kingBitmask == 0x0000000000000010ULL &&
-                targetBitmask == 0x0000000000000004ULL &&
-                castlingStatus.getWhiteQueenSide() &&
-                !getPieceAt(Square(std::pair<int, int>(0, 1))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(0, 2))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(0, 3))).isValid() &&
-                !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(std::pair<int, int>(0, 3))) &&
-                !isSquareAttacked(Square(std::pair<int, int>(0, 2)))
-                )
-            {
-                result = true;
-            }
-            else if (
-                m.getMovingPiece().getRank() == Rank::KING &&
-                kingBitmask == 0x1000000000000000ULL &&
-                targetBitmask == 0x4000000000000000ULL &&
-                castlingStatus.getBlackKingSide() &&
-                !getPieceAt(Square(std::pair<int, int>(7, 5))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(7, 6))).isValid() &&
-                !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(std::pair<int, int>(7, 5))) &&
-                !isSquareAttacked(Square(std::pair<int, int>(7, 6)))
-                )
-            {
-                result = true;
-            }
-            else if (
-                m.getMovingPiece().getRank() == Rank::KING &&
-                kingBitmask == 0x1000000000000000ULL &&
-                targetBitmask == 0x0400000000000000ULL &&
-                castlingStatus.getBlackQueenSide() &&
-                !getPieceAt(Square(std::pair<int, int>(7, 1))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(7, 2))).isValid() &&
-                !getPieceAt(Square(std::pair<int, int>(7, 3))).isValid() &&
-                !isSquareAttacked(kingLocation) &&
-                !isSquareAttacked(Square(std::pair<int, int>(7, 3))) &&
-                !isSquareAttacked(Square(std::pair<int, int>(7, 2)))
-                )
-            {
-                result = true;
-            }
-            else if ((m.getMovingPiece().getRank() != Rank::KING || 
-                !kingBitmask.inMask(0x1000000000000010ULL) || 
-                !targetBitmask.inMask(0x4400000000000044ULL)) ||
-                !isSquareAttacked(m.getTargetSquare()))
+            else if (!isSquareAttacked(m.getTargetSquare()))
             {
                 result = true;
             }
@@ -1719,8 +1717,8 @@ bool Position::isSquareAttacked(Square s) const
         result = true;
     }
 
-    blockerIndex = (LookupData::rayAttacksN[squareIndex] &
-        (whitePieces | blackPieces)).lsb();
+    blockerIndex = (LookupData::rayAttacksN[squareIndex] & allPieces)
+        .lsb();
 
     if (blockerIndex != -1)
     {
@@ -1732,7 +1730,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksNE[squareIndex] &
-        (whitePieces | blackPieces)).lsb();
+        allPieces).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1744,7 +1742,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksE[squareIndex] &
-        (whitePieces | blackPieces)).lsb();
+        (allPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1756,7 +1754,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksSE[squareIndex] &
-        (whitePieces | blackPieces)).msb();
+        (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1768,7 +1766,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksS[squareIndex] &
-        (whitePieces | blackPieces)).msb();
+        (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1780,7 +1778,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksSW[squareIndex] &
-        (whitePieces | blackPieces)).msb();
+        (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1792,7 +1790,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksW[squareIndex] &
-        (whitePieces | blackPieces)).msb();
+        (allPieces)).msb();
 
     if (blockerIndex != -1)
     {
@@ -1804,7 +1802,7 @@ bool Position::isSquareAttacked(Square s) const
     }
 
     blockerIndex = Bitboard(LookupData::rayAttacksNW[squareIndex] &
-        (whitePieces | blackPieces)).lsb();
+        (allPieces)).lsb();
 
     if (blockerIndex != -1)
     {
@@ -1853,7 +1851,7 @@ bool Position::isSquareAttacked(Square s) const
 
 bool Position::isSquareEmpty(Square s) const
 {
-    return ((whitePieces | blackPieces) & s.toBitboard()) == 0x00;
+    return (allPieces & s.toBitboard()).isEmpty();
 }
 
 void Position::removePieceAt(Bitboard loc)
@@ -2009,4 +2007,6 @@ void Position::updatePieces()
         | blackRooks
         | blackQueens
         | blackKing);
+
+    allPieces = whitePieces | blackPieces;
 }

@@ -67,3 +67,35 @@ TEST_F(MoveTest, isValid_ShouldReturnFalseIfMemberIsInvalid)
 
     EXPECT_EQ(false, m.isValid());
 }
+
+TEST_F(MoveTest, isCastle_ShouldReturnTrueIfMoveIsCastle)
+{
+    Move m1 {Piece {Color::WHITE, Rank::KING, Square {"e1"}},
+        Square {"g1"}, Rank::NONE};
+        
+    Move m2 {Piece {Color::WHITE, Rank::KING, Square {"e1"}},
+        Square {"c1"}, Rank::NONE};
+
+    Move m3 {Piece {Color::BLACK, Rank::KING, Square {"e8"}},
+        Square {"g8"}, Rank::NONE};
+
+    Move m4 {Piece {Color::BLACK, Rank::KING, Square {"e8"}},
+        Square {"c8"}, Rank::NONE};
+
+    EXPECT_EQ(true, m1.isCastle());
+    EXPECT_EQ(true, m2.isCastle());
+    EXPECT_EQ(true, m3.isCastle());
+    EXPECT_EQ(true, m4.isCastle());
+}
+
+TEST_F(MoveTest, isCastle_ShouldReturnFalseIfMoveIsNotCastle)
+{
+    Move m1 {Piece {Color::BLACK, Rank::KING, Square {"e1"}},
+        Square {"g1"}, Rank::NONE};
+        
+    Move m2 {Piece {Color::WHITE, Rank::ROOK, Square {"e1"}},
+        Square {"c1"}, Rank::NONE};
+
+    EXPECT_EQ(false, m1.isCastle());
+    EXPECT_EQ(false, m2.isCastle());
+}

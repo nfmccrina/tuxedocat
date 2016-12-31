@@ -26,26 +26,27 @@
 #pragma once
 
 #include <cstdint>
+#include <array>
 
 namespace TuxedoCat
 {
     class LookupData
     {
     public:
-        static const uint64_t knightAttacks[64];
-        static const uint64_t kingAttacks[64];
-        static const uint64_t rayAttacksN[64];
-        static const uint64_t rayAttacksS[64];
-        static const uint64_t rayAttacksE[64];
-        static const uint64_t rayAttacksW[64];
-        static const uint64_t rayAttacksNE[64];
-        static const uint64_t rayAttacksNW[64];
-        static const uint64_t rayAttacksSE[64];
-        static const uint64_t rayAttacksSW[64];
-        static const uint64_t fileMask[64];
-        static const uint64_t rankMask[64];
-        static const uint64_t swneMask[64];
-        static const uint64_t nwseMask[64];
+        static const std::array<uint64_t, 64> knightAttacks;
+        static const std::array<uint64_t, 64> kingAttacks;
+        static const std::array<uint64_t, 64> rayAttacksN;
+        static const std::array<uint64_t, 64> rayAttacksS;
+        static const std::array<uint64_t, 64> rayAttacksE;
+        static const std::array<uint64_t, 64> rayAttacksW;
+        static const std::array<uint64_t, 64> rayAttacksNE;
+        static const std::array<uint64_t, 64> rayAttacksNW;
+        static const std::array<uint64_t, 64> rayAttacksSE;
+        static const std::array<uint64_t, 64> rayAttacksSW;
+        static const std::array<uint64_t, 64> fileMask;
+        static const std::array<uint64_t, 64> rankMask;
+        static const std::array<uint64_t, 64> swneMask;
+        static const std::array<uint64_t, 64> nwseMask;
         static const int index64[64];
         static const int index64Reverse[64];
         static const uint64_t k1;
