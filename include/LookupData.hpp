@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "Direction.hpp"
 #include <cstdint>
 #include <array>
 
@@ -33,6 +34,8 @@ namespace TuxedoCat
     class LookupData
     {
     public:
+        static const std::array<uint64_t, 64>& getRayAttacksByDirection(
+            Direction dir);
         static const std::array<uint64_t, 64> knightAttacks;
         static const std::array<uint64_t, 64> kingAttacks;
         static const std::array<uint64_t, 64> rayAttacksN;

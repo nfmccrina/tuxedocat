@@ -22,8 +22,10 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
+#pragma once
+
 namespace TuxedoCat
 {
-    enum class Direction { NS, EW, SWNE, NWSE };
+    enum class Direction { N, S, E, W, SW, NE, NW, SE };
 }
 

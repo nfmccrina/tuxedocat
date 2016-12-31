@@ -23,7 +23,6 @@
 */
 
 #include "../include/Piece.hpp"
-#include <boost/algorithm/string.hpp>
 #include <cctype>
 
 using namespace TuxedoCat;
@@ -66,7 +65,7 @@ std::string Piece::toString() const
 
     if (color == Color::WHITE)
     {
-        boost::to_upper(chRank);
+        chRank[0] = std::toupper(chRank[0]);
     }
 
     return chRank;

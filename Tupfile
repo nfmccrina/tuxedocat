@@ -5,6 +5,6 @@ TESTDIR=test_src
 
 cpp_files=$(SRCDIR)/*.cpp $(TESTDIR)/*.cpp
 
-: foreach $(cpp_files)  |> $(CC) $(CXXFLAGS) $(INCLUDES) -c %f -o %o |> $(BUILDDIR)/%B.o
+: foreach $(cpp_files)  |> $(CXX) $(CXXFLAGS) $(INCLUDES) -c %f -o %o |> $(BUILDDIR)/%B.o
 
-: $(BUILDDIR)/*.o $(GTESTDIR)/libgtest.a |> $(CC) %f $(LDFLAGS) -pthread $(LIBS) -o %o |> $(BUILDDIR)/tuxedocat
+: $(BUILDDIR)/*.o $(GTESTDIR)/libgtest.a |> $(CXX) %f $(LDFLAGS) -pthread $(LIBS) -o %o |> $(BUILDDIR)/tuxedocat

@@ -51,7 +51,7 @@ namespace TuxedoCat
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
         std::vector<Move> computeSlidingMoves(int index, Piece p,
-            const std::array<uint64_t, 64>& rayMask);
+            bool highBitBlock, const std::array<uint64_t, 64>& rayMask);
 
         Bitboard computePinningPieceMask(Direction direction) const;
         std::vector<Square> findPiece(Color c, Rank r) const;
@@ -61,25 +61,21 @@ namespace TuxedoCat
         std::vector<Move> generatePawnAdvancesAt(Bitboard b);
         std::vector<Move> generatePawnCapturesAt(Bitboard b);
         std::vector<Move> generatePawnDblAdvancesAt(Bitboard b);
-        std::vector<Move> generateSlidingMovesN(Bitboard b);
-        std::vector<Move> generateSlidingMovesS(Bitboard b);
-        std::vector<Move> generateSlidingMovesE(Bitboard b);
-        std::vector<Move> generateSlidingMovesW(Bitboard b);
-        std::vector<Move> generateSlidingMovesNE(Bitboard b);
-        std::vector<Move> generateSlidingMovesNW(Bitboard b);
-        std::vector<Move> generateSlidingMovesSE(Bitboard b);
-        std::vector<Move> generateSlidingMovesSW(Bitboard b);
+        std::vector<Move> generateSlidingMovesAt(Bitboard b, Direction d);
+        int getBlockerIndex(Bitboard mask, bool highBitBlock);
         std::vector<Move> getMovesFromMask(Bitboard mask, Piece p,
             bool inCheck);
+        bool getHighBitBlockerByDirection(Direction direction) const;
         int getOffsetFromDirection(Direction direction) const;
         Bitboard getOpposingPieces(Color c) const;
         Bitboard getOwnPieces(Color c) const;
         Piece getPieceAt(Square s) const;
         bool isCastleLegal(Square s) const;
         bool isInCheck(Color c) const;
-        bool isMoveValid(const Move& m);
+        bool isMoveLegal(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
             Direction direction) const;
+        bool isSlidingPiecePinned(const Piece p, Direction d) const;
         bool isSquareAttacked(Square s) const;
         bool isSquareEmpty(Square s) const;
         void removePieceAt(Bitboard location);

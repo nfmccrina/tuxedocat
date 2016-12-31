@@ -25,6 +25,45 @@
 
 #include "../include/LookupData.hpp"
 
+using namespace TuxedoCat;
+
+const std::array<uint64_t, 64>& LookupData::getRayAttacksByDirection(
+    Direction dir)
+{
+    if (dir == Direction::N)
+    {
+        return LookupData::rayAttacksN;
+    }
+    else if (dir == Direction::S)
+    {
+        return LookupData::rayAttacksS;
+    }
+    else if (dir == Direction::E)
+    {
+        return LookupData::rayAttacksE;
+    }
+    else if (dir == Direction::W)
+    {
+        return LookupData::rayAttacksW;
+    }
+    else if (dir == Direction::NW)
+    {
+        return LookupData::rayAttacksNW;
+    }
+    else if (dir == Direction::NE)
+    {
+        return LookupData::rayAttacksNE;
+    }
+    else if (dir == Direction::SW)
+    {
+        return LookupData::rayAttacksSW;
+    }
+    else
+    {
+        return LookupData::rayAttacksSE;
+    }
+}
+
 const std::array<uint64_t, 64> TuxedoCat::LookupData::knightAttacks = {{
     0x0000000000020400ULL, 0x0000000000050800ULL,
     0x00000000000A1100ULL, 0x0000000000142200ULL,

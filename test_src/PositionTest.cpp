@@ -325,7 +325,7 @@ TEST_F(PositionTest,
     EXPECT_EQ(9, advances.size());
 }
 
-TEST_F(PositionTest,
+/*TEST_F(PositionTest,
     generateMoves_KnightMoves_IfInCheck_ShouldOnlyFindCapture)
 {
     Position p("1N6/8/8/8/1B6/3N4/1r3K2/8 w - - 0 1");
@@ -333,4 +333,30 @@ TEST_F(PositionTest,
     std::vector<Move> advances = p.generateMoves(Rank::KNIGHT);
 
     EXPECT_EQ(1, advances.size());
+}*/
+
+TEST_F(PositionTest,
+    generateMoves_makeMove_ShouldRestorePositionCorrectly)
+{
+    Position p {"8/8/8/8/1B6/3N4/1r3K2/8 w - - 0 1"};
+
+    Move m {Piece {Color::WHITE, Rank::KNIGHT, Square {"d3"}},
+        Square {"e1"}, Rank::NONE};
+
+    std::stringstream ss;
+
+    ss << "- - - - - - - -" << std::endl;
+    ss << "- - - - - - - -" << std::endl;
+    ss << "- - - - - - - -" << std::endl;
+    ss << "- - - - - - - -" << std::endl;
+    ss << "- B - - - - - -" << std::endl;
+    ss << "- - - N - - - -" << std::endl;
+    ss << "- r - - - K - -" << std::endl;
+    ss << "- - - - - - - -" << std::endl;
+    ss << "To Move: White" << std::endl;
+
+    p.makeMove(m);
+    p.unmakeMove();
+
+    EXPECT_EQ(ss.str(), p.toString());
 }

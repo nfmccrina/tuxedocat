@@ -23,12 +23,12 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Position.hpp"
-#include "LookupData.hpp"
+#include "../include/Position.hpp"
+#include "../include/LookupData.hpp"
+#include "../include/Utility.hpp"
 #include <sstream>
 #include <iostream>
 #include <vector>
-#include <boost/algorithm/string.hpp>
 #include <utility>
 
 using namespace TuxedoCat;
@@ -62,6 +62,7 @@ Position::Position(const Position& p)
     halfMoveCounter = p.halfMoveCounter;
     fullMoveCounter = p.fullMoveCounter;
     colorToMove = p.colorToMove;
+    allPieces = p.allPieces;
 }
 
 // end constructors
@@ -138,23 +139,23 @@ std::vector<Move> Position::generateMoves(Rank rank)
         if ((rank == Rank::NONE || rank == Rank::BISHOP) &&
             getPieceAt(currentSquare).getRank() == Rank::BISHOP)
         {
-            bishopMoves = generateSlidingMovesNE(currentSquare);
-
+            bishopMoves = generateSlidingMovesAt(currentSquare,
+                Direction::NE);
             moves.insert(moves.end(), bishopMoves.begin(),
                 bishopMoves.end());
             
-            bishopMoves = generateSlidingMovesNW(currentSquare);
-
+            bishopMoves = generateSlidingMovesAt(currentSquare,
+                Direction::NW);
             moves.insert(moves.end(), bishopMoves.begin(),
                 bishopMoves.end());
 
-            bishopMoves = generateSlidingMovesSE(currentSquare);
-
+            bishopMoves = generateSlidingMovesAt(currentSquare,
+                Direction::SE);
             moves.insert(moves.end(), bishopMoves.begin(),
                 bishopMoves.end());
 
-            bishopMoves = generateSlidingMovesSW(currentSquare);
-
+            bishopMoves = generateSlidingMovesAt(currentSquare,
+                Direction::SW);
             moves.insert(moves.end(), bishopMoves.begin(),
                 bishopMoves.end());
         }
@@ -162,23 +163,23 @@ std::vector<Move> Position::generateMoves(Rank rank)
         if ((rank == Rank::NONE || rank == Rank::ROOK) &&
             getPieceAt(currentSquare).getRank() == Rank::ROOK)
         {
-            rookMoves = generateSlidingMovesN(currentSquare);
-
+            rookMoves = generateSlidingMovesAt(currentSquare,
+                Direction::N);
             moves.insert(moves.end(), rookMoves.begin(),
                 rookMoves.end());
             
-            rookMoves = generateSlidingMovesW(currentSquare);
-
+            rookMoves = generateSlidingMovesAt(currentSquare,
+                Direction::W);
             moves.insert(moves.end(), rookMoves.begin(),
                 rookMoves.end());
 
-            rookMoves = generateSlidingMovesE(currentSquare);
-
+            rookMoves = generateSlidingMovesAt(currentSquare,
+                Direction::E);
             moves.insert(moves.end(), rookMoves.begin(),
                 rookMoves.end());
 
-            rookMoves = generateSlidingMovesS(currentSquare);
-
+            rookMoves = generateSlidingMovesAt(currentSquare,
+                Direction::S);
             moves.insert(moves.end(), rookMoves.begin(),
                 rookMoves.end());
         }
@@ -186,35 +187,43 @@ std::vector<Move> Position::generateMoves(Rank rank)
         if ((rank == Rank::NONE || rank == Rank::QUEEN) &&
             getPieceAt(currentSquare).getRank() == Rank::QUEEN)
         {
-            queenMoves = generateSlidingMovesN(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::N);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
             
-            queenMoves = generateSlidingMovesW(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::W);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
 
-            queenMoves = generateSlidingMovesE(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::E);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
 
-            queenMoves = generateSlidingMovesS(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::S);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
 
-            queenMoves = generateSlidingMovesNE(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::NE);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
             
-            queenMoves = generateSlidingMovesNW(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::NW);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
 
-            queenMoves = generateSlidingMovesSE(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::SE);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
 
-            queenMoves = generateSlidingMovesSW(currentSquare);
+            queenMoves = generateSlidingMovesAt(currentSquare,
+                Direction::SW);
             moves.insert(moves.end(), queenMoves.begin(),
                 queenMoves.end());
         }
@@ -586,7 +595,7 @@ void Position::addPieceAt(Bitboard loc, Color c, Rank r)
 }
 
 std::vector<Move> Position::computeSlidingMoves(int index, Piece p,
-    const std::array<uint64_t, 64>& rayMask)
+    bool highBitBlock, const std::array<uint64_t, 64>& rayMask)
 {
     Bitboard moveMask {0x0000000000000000ULL};
     Bitboard opposingPieces;
@@ -594,11 +603,11 @@ std::vector<Move> Position::computeSlidingMoves(int index, Piece p,
     int blockerIndex;
     bool inCheck {false};
 
-    opposingPieces = getOpposingPieces(colorToMove);
     ownPieces = getOwnPieces(colorToMove);
     inCheck = isInCheck(colorToMove);
     moveMask = rayMask[index];
-    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
+
+    blockerIndex = getBlockerIndex(moveMask, highBitBlock);
 
     if (blockerIndex != -1)
     {
@@ -615,7 +624,8 @@ Bitboard Position::computePinningPieceMask(Direction direction) const
 
     if (colorToMove == Color::BLACK)
     {
-        if (direction == Direction::NS || direction == Direction::EW) 
+        if (direction == Direction::N || direction == Direction::S ||
+            direction == Direction::E || direction == Direction::W)
         {
             mask = whiteQueens | whiteRooks;
         }
@@ -626,7 +636,8 @@ Bitboard Position::computePinningPieceMask(Direction direction) const
     }
     else
     {
-        if (direction == Direction::NS || direction == Direction::EW)
+        if (direction == Direction::N || direction == Direction::S ||
+            direction == Direction::W || direction == Direction::E)
         {
             mask = blackQueens | blackRooks;
         }
@@ -708,12 +719,12 @@ std::vector<Move> Position::generateCastles()
             Move castleQueenSide(piece, Square(std::pair<int, int>(0, 2)),
                 Rank::NONE);
 
-            if (isMoveValid(castleKingSide))
+            if (isMoveLegal(castleKingSide))
             {
                 moves.push_back(castleKingSide);
             }
 
-            if (isMoveValid(castleQueenSide))
+            if (isMoveLegal(castleQueenSide))
             {
                 moves.push_back(castleQueenSide);
             }
@@ -731,12 +742,12 @@ std::vector<Move> Position::generateCastles()
             Move castleQueenSide(piece, Square(std::pair<int, int>(7, 2)),
                 Rank::NONE);
 
-            if (isMoveValid(castleKingSide))
+            if (isMoveLegal(castleKingSide))
             {
                 moves.push_back(castleKingSide);
             }
 
-            if (isMoveValid(castleQueenSide))
+            if (isMoveLegal(castleQueenSide))
             {
                 moves.push_back(castleQueenSide);
             }
@@ -773,7 +784,7 @@ std::vector<Move> Position::generateKingMovesAt(Square s)
         currentMove = 0x01ULL << currentIndex;
         Move m(piece, currentMove, Rank::NONE);
 
-        if (isMoveValid(m))
+        if (isMoveLegal(m))
         {
             moves.push_back(m);
         }
@@ -800,10 +811,14 @@ std::vector<Move> Position::generateKnightMovesAt(Square s)
     if (
         !piece.isValid() ||
         piece.getRank() != Rank::KNIGHT ||
-        isPiecePinned(piece, Direction::NS) ||
-        isPiecePinned(piece, Direction::EW) ||
-        isPiecePinned(piece, Direction::SWNE) ||
-        isPiecePinned(piece, Direction::NWSE)
+        isPiecePinned(piece, Direction::N) ||
+        isPiecePinned(piece, Direction::E) ||
+        isPiecePinned(piece, Direction::S) ||
+        isPiecePinned(piece, Direction::W) ||
+        isPiecePinned(piece, Direction::SE) ||
+        isPiecePinned(piece, Direction::NE) ||
+        isPiecePinned(piece, Direction::SW) ||
+        isPiecePinned(piece, Direction::NW)
         )
     {
         return moves;
@@ -840,7 +855,7 @@ std::vector<Move> Position::generateKnightMovesAt(Square s)
         currentMove = 0x01ULL << currentIndex;
         Move m(piece, Square(currentMove), Rank::NONE);
 
-        if ((inCheck && isMoveValid(m)) || !inCheck)
+        if ((inCheck && isMoveLegal(m)) || !inCheck)
         {
             moves.push_back(m);
         }
@@ -860,9 +875,12 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
-        isPiecePinned(movingPiece, Direction::EW) ||
-        isPiecePinned(movingPiece, Direction::NWSE) ||
-        isPiecePinned(movingPiece, Direction::SWNE))
+        isPiecePinned(movingPiece, Direction::E) ||
+        isPiecePinned(movingPiece, Direction::W) ||
+        isPiecePinned(movingPiece, Direction::NW) ||
+        isPiecePinned(movingPiece, Direction::SE) ||
+        isPiecePinned(movingPiece, Direction::NE) ||
+        isPiecePinned(movingPiece, Direction::SW))
     {
         return moves;
     }
@@ -897,22 +915,22 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
             Move m3(movingPiece, target, Rank::BISHOP);
             Move m4(movingPiece, target, Rank::KNIGHT);
 
-            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
                 moves.push_back(m1);
             }
 
-            if ((inCheck && isMoveValid(m2)) || !inCheck)
+            if ((inCheck && isMoveLegal(m2)) || !inCheck)
             {
                 moves.push_back(m2);
             }
 
-            if ((inCheck && isMoveValid(m3)) || !inCheck)
+            if ((inCheck && isMoveLegal(m3)) || !inCheck)
             {
                 moves.push_back(m3);
             }
 
-            if ((inCheck && isMoveValid(m4)) || !inCheck)
+            if ((inCheck && isMoveLegal(m4)) || !inCheck)
             {
                 moves.push_back(m4);
             }
@@ -921,7 +939,7 @@ std::vector<Move> Position::generatePawnAdvancesAt(Bitboard b)
         {
             Move m1(movingPiece, target, Rank::NONE);
 
-            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
                 moves.push_back(m1);
             }
@@ -937,8 +955,8 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
     Bitboard validRankMask;
     Bitboard validCaptureLeftMask;
     Bitboard validCaptureRightMask;
-    Bitboard captureLeftTarget;
-    Bitboard captureRightTarget;
+    Bitboard captureLeftTarget {0x00ULL};
+    Bitboard captureRightTarget {0x00ULL};
     Bitboard targets;
     Bitboard currentSquare;
     Bitboard opposingPieces;
@@ -946,20 +964,36 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
     Piece movePiece = getPieceAt(Square(b));
     bool inCheck {false};
 
-    if (!movePiece.isValid() || movePiece.getRank() != Rank::PAWN)
+    if (!movePiece.isValid() ||
+        movePiece.getRank() != Rank::PAWN ||
+        isPiecePinned(movePiece, Direction::N) ||
+        isPiecePinned(movePiece, Direction::S) ||
+        isPiecePinned(movePiece, Direction::E) ||
+        isPiecePinned(movePiece, Direction::W))
     {
         return captures;
     }
 
     if (colorToMove == Color::WHITE)
     {
+            
         validRankMask.setValue(0x00FFFFFFFFFFFFFFULL);
         validCaptureLeftMask.setValue(0xFEFEFEFEFEFEFEFEULL);
         validCaptureRightMask.setValue(0x7F7F7F7F7F7F7F7FULL);
-        captureLeftTarget = ((b & validRankMask) & validCaptureLeftMask)
-            << 7;
-        captureRightTarget = ((b & validRankMask) & validCaptureRightMask)
-            << 9;
+
+        if (!isPiecePinned(movePiece, Direction::SW) &&
+            !isPiecePinned(movePiece, Direction::NE))
+        {
+            captureLeftTarget = (
+                (b & validRankMask) & validCaptureLeftMask) << 7;
+        }
+
+        if (!isPiecePinned(movePiece, Direction::SE) &&
+            !isPiecePinned(movePiece, Direction::NW))
+        {
+            captureRightTarget = (
+                (b & validRankMask) & validCaptureRightMask) << 9;
+        }
 
         opposingPieces = blackPieces;
 
@@ -973,10 +1007,20 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
         validRankMask.setValue(0xFFFFFFFFFFFFFF00ULL);
         validCaptureLeftMask.setValue(0x7F7F7F7F7F7F7F7FULL);
         validCaptureRightMask.setValue(0xFEFEFEFEFEFEFEFEULL);
-        captureLeftTarget = ((b & validRankMask) & validCaptureLeftMask)
-            >> 7;
-        captureRightTarget = ((b & validRankMask) & validCaptureRightMask)
-            >> 9;
+
+        if (!isPiecePinned(movePiece, Direction::SW) &&
+            !isPiecePinned(movePiece, Direction::NE))
+        {
+            captureLeftTarget = (
+                (b & validRankMask) & validCaptureLeftMask) >> 7;
+        }
+
+        if (!isPiecePinned(movePiece, Direction::SE) &&
+            !isPiecePinned(movePiece, Direction::NW))
+        {
+            captureRightTarget = (
+                (b & validRankMask) & validCaptureRightMask) >> 9;
+        }
 
         opposingPieces = whitePieces;
 
@@ -1005,22 +1049,22 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
             Move m3(movePiece, currentSquare, Rank::BISHOP);
             Move m4(movePiece, currentSquare, Rank::KNIGHT);
 
-            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
                 captures.push_back(m1);
             }
 
-            if ((inCheck && isMoveValid(m2)) || !inCheck)
+            if ((inCheck && isMoveLegal(m2)) || !inCheck)
             {
                 captures.push_back(m2);
             }
 
-            if ((inCheck && isMoveValid(m3)) || !inCheck)
+            if ((inCheck && isMoveLegal(m3)) || !inCheck)
             {
                 captures.push_back(m3);
             }
 
-            if ((inCheck && isMoveValid(m4)) || !inCheck)
+            if ((inCheck && isMoveLegal(m4)) || !inCheck)
             {
                 captures.push_back(m4);
             }
@@ -1029,7 +1073,7 @@ std::vector<Move> Position::generatePawnCapturesAt(Bitboard b)
         {
             Move m1(movePiece, currentSquare, Rank::NONE);
 
-            if ((inCheck && isMoveValid(m1)) || !inCheck)
+            if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
                 captures.push_back(m1);
             }
@@ -1051,9 +1095,12 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
-        isPiecePinned(movingPiece, Direction::EW) ||
-        isPiecePinned(movingPiece, Direction::NWSE) ||
-        isPiecePinned(movingPiece, Direction::SWNE))
+        isPiecePinned(movingPiece, Direction::E) ||
+        isPiecePinned(movingPiece, Direction::W) ||
+        isPiecePinned(movingPiece, Direction::SE) ||
+        isPiecePinned(movingPiece, Direction::NW) ||
+        isPiecePinned(movingPiece, Direction::SW) ||
+        isPiecePinned(movingPiece, Direction::NE))
     {
         return moves;
     }
@@ -1087,264 +1134,38 @@ std::vector<Move> Position::generatePawnDblAdvancesAt(Bitboard b)
     {
         Move m(movingPiece, target, Rank::NONE);
 
-        if ((inCheck && isMoveValid(m)) || !inCheck)
+        if ((inCheck && isMoveLegal(m)) || !inCheck)
         moves.push_back(m);
     }
 
     return moves;
 }
 
-std::vector<Move> Position::generateSlidingMovesN(Bitboard b)
+std::vector<Move> Position::generateSlidingMovesAt(Bitboard b, Direction d)
 {
     Piece piece = getPieceAt({b});
 
     if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NWSE) ||
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::EW))
+        isSlidingPiecePinned(piece, d))
     {
         return std::vector<Move>();
     }
 
-    return computeSlidingMoves(b.lsb(), piece, LookupData::rayAttacksN);
+    return computeSlidingMoves(b.lsb(), piece,
+        getHighBitBlockerByDirection(d),
+        LookupData::getRayAttacksByDirection(d));
 }
 
-std::vector<Move> Position::generateSlidingMovesS(Bitboard b)
+int Position::getBlockerIndex(Bitboard mask, bool highBitBlock)
 {
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NWSE) || 
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::EW)) 
+    if (highBitBlock)
     {
-        return std::vector<Move>();
+        return (mask & allPieces).msb();
     }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksS[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
-
-    if (blockerIndex != -1)
+    else
     {
-        moveMask = moveMask & (~LookupData::rayAttacksS[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
+        return (mask & allPieces).lsb();
     }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesE(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NWSE) ||
-        isPiecePinned(piece, Direction::SWNE) ||
-        isPiecePinned(piece, Direction::NS)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksE[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesW(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NWSE) || 
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::NS)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksW[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesNE(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NS) || 
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::EW)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksNE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksNE[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesNW(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NS) || 
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::EW)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksNW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).lsb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksNW[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesSE(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NS) || 
-        isPiecePinned(piece, Direction::SWNE) || 
-        isPiecePinned(piece, Direction::EW)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksSE[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksSE[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
-}
-
-std::vector<Move> Position::generateSlidingMovesSW(Bitboard b)
-{
-    Piece piece = getPieceAt({b});
-    int locationIndex;
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
-    int blockerIndex;
-    bool inCheck {false};
-
-    if (!piece.isValid() ||
-        isPiecePinned(piece, Direction::NWSE) || 
-        isPiecePinned(piece, Direction::NS) || 
-        isPiecePinned(piece, Direction::EW)) 
-    {
-        return std::vector<Move>();
-    }
-
-    opposingPieces = getOpposingPieces(colorToMove);
-    ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
-    locationIndex = b.lsb();
-    moveMask = LookupData::rayAttacksSW[locationIndex];
-    blockerIndex = Bitboard(moveMask & (allPieces)).msb();
-
-    if (blockerIndex != -1)
-    {
-        moveMask = moveMask & (~LookupData::rayAttacksSW[blockerIndex]);
-        moveMask = moveMask & (~ownPieces);
-    }
-
-    return getMovesFromMask(moveMask, piece, inCheck);
 }
 
 std::vector<Move> Position::getMovesFromMask(Bitboard mask, Piece p,
@@ -1361,7 +1182,7 @@ std::vector<Move> Position::getMovesFromMask(Bitboard mask, Piece p,
 
         Move m {p, currentMove, Rank::NONE};
 
-        if ((inCheck && isMoveValid(m)) || !inCheck)
+        if ((inCheck && isMoveLegal(m)) || !inCheck)
         {
             moves.push_back(m);
         }
@@ -1372,23 +1193,38 @@ std::vector<Move> Position::getMovesFromMask(Bitboard mask, Piece p,
     return moves;
 }
 
+bool Position::getHighBitBlockerByDirection(Direction direction) const
+{
+    if (direction == Direction::N ||
+        direction == Direction::NW ||
+        direction == Direction::NE ||
+        direction == Direction::W)
+    {
+        return false;
+    }
+    else
+    {
+        return true;
+    }
+}
+
 int Position::getOffsetFromDirection(Direction direction) const
 {
     int offset = 0;
     
-    if (direction == Direction::NS)
+    if (direction == Direction::N || direction == Direction::S)
     {
         offset = 8;
     }
-    else if (direction == Direction::EW)
+    else if (direction == Direction::E || direction == Direction::W)
     {
         offset = 1;
     }
-    else if (direction == Direction::SWNE)
+    else if (direction == Direction::SW || direction == Direction::NE)
     {
         offset = 9;
     }
-    else if (direction == Direction::NWSE)
+    else if (direction == Direction::NW || direction == Direction::SE)
     {
         offset = 7;
     }
@@ -1562,6 +1398,86 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
     return result;
 }
 
+bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
+{
+    bool result;
+
+    if (d == Direction::N)
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+    else if (d == Direction::S)
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+    else if (d == Direction::W)
+    {
+        result = isPiecePinned(p, Direction::S) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+    else if (d == Direction::E)
+    {
+        result = isPiecePinned(p, Direction::S) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+    else if (d == Direction::NW)
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::S); 
+    }
+    else if (d == Direction::NE)
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::NE) ||
+            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::S); 
+    }
+    else if (d == Direction::SW)
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::S) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+    else
+    {
+        result = isPiecePinned(p, Direction::E) ||
+            isPiecePinned(p, Direction::W) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::N) ||
+            isPiecePinned(p, Direction::S) ||
+            isPiecePinned(p, Direction::SE); 
+    }
+
+    return result;
+}
+
 bool Position::isCastleLegal(Square s) const
 {
     bool result = false;
@@ -1636,7 +1552,7 @@ bool Position::isInCheck(Color c) const
     return inCheck;
 }
 
-bool Position::isMoveValid(const Move& m)
+bool Position::isMoveLegal(const Move& m)
 {
     Piece p = m.getMovingPiece();
     std::vector<Square> kingLocationVector =
@@ -1897,16 +1813,14 @@ void Position::parseFEN(std::string fen)
     blackKing = 0x0000000000000000ULL;
     blackPieces = 0x0000000000000000ULL;
 
-    boost::split(fenParts, fen, boost::is_any_of(" \t"),
-        boost::token_compress_on);
+    Utility::split(fen, ' ', fenParts);
 
     if (fenParts.size() != 6)
     {
         return;
     }
 
-    boost::split(rankInfo, fenParts[0], boost::is_any_of("/"),
-        boost::token_compress_on);
+    Utility::split(fenParts[0], '/', rankInfo);
 
     if (rankInfo.size() != 8)
     {
