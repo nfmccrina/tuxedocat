@@ -22,39 +22,34 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Engine.hpp"
-#include "../include/Move.hpp"
 #include "../include/MoveList.hpp"
-#include <vector>
 
 using namespace TuxedoCat;
 
-Engine::Engine(Position p)
-    : position(p)
+MoveList::MoveList()
+    : currentIndex(-1)
 {
 }
 
-uint64_t Engine::perft(int depth)
+void MoveList::addMove(Move m)
 {
-    MoveList availableMoves;
-    position.generateMoves(Rank::NONE, availableMoves);
-
-    if (depth <= 1)
+    if (currentIndex < (MoveList::MAX_SIZE - 1))
     {
-        return availableMoves.size();
+        moves[++currentIndex] = m;
     }
-    else
-    {
-        uint64_t count = 0;
+}
 
-        for (int moveIndex = 0; moveIndex < availableMoves.size();
-            moveIndex++)
-        {
-            position.makeMove(availableMoves[moveIndex]);
-            count += perft(depth - 1);
-            position.unmakeMove();
-        }
+int MoveList::size()
+{
+    return currentIndex + 1;
+}
 
-        return count;
-    }
+bool MoveList::isEmpty()
+{
+    return currentIndex == -1;
+}
+
+const Move& MoveList::operator[](int pos) const
+{
+    return moves[pos];
 }

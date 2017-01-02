@@ -30,6 +30,7 @@
 #include "Piece.hpp"
 #include "Move.hpp"
 #include "Direction.hpp"
+#include "MoveList.hpp"
 #include <string>
 #include <vector>
 #include <stack>
@@ -41,30 +42,29 @@ namespace TuxedoCat
     {
     public:
         Position(std::string fen);
-
-        std::vector<Move> generateMoves(Rank rank = Rank::NONE);
         Position(const Position& p);
 
-        void makeMove(Move move);
+        void generateMoves(Rank rank, MoveList& moves);
+        void makeMove(const Move& move);
         std::string toString() const;
         void unmakeMove();
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
-        std::vector<Move> computeSlidingMoves(int index, Piece p,
-            bool highBitBlock, const std::array<uint64_t, 64>& rayMask);
-
+        void computeSlidingMoves(int index, Piece p, bool highBitBlock,
+            const std::array<uint64_t, 64>& rayMask, MoveList& moves);
         Bitboard computePinningPieceMask(Direction direction) const;
         std::vector<Square> findPiece(Color c, Rank r) const;
-        std::vector<Move> generateCastles();
-        std::vector<Move> generateKingMovesAt(Square s);
-        std::vector<Move> generateKnightMovesAt(Square s);
-        std::vector<Move> generatePawnAdvancesAt(Bitboard b);
-        std::vector<Move> generatePawnCapturesAt(Bitboard b);
-        std::vector<Move> generatePawnDblAdvancesAt(Bitboard b);
-        std::vector<Move> generateSlidingMovesAt(Bitboard b, Direction d);
+        void generateCastles(MoveList& moves);
+        void generateKingMovesAt(Square s, MoveList& moves);
+        void generateKnightMovesAt(Square s, MoveList& moves);
+        void generatePawnAdvancesAt(Bitboard b, MoveList& moves);
+        void generatePawnCapturesAt(Bitboard b, MoveList& moves);
+        void generatePawnDblAdvancesAt(Bitboard b, MoveList& moves);
+        void generateSlidingMovesAt(Bitboard b, Direction d,
+            MoveList& moves);
         int getBlockerIndex(Bitboard mask, bool highBitBlock);
-        std::vector<Move> getMovesFromMask(Bitboard mask, Piece p,
-            bool inCheck);
+        void getMovesFromMask(Bitboard mask, Piece p,
+            bool inCheck, MoveList& moves);
         bool getHighBitBlockerByDirection(Direction direction) const;
         int getOffsetFromDirection(Direction direction) const;
         Bitboard getOpposingPieces(Color c) const;

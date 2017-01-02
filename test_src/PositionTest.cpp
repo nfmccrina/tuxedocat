@@ -26,6 +26,7 @@
 #include "../test_include/PositionTest.hpp"
 #include "../include/Position.hpp"
 #include "../include/Move.hpp"
+#include "../include/MoveList.hpp"
 #include "../include/gtest/gtest.h"
 #include <vector>
 
@@ -36,17 +37,18 @@ TEST_F(PositionTest,
 {
     Position p("8/8/2nB4/3P4/8/8/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList ml;
+    p.generateMoves(Rank::PAWN, ml);
 
-    EXPECT_EQ(1, captures.size());
+    EXPECT_EQ(1, ml.size());
 
-    if (captures.size() > 0)
+    if (ml.size() > 0)
     {
         EXPECT_EQ(0x0000040000000000ULL,
-            captures[0].getTargetSquare().toBitboard());
+            ml[0].getTargetSquare().toBitboard());
         EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
-            captures[0].getMovingPiece());
-        EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
+            ml[0].getMovingPiece());
+        EXPECT_EQ(Rank::NONE, ml[0].getPromotedRank());
     }
 }
 
@@ -55,7 +57,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/3rb3/3P4/8/8/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     EXPECT_EQ(1, captures.size());
 
@@ -74,7 +77,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/3K4/3P4/8/8/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     EXPECT_EQ(0, captures.size());
 }
@@ -84,7 +88,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/2b5/1P6/4K3/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     EXPECT_EQ(1, captures.size());
     
@@ -100,7 +105,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/8/8/1p6/QN6 b - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     Piece mp(Color::BLACK, Rank::PAWN, Square("b2"));
     Square s("a1");
@@ -148,7 +154,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/2pP4/2R5/8/8 b - d3 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     EXPECT_EQ(1, captures.size());
 
@@ -167,7 +174,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/2p5/8/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(1, advances.size());
 
@@ -186,7 +194,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/2B4p/8/4k3/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(0, advances.size());
 }
@@ -196,7 +205,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/2Bp3p/8/4k3/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(1, advances.size());
 
@@ -212,7 +222,8 @@ TEST_F(PositionTest,
 {
     Position p("8/3P4/8/8/8/8/8/8 w - - 0 1");
 
-    std::vector<Move> captures = p.generateMoves(Rank::PAWN);
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
 
     Piece mp(Color::WHITE, Rank::PAWN, Square("d7"));
     Square s("d8");
@@ -260,7 +271,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/k1p2R2/8/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(0, advances.size());
 }
@@ -270,7 +282,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/k7/1p6/8/3B4 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(0, advances.size());
 }
@@ -280,7 +293,8 @@ TEST_F(PositionTest,
 {
     Position p("8/4p3/8/8/8/8/8/8 b - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(2, advances.size());
 
@@ -310,7 +324,8 @@ TEST_F(PositionTest,
 {
     Position p("8/8/8/8/1B6/8/1P6/8 w - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::PAWN);
+    MoveList advances;
+    p.generateMoves(Rank::PAWN, advances);
 
     EXPECT_EQ(1, advances.size());
 }
@@ -320,20 +335,22 @@ TEST_F(PositionTest,
 {
     Position p("1N6/8/8/8/1B6/3N4/1r3Q2/8 w - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::KNIGHT);
+    MoveList advances;
+    p.generateMoves(Rank::KNIGHT, advances);
 
     EXPECT_EQ(9, advances.size());
 }
 
-/*TEST_F(PositionTest,
+TEST_F(PositionTest,
     generateMoves_KnightMoves_IfInCheck_ShouldOnlyFindCapture)
 {
     Position p("1N6/8/8/8/1B6/3N4/1r3K2/8 w - - 0 1");
 
-    std::vector<Move> advances = p.generateMoves(Rank::KNIGHT);
+    MoveList advances;
+    p.generateMoves(Rank::KNIGHT, advances);
 
     EXPECT_EQ(1, advances.size());
-}*/
+}
 
 TEST_F(PositionTest,
     generateMoves_makeMove_ShouldRestorePositionCorrectly)

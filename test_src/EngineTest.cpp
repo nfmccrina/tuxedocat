@@ -31,9 +31,10 @@ using namespace TuxedoCat;
 
 TEST_F(EngineTest, perft_StartingPosition_Depth1_ShouldBe20)
 {
-    Position p {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"};
-
-    Engine e {p};
-
-    EXPECT_EQ(20, e.perft(1));
+    EXPECT_EQ(20, startingPosition.perft(1));
 }
+
+/*TEST_F(EngineTest, perft_StartingPosition_Depth2_ShouldBe400)
+{
+    EXPECT_EQ(400, startingPosition.perft(2));
+}*/
