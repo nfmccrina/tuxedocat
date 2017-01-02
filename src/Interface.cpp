@@ -22,67 +22,47 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "Move.hpp"
+#include "../include/Interface.hpp"
+#include "../include/MessageQueue.hpp"
+#include "../include/Utility.hpp"
+#include "../include/Messages.hpp"
+#include <iostream>
+#include <vector>
 
 using namespace TuxedoCat;
 
-Move::Move()
-    : promotedRank(Rank::NONE)
+Interface::Interface(MessageQueue& mq)
+    : messages(mq)
 {
 }
 
-Move::Move(Piece mp, Square tl, Rank pr)
-    : movingPiece(mp), targetSquare(tl), promotedRank(pr)
+void Interface::start(MessageQueue& mq)
 {
+    Interface i {mq};
+
+    i.run();
 }
 
-Piece Move::getMovingPiece() const
+void Interface::run()
 {
-    return this->movingPiece;
-}
+    while (true)
+    {
+        std::string input;
+        std::vector<std::string> cmdParts;
+        
+        std::getline(std::cin, input);
 
-std::string Move::getNotation() const
-{
-    return notation;
-}
+        Utility::split(input, ' ', cmdParts);
 
-Square Move::getTargetSquare() const
-{
-    return this->targetSquare;
-}
+        if (cmdParts[0] == "quit")
+        {
+            messages.addMessage(QuitMessage());
+            break;
+        }
 
-Rank Move::getPromotedRank() const
-{
-    return this->promotedRank;
-}
-
-bool Move::isCastle() const
-{
-    const Piece& mp {movingPiece};
-
-    return isValid() &&
-        mp.getRank() == Rank::KING &&
-        (
-        (
-        mp.getColor() == Color::WHITE &&
-        mp.getSquare().toBitboard().inMask(0x0000000000000010ULL) &&
-        targetSquare.toBitboard().inMask(0x0000000000000044ULL)
-        ) ||
-        (
-        mp.getColor() == Color::BLACK &&
-        mp.getSquare().toBitboard().inMask(0x1000000000000000ULL) &&
-        targetSquare.toBitboard().inMask(0x4400000000000000ULL)
-        )
-        );
-}
-
-bool Move::isValid() const
-{
-    return movingPiece.isValid() &&
-        targetSquare.isValid();
-}
-
-void Move::setNotation(std::string s)
-{
-    notation = s;
+        if (cmdParts[0] == "test")
+        {
+            messages.addMessage(TestMessage());
+        }
+    }
 }

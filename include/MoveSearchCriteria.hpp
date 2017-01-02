@@ -24,32 +24,17 @@
 
 #pragma once
 
-#include "Move.hpp"
-#include "Piece.hpp"
-#include "Rank.hpp"
-#include "Square.hpp"
-#include <cstdint>
-#include <string>
-
 namespace TuxedoCat
 {
-    class Move
+    enum MoveSearchCriteria
     {
-    public:
-        Move();
-        Move(Piece mp, Square tl, Rank pr);
-        Piece getMovingPiece() const;
-        std::string getNotation() const;
-        Square getTargetSquare() const;
-        Rank getPromotedRank() const;
-        bool isValid() const;
-        bool isCastle() const;
-        void setNotation(std::string s);
-
-    private:
-        Piece movingPiece;
-        Square targetSquare;
-        Rank promotedRank;
-        std::string notation;
+        NONE = 0,
+        MOVING_PIECE_COLOR = 1,
+        MOVING_PIECE_RANK = 2,
+        MOVING_PIECE_SQUARE = 4,
+        MOVING_PIECE_SQUARE_RANK = 8,
+        MOVING_PIECE_SQUARE_FILE = 16,
+        TARGET_SQUARE = 32,
+        PROMOTED_RANK = 64 
     };
 }

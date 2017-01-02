@@ -24,32 +24,19 @@
 
 #pragma once
 
-#include "Move.hpp"
-#include "Piece.hpp"
-#include "Rank.hpp"
-#include "Square.hpp"
-#include <cstdint>
 #include <string>
 
 namespace TuxedoCat
 {
-    class Move
+    class MessageArgument
     {
     public:
-        Move();
-        Move(Piece mp, Square tl, Rank pr);
-        Piece getMovingPiece() const;
-        std::string getNotation() const;
-        Square getTargetSquare() const;
-        Rank getPromotedRank() const;
-        bool isValid() const;
-        bool isCastle() const;
-        void setNotation(std::string s);
+        MessageArgument(std::string n, std::string v);
 
+        std::string getName() const;
+        std::string getValue() const;
     private:
-        Piece movingPiece;
-        Square targetSquare;
-        Rank promotedRank;
-        std::string notation;
+        std::string name;
+        std::string value;
     };
 }

@@ -23,16 +23,12 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
-#include "../include/Engine.hpp"
-#include "../include/gtest/gtest.h"
+#include "../include/TestMessage.hpp"
+#include "../include/MessageType.hpp"
 
 using namespace TuxedoCat;
 
-class EngineTest : public ::testing::Test
+TestMessage::TestMessage()
+    : Message(MessageType::TEST)
 {
-protected:
-    Engine startingPosition {{
-        "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}};
-};
+}

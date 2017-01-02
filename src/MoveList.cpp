@@ -23,6 +23,7 @@
 */
 
 #include "../include/MoveList.hpp"
+#include "MoveSearchCriteria.hpp"
 
 using namespace TuxedoCat;
 
@@ -39,6 +40,160 @@ void MoveList::addMove(Move m)
     }
 }
 
+int MoveList::contains(Move m, int criteria, bool matchAny) const
+{
+    int total = 0;
+
+    for (int count = 0; count <= currentIndex; count++)
+    {
+        if (matchAny)
+        {
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_COLOR) != 0)
+            {
+                if (m.getMovingPiece().getColor() ==
+                    moves[count].getMovingPiece().getColor())
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_RANK) != 0)
+            {
+                if (m.getMovingPiece().getRank() ==
+                    moves[count].getMovingPiece().getRank())
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE) != 0)
+            {
+                if (m.getMovingPiece().getSquare() ==
+                    moves[count].getMovingPiece().getSquare())
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK)
+                != 0)
+            {
+                if (m.getMovingPiece().getSquare().toString()[1] ==
+                    moves[count].getMovingPiece().getSquare().toString()[1])
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE)
+                != 0)
+            {
+                if (m.getMovingPiece().getSquare().toString()[0] ==
+                    moves[count].getMovingPiece().getSquare().toString()[0])
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::TARGET_SQUARE) != 0)
+            {
+                if (m.getTargetSquare() ==
+                    moves[count].getTargetSquare())
+                {
+                    total++;
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::PROMOTED_RANK) != 0)
+            {
+                if (m.getPromotedRank() ==
+                    moves[count].getPromotedRank())
+                {
+                    total++;
+                    continue;
+                }
+            }
+        }
+        else
+        {
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_COLOR) != 0)
+            {
+                if (m.getMovingPiece().getColor() !=
+                    moves[count].getMovingPiece().getColor())
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_RANK) != 0)
+            {
+                if (m.getMovingPiece().getRank() !=
+                    moves[count].getMovingPiece().getRank())
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE) != 0)
+            {
+                if (m.getMovingPiece().getSquare() !=
+                    moves[count].getMovingPiece().getSquare())
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK)
+                != 0)
+            {
+                if (m.getMovingPiece().getSquare().toString()[1] !=
+                    moves[count].getMovingPiece().getSquare().toString()[1])
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE)
+                != 0)
+            {
+                if (m.getMovingPiece().getSquare().toString()[0] !=
+                    moves[count].getMovingPiece().getSquare().toString()[0])
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::TARGET_SQUARE) != 0)
+            {
+                if (m.getTargetSquare() !=
+                    moves[count].getTargetSquare())
+                {
+                    continue;
+                }
+            }
+
+            if ((criteria & MoveSearchCriteria::PROMOTED_RANK) != 0)
+            {
+                if (m.getPromotedRank() !=
+                    moves[count].getPromotedRank())
+                {
+                    continue;
+                }
+            }
+
+            total++;
+        }
+    }
+
+    return total;
+}
+
 int MoveList::size()
 {
     return currentIndex + 1;
@@ -49,7 +204,7 @@ bool MoveList::isEmpty()
     return currentIndex == -1;
 }
 
-const Move& MoveList::operator[](int pos) const
+Move& MoveList::operator[](int pos)
 {
     return moves[pos];
 }

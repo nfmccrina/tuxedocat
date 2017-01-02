@@ -23,18 +23,8 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../test_include/EngineTest.hpp"
-#include "../include/Engine.hpp"
-#include "../include/gtest/gtest.h"
+#pragma once
 
-using namespace TuxedoCat;
-
-TEST_F(EngineTest, perft_StartingPosition_Depth1_ShouldBe20)
-{
-    EXPECT_EQ(20, startingPosition.perft(1));
-}
-
-/*TEST_F(EngineTest, perft_StartingPosition_Depth2_ShouldBe400)
-{
-    EXPECT_EQ(400, startingPosition.perft(2));
-}*/
+#include "SetBoardMessage.hpp"
+#include "QuitMessage.hpp"
+#include "TestMessage.hpp"

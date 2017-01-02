@@ -50,6 +50,7 @@ namespace TuxedoCat
         void unmakeMove();
     private:
         void addPieceAt(Bitboard location, Color c, Rank r);
+        void computeMoveNotation(MoveList& moves);
         void computeSlidingMoves(int index, Piece p, bool highBitBlock,
             const std::array<uint64_t, 64>& rayMask, MoveList& moves);
         Bitboard computePinningPieceMask(Direction direction) const;

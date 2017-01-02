@@ -25,13 +25,42 @@
 #include "../include/Engine.hpp"
 #include "../include/Move.hpp"
 #include "../include/MoveList.hpp"
-#include <vector>
+#include "../test_include/TuxedoCatTest.hpp"
+#include <sstream>
 
 using namespace TuxedoCat;
 
-Engine::Engine(Position p)
-    : position(p)
+Engine::Engine(Position p, MessageQueue& mq)
+    : position(p), messages(mq)
 {
+}
+
+void Engine::start(MessageQueue& mq)
+{
+    Engine e {{"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"},
+        mq};
+
+    e.run();
+}
+
+void Engine::run()
+{
+    while (true)
+    {
+        if (!messages.isQueueEmpty())
+        {
+            Message msg = messages.getNextMessage();
+
+            if (msg.getType() == MessageType::QUIT)
+            {
+                break;
+            }
+            else if (msg.getType() == MessageType::TEST)
+            {
+                test();
+            }
+        }
+    }
 }
 
 uint64_t Engine::perft(int depth)
@@ -57,4 +86,77 @@ uint64_t Engine::perft(int depth)
 
         return count;
     }
+}
+
+std::string Engine::divide(int depth)
+{
+    uint64_t totalCount = 0;
+    int moveCount = 0;
+    MoveList availableMoves;
+
+    position.generateMoves(Rank::NONE, availableMoves);
+    std::stringstream output;
+
+    if (depth <= 1)
+    {
+        for (int index = 0; index < availableMoves.size(); index++)
+        {
+            totalCount++;
+            moveCount++;
+
+            output << availableMoves[index].getNotation() << ": 1"
+                << std::endl;
+        }
+    }
+    else
+    {
+        for (int index = 0; index < availableMoves.size(); index++)
+        {
+            moveCount++;
+            
+            position.makeMove(availableMoves[index]);
+
+            uint64_t localCount = perft(depth - 1);
+
+            position.unmakeMove();
+
+            totalCount += localCount;
+
+            output << availableMoves[index].getNotation() << ": "
+                << localCount << std::endl;
+        }
+    }
+
+    return output.str();
+}
+
+void Engine::setboard(std::string fen)
+{
+    position = Position(fen);
+}
+
+void Engine::test() const
+{
+    int argc {1};
+    char* argv[1];
+
+    int result;
+
+    argv[0] = new char[10];
+
+    argv[0][0] = 't';
+    argv[0][1] = 'u';
+    argv[0][2] = 'x';
+    argv[0][3] = 'e';
+    argv[0][4] = 'd';
+    argv[0][5] = 'o';
+    argv[0][6] = 'c';
+    argv[0][7] = 'a';
+    argv[0][8] = 't';
+    argv[0][9] = '\0';
+
+    ::testing::InitGoogleTest(&argc, argv);
+    result = RUN_ALL_TESTS();
+
+    delete argv[0];
 }

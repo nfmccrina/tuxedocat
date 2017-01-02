@@ -22,67 +22,21 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "Move.hpp"
+#include "../include/Message.hpp"
 
 using namespace TuxedoCat;
 
-Move::Move()
-    : promotedRank(Rank::NONE)
+Message::Message(MessageType t)
 {
+    type = t;
 }
 
-Move::Move(Piece mp, Square tl, Rank pr)
-    : movingPiece(mp), targetSquare(tl), promotedRank(pr)
+MessageType Message::getType() const
 {
+    return type;
 }
 
-Piece Move::getMovingPiece() const
+const std::vector<MessageArgument>& Message::getArguments() const
 {
-    return this->movingPiece;
-}
-
-std::string Move::getNotation() const
-{
-    return notation;
-}
-
-Square Move::getTargetSquare() const
-{
-    return this->targetSquare;
-}
-
-Rank Move::getPromotedRank() const
-{
-    return this->promotedRank;
-}
-
-bool Move::isCastle() const
-{
-    const Piece& mp {movingPiece};
-
-    return isValid() &&
-        mp.getRank() == Rank::KING &&
-        (
-        (
-        mp.getColor() == Color::WHITE &&
-        mp.getSquare().toBitboard().inMask(0x0000000000000010ULL) &&
-        targetSquare.toBitboard().inMask(0x0000000000000044ULL)
-        ) ||
-        (
-        mp.getColor() == Color::BLACK &&
-        mp.getSquare().toBitboard().inMask(0x1000000000000000ULL) &&
-        targetSquare.toBitboard().inMask(0x4400000000000000ULL)
-        )
-        );
-}
-
-bool Move::isValid() const
-{
-    return movingPiece.isValid() &&
-        targetSquare.isValid();
-}
-
-void Move::setNotation(std::string s)
-{
-    notation = s;
+    return arguments;
 }

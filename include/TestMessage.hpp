@@ -23,17 +23,15 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../test_include/TuxedoCatTest.hpp"
-#include "../include/Controller.hpp"
-#include <iostream>
+#pragma once
 
-using namespace TuxedoCat;
+#include "Message.hpp"
 
-int main()
+namespace TuxedoCat
 {
-    Controller c;
-
-    c.run();
-
-    return 0;
+    class TestMessage : public Message
+    {
+    public:
+        TestMessage();
+    };
 }

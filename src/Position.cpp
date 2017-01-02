@@ -26,6 +26,7 @@
 #include "../include/Position.hpp"
 #include "../include/LookupData.hpp"
 #include "../include/Utility.hpp"
+#include "../include/MoveSearchCriteria.hpp"
 #include <sstream>
 #include <iostream>
 #include <vector>
@@ -173,6 +174,8 @@ void Position::generateMoves(Rank rank, MoveList& moves)
 
         pieces.flipBit(currentIndex);
     }
+
+    computeMoveNotation(moves);
 }
 
 void Position::makeMove(const Move& move)
@@ -533,6 +536,146 @@ void Position::addPieceAt(Bitboard loc, Color c, Rank r)
     }
 
     updatePieces();
+}
+
+void Position::computeMoveNotation(MoveList& moves)
+{
+    std::stringstream san;
+
+    for (int count = 0; count < moves.size(); count++)
+    {
+        Move& move = moves[count];
+        Rank movingRank = move.getMovingPiece().getRank();
+
+        if (movingRank != Rank::PAWN)
+        {
+            std::string rank {rankToString(movingRank)};
+            rank[0] = std::toupper(rank[0]);
+
+            if (!move.isCastle())
+            {
+                san << rank;
+
+                bool ambiguity = false;
+
+                if (moves.contains(
+                    move,
+                    MoveSearchCriteria::TARGET_SQUARE |
+                    MoveSearchCriteria::MOVING_PIECE_COLOR |
+                    MoveSearchCriteria::MOVING_PIECE_RANK,
+                    false) > 1)
+                {
+                    ambiguity = true;
+                }
+
+                if (ambiguity)
+                {
+                    bool ranksDiffer = true;
+                    bool filesDiffer = true;
+
+                    if (moves.contains(
+                        move,
+                        MoveSearchCriteria::TARGET_SQUARE |
+                        MoveSearchCriteria::MOVING_PIECE_COLOR |
+                        MoveSearchCriteria::MOVING_PIECE_RANK |
+                        MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK,
+                        false) > 1)
+                    {
+                        ranksDiffer = false;
+                    }
+
+                    if (moves.contains(
+                        move,
+                        MoveSearchCriteria::TARGET_SQUARE |
+                        MoveSearchCriteria::MOVING_PIECE_COLOR |
+                        MoveSearchCriteria::MOVING_PIECE_RANK |
+                        MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE,
+                        false) > 1)
+                    {
+                        filesDiffer = false;
+                    }
+
+                    if (filesDiffer)
+                    {
+                        san << move.getMovingPiece().getSquare()
+                            .toString()[0];
+                    }
+                    else if (ranksDiffer)
+                    {
+                        san << move.getMovingPiece().getSquare()
+                            .toString()[1];
+                    }
+                    else
+                    {
+                        san << move.getMovingPiece().getSquare()
+                            .toString()[0];
+                        san << move.getMovingPiece().getSquare()
+                            .toString()[1];
+                    }
+                }
+
+                if (!isSquareEmpty(move.getTargetSquare()))
+                {
+                    san << "x";
+                }
+
+                san << move.getTargetSquare().toString();
+            }
+            else
+            {
+                if (move.getTargetSquare().toBitboard()
+                    .inMask(0x4000000000000040ULL))
+                {
+                    san << "0-0";
+                }
+                else
+                {
+                    san << "0-0-0";
+                }
+            }
+        }
+        else
+        {
+            bool ep = false;
+
+            if (!isSquareEmpty(move.getTargetSquare()))
+            {
+                san << move.getMovingPiece().getSquare().toString()[0];
+                san << "x";
+
+                if (move.getTargetSquare().toBitboard() == enPassantTarget)
+                {
+                    ep = true;
+                }
+            }
+
+            san << move.getTargetSquare().toString();
+
+            if (ep)
+            {
+                san << "e.p.";
+            }
+
+            if (move.getPromotedRank() != Rank::NONE)
+            {
+                san << "=";
+
+                std::string pr {rankToString(move.getPromotedRank())};
+                san <<  std::toupper(pr[0]);
+            }
+        }
+
+        makeMove(move);
+
+        if (isInCheck(colorToMove))
+        {
+            san << "+";
+        }
+
+        unmakeMove();
+
+        move.setNotation(san.str());
+    }
 }
 
 void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,

@@ -35,10 +35,11 @@ namespace TuxedoCat
         MoveList();
         
         void addMove(Move m);
+        int contains(Move m, int criteria, bool matchAny) const;
         int size();
         bool isEmpty();
 
-        const Move& operator[](int pos) const;
+        Move& operator[](int pos);
     private:
         std::array<Move, 250> moves;
         int currentIndex;

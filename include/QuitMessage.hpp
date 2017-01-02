@@ -22,34 +22,13 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
-#include "Move.hpp"
-#include "Piece.hpp"
-#include "Rank.hpp"
-#include "Square.hpp"
-#include <cstdint>
-#include <string>
+#include "Message.hpp"
 
 namespace TuxedoCat
 {
-    class Move
+    class QuitMessage : public Message
     {
     public:
-        Move();
-        Move(Piece mp, Square tl, Rank pr);
-        Piece getMovingPiece() const;
-        std::string getNotation() const;
-        Square getTargetSquare() const;
-        Rank getPromotedRank() const;
-        bool isValid() const;
-        bool isCastle() const;
-        void setNotation(std::string s);
-
-    private:
-        Piece movingPiece;
-        Square targetSquare;
-        Rank promotedRank;
-        std::string notation;
+        QuitMessage();
     };
 }

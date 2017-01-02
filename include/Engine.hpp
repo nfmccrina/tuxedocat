@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Position.hpp"
+#include "MessageQueue.hpp"
 #include <cstdint>
 
 namespace TuxedoCat
@@ -32,11 +33,19 @@ namespace TuxedoCat
     class Engine
     {
     public:
-        Engine(Position p);
+        Engine(Position p, MessageQueue& mq);
 
-        uint64_t perft(int depth);
-        void divide(int depth);
+        static void start(MessageQueue& mq);
+
+        void run();
+
     private:
+        uint64_t perft(int depth);
+        std::string divide(int depth);
+        void setboard(std::string fen);
+        void test() const;
+
         Position position;
+        MessageQueue& messages;
     };
 }
