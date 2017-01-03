@@ -73,6 +73,17 @@ TEST_F(PositionTest,
 }
 
 TEST_F(PositionTest,
+    generateMoves_PawnCaptures_ShouldNotIncludeEPIfNotValid)
+{
+    Position p("8/p7/8/8/4P3/8/8/8 b - e3 0 1");
+
+    MoveList captures;
+    p.generateMoves(Rank::PAWN, captures);
+
+    EXPECT_EQ(2, captures.size());
+}
+
+TEST_F(PositionTest,
     generateMoves_PawnCaptures_IfNotExist_ShouldGenerateCaptures)
 {
     Position p("8/8/3K4/3P4/8/8/8/8 w - - 0 1");

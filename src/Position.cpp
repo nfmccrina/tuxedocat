@@ -1102,12 +1102,8 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
         }
     }
 
-    targets = (captureLeftTarget | captureRightTarget) & opposingPieces;
-
-    if (!enPassantTarget.isEmpty())
-    {
-        targets |= enPassantTarget;
-    }
+    targets = (captureLeftTarget | captureRightTarget) &
+        (opposingPieces | enPassantTarget);
 
     while (targets != 0x00ULL)
     {
