@@ -96,6 +96,23 @@ void Engine::run()
             {
                 std::cout << print() << std::endl;
             }
+            else if (msgType == MessageType::PERFT)
+            {
+                const std::vector<MessageArgument>& args =
+                    msg.getArguments();
+                int depth = 0;
+
+                for (auto it = args.cbegin(); it != args.cend(); it++)
+                {
+                    if (it->getName() == "depth")
+                    {
+                        depth = std::stoi(it->getValue());
+                        break;
+                    }
+                }
+
+                std::cout << "Leaf nodes: " << perft(depth) << std::endl;
+            }
         }
     }
 }

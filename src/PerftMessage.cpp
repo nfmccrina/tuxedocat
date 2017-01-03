@@ -22,17 +22,15 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "../include/PerftMessage.hpp"
+#include "../include/MessageType.hpp"
+#include "../include/MessageArgument.hpp"
+#include <string>
 
-namespace TuxedoCat
+using namespace TuxedoCat;
+
+PerftMessage::PerftMessage(int depth)
+    : Message(MessageType::PERFT)
 {
-    enum class MessageType
-    {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT,
-        PERFT
-    };
+    arguments.push_back(MessageArgument("depth", std::to_string(depth)));
 }

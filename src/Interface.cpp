@@ -122,5 +122,32 @@ void Interface::run()
         {
             messages.addMessage(PrintMessage());
         }
+        else if (cmdParts[0] == "perft")
+        {
+            if (cmdParts.size() > 1)
+            {
+                try
+                {
+                    messages.addMessage(PerftMessage(
+                        std::stoi(cmdParts[1])));
+                }
+                catch (std::invalid_argument)
+                {
+                    std::cout << "Invalid argument to perft command: "
+                        << cmdParts[1] << std::endl;
+                }
+                catch (std::out_of_range)
+                {
+                    std::cout << "Invalid argument to perft command: "
+                        << cmdParts[1] << std::endl;
+                }
+            }
+            else
+            {
+                std::cout <<
+                    "Error (Not enough arguments to perft command): "
+                    << input << std::endl;
+            }
+        }
     }
 }

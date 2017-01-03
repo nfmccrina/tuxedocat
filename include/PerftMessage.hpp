@@ -24,15 +24,13 @@
 
 #pragma once
 
+#include "Message.hpp"
+
 namespace TuxedoCat
 {
-    enum class MessageType
+    class PerftMessage : public Message
     {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT,
-        PERFT
+    public:
+        PerftMessage(int depth);
     };
 }
