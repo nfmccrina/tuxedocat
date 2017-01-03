@@ -22,16 +22,12 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "../include/PrintMessage.hpp"
+#include "../include/MessageType.hpp"
 
-namespace TuxedoCat
+using namespace TuxedoCat;
+
+PrintMessage::PrintMessage()
+    : Message(MessageType::PRINT)
 {
-    enum class MessageType
-    {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT
-    };
 }

@@ -44,6 +44,7 @@ namespace TuxedoCat
         std::string divide(int depth);
         void setboard(std::string fen);
         void test() const;
+        std::string print() const;
 
         Position position;
         MessageQueue& messages;

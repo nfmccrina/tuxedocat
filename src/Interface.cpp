@@ -28,6 +28,7 @@
 #include "../include/Messages.hpp"
 #include <iostream>
 #include <vector>
+#include <stdexcept>
 
 using namespace TuxedoCat;
 
@@ -52,6 +53,11 @@ void Interface::run()
         
         std::getline(std::cin, input);
 
+        if (input == "")
+        {
+            continue;
+        }
+
         Utility::split(input, ' ', cmdParts);
 
         if (cmdParts[0] == "quit")
@@ -59,10 +65,62 @@ void Interface::run()
             messages.addMessage(QuitMessage());
             break;
         }
-
-        if (cmdParts[0] == "test")
+        else if (cmdParts[0] == "test")
         {
             messages.addMessage(TestMessage());
+        }
+        else if (cmdParts[0] == "divide")
+        {
+            if (cmdParts.size() > 1)
+            {
+                try
+                {
+                    messages.addMessage(DivideMessage(
+                        std::stoi(cmdParts[1])));
+                }
+                catch (std::invalid_argument)
+                {
+                    std::cout << "Invalid argument to divide command: "
+                        << cmdParts[1] << std::endl;
+                }
+                catch (std::out_of_range)
+                {
+                    std::cout << "Invalid argument to divide command: "
+                        << cmdParts[1] << std::endl;
+                }
+            }
+            else
+            {
+                std::cout <<
+                    "Error (Not enough arguments to divide command): "
+                    << input << std::endl;
+            }
+        }
+        else if (cmdParts[0] == "setboard")
+        {
+            if (cmdParts.size() > 6)
+            {
+                std::stringstream ss;
+
+                ss << cmdParts[1] << " ";
+                ss << cmdParts[2] << " ";
+                ss << cmdParts[3] << " ";
+                ss << cmdParts[4] << " ";
+                ss << cmdParts[5] << " ";
+                ss << cmdParts[6];
+
+                messages.addMessage(SetBoardMessage(ss.str()));
+            }
+            else
+            {
+                std::cout <<
+                    "Error (Not enough arguments to setboard command): "
+                    << input << std::endl;
+            }
+        }
+        else if (cmdParts[0] == "print")
+        {
+            messages.addMessage(PrintMessage());
         }
     }
 }

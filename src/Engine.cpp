@@ -27,6 +27,7 @@
 #include "../include/MoveList.hpp"
 #include "../test_include/TuxedoCatTest.hpp"
 #include <sstream>
+#include <iostream>
 
 using namespace TuxedoCat;
 
@@ -50,14 +51,50 @@ void Engine::run()
         if (!messages.isQueueEmpty())
         {
             Message msg = messages.getNextMessage();
+            MessageType msgType = msg.getType();
 
-            if (msg.getType() == MessageType::QUIT)
+            if (msgType == MessageType::QUIT)
             {
                 break;
             }
-            else if (msg.getType() == MessageType::TEST)
+            else if (msgType == MessageType::TEST)
             {
                 test();
+            }
+            else if (msgType == MessageType::DIVIDE)
+            {
+                const std::vector<MessageArgument>& args =
+                    msg.getArguments();
+                int depth = 0;
+
+                for (auto it = args.cbegin(); it != args.cend(); it++)
+                {
+                    if (it->getName() == "depth")
+                    {
+                        depth = std::stoi(it->getValue());
+                        break;
+                    }
+                }
+
+                std::cout << divide(depth) << std::endl;
+            }
+            else if (msgType == MessageType::SETBOARD)
+            {
+                const std::vector<MessageArgument>& args =
+                    msg.getArguments();
+
+                for (auto it = args.cbegin(); it != args.cend(); it++)
+                {
+                    if (it->getName() == "fen")
+                    {
+                        setboard(it->getValue());
+                        break;
+                    }
+                }
+            }
+            else if (msgType == MessageType::PRINT)
+            {
+                std::cout << print() << std::endl;
             }
         }
     }
@@ -107,6 +144,8 @@ std::string Engine::divide(int depth)
             output << availableMoves[index].getNotation() << ": 1"
                 << std::endl;
         }
+
+        output << "Leaf nodes: " << moveCount << std::endl;
     }
     else
     {
@@ -159,4 +198,9 @@ void Engine::test() const
     result = RUN_ALL_TESTS();
 
     delete argv[0];
+}
+
+std::string Engine::print() const
+{
+    return position.toString();
 }

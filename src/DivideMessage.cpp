@@ -22,16 +22,13 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "../include/DivideMessage.hpp"
+#include <string>
 
-namespace TuxedoCat
+using namespace TuxedoCat;
+
+DivideMessage::DivideMessage(int d)
+    : Message(MessageType::DIVIDE)
 {
-    enum class MessageType
-    {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT
-    };
+    arguments.push_back(MessageArgument("depth", std::to_string(d)));
 }

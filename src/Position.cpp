@@ -544,6 +544,7 @@ void Position::computeMoveNotation(MoveList& moves)
 
     for (int count = 0; count < moves.size(); count++)
     {
+        san.str("");
         Move& move = moves[count];
         Rank movingRank = move.getMovingPiece().getRank();
 

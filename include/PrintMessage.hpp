@@ -24,14 +24,13 @@
 
 #pragma once
 
+#include "Message.hpp"
+
 namespace TuxedoCat
 {
-    enum class MessageType
+    class PrintMessage : public Message
     {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT
+    public:
+        PrintMessage();
     };
 }
