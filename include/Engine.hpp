@@ -25,6 +25,7 @@
 #pragma once
 
 #include "Position.hpp"
+#include "Message.hpp"
 #include "MessageQueue.hpp"
 #include <cstdint>
 
@@ -45,6 +46,7 @@ namespace TuxedoCat
         void setboard(std::string fen);
         void test() const;
         std::string print() const;
+        void handleUserMoveMessage(const Message& msg);
 
         Position position;
         MessageQueue& messages;

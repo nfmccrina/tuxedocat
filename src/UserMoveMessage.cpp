@@ -22,18 +22,16 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "../include/UserMoveMessage.hpp"
+#include "../include/MessageType.hpp"
+#include "../include/MessageArgument.hpp"
+#include <string>
 
-namespace TuxedoCat
+using namespace TuxedoCat;
+
+UserMoveMessage::UserMoveMessage(std::string description)
+    : Message(MessageType::USERMOVE)
 {
-    enum class MessageType
-    {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT,
-        PERFT,
-        USERMOVE
-    };
+    arguments.push_back(MessageArgument("move", description));
 }
+

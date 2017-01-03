@@ -178,6 +178,27 @@ void Position::generateMoves(Rank rank, MoveList& moves)
     computeMoveNotation(moves);
 }
 
+Move Position::getMoveFromString(std::string s) const
+{
+    if (s.size() < 4)
+    {
+        return Move(Piece(), Square(), Rank::NONE);
+    }
+
+    Square source {s.substr(0, 2)};
+    Square target {s.substr(2, 2)};
+
+    if (s.size() < 5)
+    {
+        return Move(getPieceAt(source), target, Rank::NONE);
+    }
+    else
+    {
+        return Move(getPieceAt(source), target,
+            getRankFromString(s.substr(4, 1)));
+    }
+}
+
 void Position::makeMove(const Move& move)
 {
     Bitboard sourceLocation;
@@ -204,6 +225,8 @@ void Position::makeMove(const Move& move)
 
         return;
     }
+
+    
 
     sourceLocation = move.getMovingPiece().getSquare().toBitboard();
     targetLocation = move.getTargetSquare().toBitboard();
@@ -1622,6 +1645,11 @@ bool Position::isMoveLegal(const Move& m)
     bool result = false;
 
     if (kingLocationVector.empty())
+    {
+        return false;
+    }
+
+    if (colorToMove != m.getMovingPiece().getColor())
     {
         return false;
     }

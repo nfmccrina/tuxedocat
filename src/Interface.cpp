@@ -149,5 +149,22 @@ void Interface::run()
                     << input << std::endl;
             }
         }
+        else if (cmdParts[0] == "usermove")
+        {
+            if (cmdParts.size() > 1)
+            {
+                messages.addMessage(UserMoveMessage(cmdParts[1]));
+            }
+            else
+            {
+                std::cout <<
+                    "Error (Not enough arguments to usermove command): "
+                    << input << std::endl;
+            }
+        }
+        else
+        {
+            messages.addMessage(UserMoveMessage(cmdParts[0]));
+        }
     }
 }

@@ -24,16 +24,15 @@
 
 #pragma once
 
+#include "Message.hpp"
+#include <string>
+
 namespace TuxedoCat
 {
-    enum class MessageType
+    class UserMoveMessage : public Message
     {
-        SETBOARD,
-        QUIT,
-        TEST,
-        DIVIDE,
-        PRINT,
-        PERFT,
-        USERMOVE
+    public:
+        UserMoveMessage(std::string description);
     };
 }
+

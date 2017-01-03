@@ -45,6 +45,7 @@ namespace TuxedoCat
         Position(const Position& p);
 
         void generateMoves(Rank rank, MoveList& moves);
+        Move getMoveFromString(std::string s) const;
         void makeMove(const Move& move);
         std::string toString() const;
         void unmakeMove();

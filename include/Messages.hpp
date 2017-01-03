@@ -31,3 +31,4 @@
 #include "DivideMessage.hpp"
 #include "PrintMessage.hpp"
 #include "PerftMessage.hpp"
+#include "UserMoveMessage.hpp"

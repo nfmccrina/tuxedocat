@@ -25,6 +25,7 @@
 #include "../include/Engine.hpp"
 #include "../include/Move.hpp"
 #include "../include/MoveList.hpp"
+#include "../include/MoveSearchCriteria.hpp"
 #include "../test_include/TuxedoCatTest.hpp"
 #include <sstream>
 #include <iostream>
@@ -112,6 +113,10 @@ void Engine::run()
                 }
 
                 std::cout << "Leaf nodes: " << perft(depth) << std::endl;
+            }
+            else if (msgType == MessageType::USERMOVE)
+            {
+                handleUserMoveMessage(msg);
             }
         }
     }
@@ -220,4 +225,46 @@ void Engine::test() const
 std::string Engine::print() const
 {
     return position.toString();
+}
+
+void Engine::handleUserMoveMessage(const Message& msg)
+{
+    const std::vector<MessageArgument>& args = msg.getArguments();
+
+    for (auto it = args.cbegin(); it != args.cend(); it++)
+    {
+        if (it->getName() == "move")
+        {
+            MoveList ml;
+            Move m = position.getMoveFromString(it->getValue());
+
+
+            if (!m.isValid())
+            {
+                std::cout << "Illegal move: " << it->getValue()
+                    << std::endl;
+            }
+            else
+            {
+                position.generateMoves(m.getMovingPiece().getRank(), ml);
+
+                if (ml.contains(m,
+                    MoveSearchCriteria::MOVING_PIECE_COLOR |
+                    MoveSearchCriteria::MOVING_PIECE_RANK |
+                    MoveSearchCriteria::MOVING_PIECE_SQUARE |
+                    MoveSearchCriteria::TARGET_SQUARE |
+                    MoveSearchCriteria::PROMOTED_RANK, false))
+                {
+                    position.makeMove(m);
+                }
+                else
+                {
+                    std::cout << "Illegal move: " << it->getValue()
+                        << std::endl;
+                }
+            }
+
+            break;
+        }
+    }
 }
