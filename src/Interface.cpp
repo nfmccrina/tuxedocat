@@ -162,6 +162,10 @@ void Interface::run()
                     << input << std::endl;
             }
         }
+        else if (cmdParts[0] == "undo")
+        {
+            messages.addMessage(UndoMoveMessage());
+        }
         else
         {
             messages.addMessage(UserMoveMessage(cmdParts[0]));

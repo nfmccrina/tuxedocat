@@ -25,11 +25,13 @@
 
 #pragma once
 
-#include "SetBoardMessage.hpp"
-#include "QuitMessage.hpp"
-#include "TestMessage.hpp"
-#include "DivideMessage.hpp"
-#include "PrintMessage.hpp"
-#include "PerftMessage.hpp"
-#include "UserMoveMessage.hpp"
-#include "UndoMoveMessage.hpp"
+#include "Message.hpp"
+
+namespace TuxedoCat
+{
+    class UndoMoveMessage : public Message
+    {
+    public:
+        UndoMoveMessage();
+    };
+}

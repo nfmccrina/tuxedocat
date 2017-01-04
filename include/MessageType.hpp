@@ -34,6 +34,7 @@ namespace TuxedoCat
         DIVIDE,
         PRINT,
         PERFT,
-        USERMOVE
+        USERMOVE,
+        UNDO
     };
 }

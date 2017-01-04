@@ -118,6 +118,10 @@ void Engine::run()
             {
                 handleUserMoveMessage(msg);
             }
+            else if (msgType == MessageType::UNDO)
+            {
+                position.unmakeMove();
+            }
         }
     }
 }

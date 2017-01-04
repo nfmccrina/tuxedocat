@@ -23,13 +23,12 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "../include/UndoMoveMessage.hpp"
+#include "../include/MessageType.hpp"
 
-#include "SetBoardMessage.hpp"
-#include "QuitMessage.hpp"
-#include "TestMessage.hpp"
-#include "DivideMessage.hpp"
-#include "PrintMessage.hpp"
-#include "PerftMessage.hpp"
-#include "UserMoveMessage.hpp"
-#include "UndoMoveMessage.hpp"
+using namespace TuxedoCat;
+
+UndoMoveMessage::UndoMoveMessage()
+    : Message(MessageType::UNDO)
+{
+}
