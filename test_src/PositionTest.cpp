@@ -42,11 +42,13 @@ TEST_F(PositionTest,
 
     EXPECT_EQ(1, ml.size());
 
+    bool t = true;
+
     if (ml.size() > 0)
     {
         EXPECT_EQ(0x0000040000000000ULL,
             ml[0].getTargetSquare().toBitboard());
-        EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
+        EXPECT_EQ(t, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
             ml[0].getMovingPiece());
         EXPECT_EQ(Rank::NONE, ml[0].getPromotedRank());
     }
@@ -62,11 +64,13 @@ TEST_F(PositionTest,
 
     EXPECT_EQ(1, captures.size());
 
+    bool t = true;
+
     if (captures.size() > 0)
     {
         EXPECT_EQ(0x0000100000000000ULL,
             captures[0].getTargetSquare().toBitboard());
-        EXPECT_EQ(true, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
+        EXPECT_EQ(t, Piece(Color::WHITE, Rank::PAWN, Square("d5")) ==
             captures[0].getMovingPiece());
         EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
     }
@@ -130,7 +134,7 @@ TEST_F(PositionTest,
 
     if (captures.size() > 0)
     {
-        for (size_t count = 0; count < captures.size(); count++)
+        for (int count = 0; count < captures.size(); count++)
         {
             if (captures[count].getPromotedRank() == Rank::QUEEN)
             {
@@ -153,10 +157,12 @@ TEST_F(PositionTest,
             EXPECT_EQ(captures[count].getMovingPiece(), mp);
         }
 
-        EXPECT_EQ(true, hasQueen);
-        EXPECT_EQ(true, hasRook);
-        EXPECT_EQ(true, hasBishop);
-        EXPECT_EQ(true, hasKnight);
+        bool t = true;
+
+        EXPECT_EQ(t, hasQueen);
+        EXPECT_EQ(t, hasRook);
+        EXPECT_EQ(t, hasBishop);
+        EXPECT_EQ(t, hasKnight);
     }
 }
 
@@ -170,11 +176,13 @@ TEST_F(PositionTest,
 
     EXPECT_EQ(1, captures.size());
 
+    bool t = true;
+
     if (captures.size() > 0)
     {
         EXPECT_EQ(0x0000000000080000ULL,
             captures[0].getTargetSquare().toBitboard());
-        EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
+        EXPECT_EQ(t, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
             captures[0].getMovingPiece());
         EXPECT_EQ(Rank::NONE, captures[0].getPromotedRank());
     }
@@ -190,11 +198,13 @@ TEST_F(PositionTest,
 
     EXPECT_EQ(1, advances.size());
 
+    bool t = true;
+
     if (advances.size() > 0)
     {
         EXPECT_EQ(0x0000000000040000ULL,
             advances[0].getTargetSquare().toBitboard());
-        EXPECT_EQ(true, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
+        EXPECT_EQ(t, Piece(Color::BLACK, Rank::PAWN, Square("c4")) ==
             advances[0].getMovingPiece());
         EXPECT_EQ(Rank::NONE, advances[0].getPromotedRank());
     }
@@ -247,7 +257,7 @@ TEST_F(PositionTest,
 
     if (captures.size() > 0)
     {
-        for (size_t count = 0; count < captures.size(); count++)
+        for (int count = 0; count < captures.size(); count++)
         {
             if (captures[count].getPromotedRank() == Rank::QUEEN)
             {
@@ -270,10 +280,12 @@ TEST_F(PositionTest,
             EXPECT_EQ(captures[count].getMovingPiece(), mp);
         }
 
-        EXPECT_EQ(true, hasQueen);
-        EXPECT_EQ(true, hasRook);
-        EXPECT_EQ(true, hasBishop);
-        EXPECT_EQ(true, hasKnight);
+        bool t = true;
+
+        EXPECT_EQ(t, hasQueen);
+        EXPECT_EQ(t, hasRook);
+        EXPECT_EQ(t, hasBishop);
+        EXPECT_EQ(t, hasKnight);
     }
 }
 
@@ -313,7 +325,7 @@ TEST_F(PositionTest,
     bool normalAdvanceExists = false;
     bool doubleAdvanceExists = false;
 
-    for (size_t count = 0; count < advances.size(); count++)
+    for (int count = 0; count < advances.size(); count++)
     {
         if (advances[count].getTargetSquare() == Square("e6"))
         {
@@ -326,8 +338,10 @@ TEST_F(PositionTest,
         }
     }
 
-    EXPECT_EQ(true, normalAdvanceExists);
-    EXPECT_EQ(true, doubleAdvanceExists);
+    bool t = true;
+
+    EXPECT_EQ(t, normalAdvanceExists);
+    EXPECT_EQ(t, doubleAdvanceExists);
 }
 
 TEST_F(PositionTest,

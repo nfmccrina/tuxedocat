@@ -131,7 +131,9 @@ TEST_F(BitboardTest, EqualsOp_ComparesBitboardsCorrectly)
     Bitboard b1(0x8F729262B65A6DC3ULL);
     Bitboard b2(0x8F729262B65A6DC3ULL);
 
-    EXPECT_EQ(true, b1 == b2);
+    bool t = true;
+
+    EXPECT_EQ(t, b1 == b2);
 }
 
 TEST_F(BitboardTest, NotEqualsOp_ComparesBitboardsCorrectly)
@@ -139,7 +141,9 @@ TEST_F(BitboardTest, NotEqualsOp_ComparesBitboardsCorrectly)
     Bitboard b1(0x8F729262B65A6DC3ULL);
     Bitboard b2(0x8F729162B65A6DC3ULL);
 
-    EXPECT_EQ(true, b1 != b2);
+    bool t = true;
+
+    EXPECT_EQ(t, b1 != b2);
 }
 
 TEST_F(BitboardTest, AmpersandOp_ReturnsTheIntersectionOfTwoBitboards)
@@ -177,68 +181,80 @@ TEST_F(BitboardTest, PipeEqualsOp_SetsTheBitboardToTheUnionOfTwoBitboards)
 
 TEST_F(BitboardTest, GreaterThanOp_ReturnsTrueIfFirstOperandIsGreater)
 {
-    EXPECT_EQ(true, greaterThanValue > lessThanValue);
+    bool t = true;
+    EXPECT_EQ(t, greaterThanValue > lessThanValue);
 }
 
 TEST_F(BitboardTest, GreaterThanOp_ReturnsFalseIfOperandsAreEqual)
 {
-    EXPECT_EQ(false, firstEqualValue > secondEqualValue);
+    bool f = false;
+    EXPECT_EQ(f, firstEqualValue > secondEqualValue);
 }
 
 TEST_F(BitboardTest, GreaterThanOp_ReturnsFalseIfFirstOperandIsLess)
 {
-    EXPECT_EQ(false, lessThanValue > greaterThanValue);
+    bool f = false;
+    EXPECT_EQ(f, lessThanValue > greaterThanValue);
 }
 
 TEST_F(BitboardTest, LessThanOp_ReturnsTrueIfFirstOperandIsLess)
 {
-    EXPECT_EQ(true, lessThanValue < greaterThanValue);
+    bool t = true;
+    EXPECT_EQ(t, lessThanValue < greaterThanValue);
 }
 
 TEST_F(BitboardTest, LessThanOp_ReturnsFalseIfOperandsAreEqual)
 {
-    EXPECT_EQ(false, firstEqualValue < secondEqualValue);
+    bool f = false;
+    EXPECT_EQ(f, firstEqualValue < secondEqualValue);
 }
 
 TEST_F(BitboardTest, LessThanOp_ReturnsFalseIfFirstOperandIsGreater)
 {
-    EXPECT_EQ(false, greaterThanValue < lessThanValue);
+    bool f = false;
+    EXPECT_EQ(f, greaterThanValue < lessThanValue);
 }
 
 TEST_F(BitboardTest,
     GreaterThanOrEqualOp_ReturnsTrueIfFirstOperandIsGreater)
 {
-    EXPECT_EQ(true, greaterThanValue >= lessThanValue);
+    bool t = true;
+    EXPECT_EQ(t, greaterThanValue >= lessThanValue);
 }
 
 TEST_F(BitboardTest,
     GreaterThanOrEqualOp_ReturnsTrueIfOperandsAreEqual)
 {
-    EXPECT_EQ(true, firstEqualValue >= secondEqualValue);
+    bool t = true;
+    EXPECT_EQ(t, firstEqualValue >= secondEqualValue);
 }
 
 TEST_F(BitboardTest,
     GreaterThanOrEqualOp_ReturnsFalseIfFirstOperandIsLess)
 {
-    EXPECT_EQ(false, lessThanValue >= greaterThanValue);
+    bool f = false;
+    EXPECT_EQ(f, lessThanValue >= greaterThanValue);
 }
 
 TEST_F(BitboardTest,
     LessThanOrEqualOp_ReturnsTrueIfFirstOperandIsLess)
 {
-    EXPECT_EQ(true, lessThanValue <= greaterThanValue);
+    bool t = true;
+    EXPECT_EQ(t, lessThanValue <= greaterThanValue);
 }
 
 TEST_F(BitboardTest,
     LessThanOrEqualOp_ReturnsTrueIfOperandsAreEqual)
 {
-    EXPECT_EQ(true, firstEqualValue <= secondEqualValue);
+    bool t = true;
+    EXPECT_EQ(t, firstEqualValue <= secondEqualValue);
 }
 
 TEST_F(BitboardTest,
     LessThanOrEqualOp_ReturnsFalseIfFirstOperandIsGreater)
 {
-    EXPECT_EQ(false, greaterThanValue <= lessThanValue);
+    bool f = false;
+    EXPECT_EQ(f, greaterThanValue <= lessThanValue);
 }
 
 TEST_F(BitboardTest, ShiftLOp_ReturnsABitboardShiftedCorrectly)
@@ -357,7 +373,8 @@ TEST_F(BitboardTest, uint64_t_IsConvertedToBitboardImplicitly)
     Bitboard b(0x0250492803434000ULL);
     Bitboard b2(0x0000000040000000ULL);
 
-    EXPECT_EQ(true, b == 0x0250492803434000ULL);
+    bool t = true;
+    EXPECT_EQ(t, b == 0x0250492803434000ULL);
     EXPECT_EQ(0x0000000044000000ULL, b2 | 0x0000000004000000ULL);
 }
 
@@ -367,7 +384,8 @@ TEST_F(BitboardTest, uint64_t_CanBeAssignedToBitboardVariable)
 
     b = 0x0000000F00000000ULL;
 
-    EXPECT_EQ(true, b.getValue() == 0x0000000F00000000ULL);
+    bool t = true;
+    EXPECT_EQ(t, b.getValue() == 0x0000000F00000000ULL);
 }
 
 TEST_F(BitboardTest, flipBit_WhenValidIndex_ShouldFlipTheCorrectBit)
@@ -376,7 +394,8 @@ TEST_F(BitboardTest, flipBit_WhenValidIndex_ShouldFlipTheCorrectBit)
 
     b.flipBit(40);
 
-    EXPECT_EQ(true, b.getValue() == 0x40F2002900B3CC24ULL);
+    bool t = true;
+    EXPECT_EQ(t, b.getValue() == 0x40F2002900B3CC24ULL);
 }
 
 TEST_F(BitboardTest, flipBit_WhenInvalidIndex_ShouldNotModifyBitboard)
@@ -385,33 +404,38 @@ TEST_F(BitboardTest, flipBit_WhenInvalidIndex_ShouldNotModifyBitboard)
 
     b.flipBit(74);
 
-    EXPECT_EQ(true, b.getValue() == 0x40F2012900B3CC24ULL);
+    bool t = true;
+    EXPECT_EQ(t, b.getValue() == 0x40F2012900B3CC24ULL);
 }
 
 TEST_F(BitboardTest, inMask_ReturnsTrueIfMatchesMask)
 {
     Bitboard b(0x0000000000000010ULL);
 
-    EXPECT_EQ(true, b.inMask(0x00000000000000FFULL));
+    bool t = true;
+    EXPECT_EQ(t, b.inMask(0x00000000000000FFULL));
 }
 
 TEST_F(BitboardTest, inMask_ReturnsFalseIfNotMatchesMask)
 {
     Bitboard b(0x0000000007000010ULL);
 
-    EXPECT_EQ(false, b.inMask(0x00000000000000FFULL));
+    bool f = false;
+    EXPECT_EQ(f, b.inMask(0x00000000000000FFULL));
 }
 
 TEST_F(BitboardTest, isEmpty_ReturnsTrueIfNoBitsSet)
 {
     Bitboard b {0x0000000000000000ULL};
 
-    EXPECT_EQ(true, b.isEmpty());
+    bool t = true;
+    EXPECT_EQ(t, b.isEmpty());
 }
 
 TEST_F(BitboardTest, isEmpty_ReturnsFalseIfBitsSet)
 {
     Bitboard b {0x0000008000000000ULL};
 
-    EXPECT_EQ(false, b.isEmpty());
+    bool f = false;
+    EXPECT_EQ(f, b.isEmpty());
 }

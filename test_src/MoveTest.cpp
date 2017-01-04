@@ -64,8 +64,9 @@ TEST_F(MoveTest, getPromotedRank_ShouldReturnThePromotedRank)
 TEST_F(MoveTest, isValid_ShouldReturnFalseIfMemberIsInvalid)
 {
     Move m {Piece(), Square {"e2"}, Rank::NONE};
+    bool expected = false;
 
-    EXPECT_EQ(false, m.isValid());
+    EXPECT_EQ(expected, m.isValid());
 }
 
 TEST_F(MoveTest, isCastle_ShouldReturnTrueIfMoveIsCastle)
@@ -82,10 +83,12 @@ TEST_F(MoveTest, isCastle_ShouldReturnTrueIfMoveIsCastle)
     Move m4 {Piece {Color::BLACK, Rank::KING, Square {"e8"}},
         Square {"c8"}, Rank::NONE};
 
-    EXPECT_EQ(true, m1.isCastle());
-    EXPECT_EQ(true, m2.isCastle());
-    EXPECT_EQ(true, m3.isCastle());
-    EXPECT_EQ(true, m4.isCastle());
+    bool expected = true;
+
+    EXPECT_EQ(expected, m1.isCastle());
+    EXPECT_EQ(expected, m2.isCastle());
+    EXPECT_EQ(expected, m3.isCastle());
+    EXPECT_EQ(expected, m4.isCastle());
 }
 
 TEST_F(MoveTest, isCastle_ShouldReturnFalseIfMoveIsNotCastle)
@@ -96,6 +99,8 @@ TEST_F(MoveTest, isCastle_ShouldReturnFalseIfMoveIsNotCastle)
     Move m2 {Piece {Color::WHITE, Rank::ROOK, Square {"e1"}},
         Square {"c1"}, Rank::NONE};
 
-    EXPECT_EQ(false, m1.isCastle());
-    EXPECT_EQ(false, m2.isCastle());
+    bool expected = false;
+
+    EXPECT_EQ(expected, m1.isCastle());
+    EXPECT_EQ(expected, m2.isCastle());
 }

@@ -40,28 +40,36 @@ TEST_F(SquareTest, WhenUsingStringCtor_ShouldBeZeroIfInvalid)
 {
     Square s {"b9"};
 
-    EXPECT_EQ(false, s.isValid());
+    bool f = false;
+
+    EXPECT_EQ(f, s.isValid());
 }
 
 TEST_F(SquareTest, WhenUsingStringCtor_ShouldBeZeroIfEmpty)
 {
     Square s {""};
 
-    EXPECT_EQ(false, s.isValid());
+    bool f = false;
+
+    EXPECT_EQ(f, s.isValid());
 }
 
 TEST_F(SquareTest, WhenUsingPairCtor_ShouldBeZeroIfInvalid)
 {
     Square s {std::pair<int, int>(-1, 5)};
 
-    EXPECT_EQ(false, s.isValid());
+    bool f = false;
+
+    EXPECT_EQ(f, s.isValid());
 }
 
 TEST_F(SquareTest, WhenUsingBitboardCtor_ShouldThrowExceptionIfInvalid)
 {
     Square s {Bitboard {0x00ULL}};
 
-    EXPECT_EQ(false, s.isValid());
+    bool f = false;
+
+    EXPECT_EQ(f, s.isValid());
 }
 
 TEST_F(SquareTest, toBitboard_ShouldConvertToBitboardCorrectly)
@@ -96,7 +104,9 @@ TEST_F(SquareTest, operatorEQ_ShouldCorrectlyCompareObjects)
     Square s1("a3");
     Square s2("a3");
 
-    EXPECT_EQ(true, s1 == s2);
+    bool t = true;
+
+    EXPECT_EQ(t, s1 == s2);
 }
 
 TEST_F(SquareTest, operatorNEQ_ShouldCorrectlyCompareObjects)
@@ -104,12 +114,16 @@ TEST_F(SquareTest, operatorNEQ_ShouldCorrectlyCompareObjects)
     Square s1("a3");
     Square s2("b7");
 
-    EXPECT_EQ(true, s1 != s2);
+    bool t = true;
+
+    EXPECT_EQ(t, s1 != s2);
 }
 
 TEST_F(SquareTest, isValid_ShouldReturnFalseIfZero)
 {
     Square s;
 
-    EXPECT_EQ(false, s.isValid());
+    bool f = false;
+
+    EXPECT_EQ(f, s.isValid());
 }

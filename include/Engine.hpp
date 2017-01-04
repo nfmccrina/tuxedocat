@@ -44,7 +44,7 @@ namespace TuxedoCat
         uint64_t perft(int depth);
         std::string divide(int depth);
         void setboard(std::string fen);
-        void test() const;
+        int test() const;
         std::string print() const;
         void handleUserMoveMessage(const Message& msg);
 

@@ -200,7 +200,7 @@ void Engine::setboard(std::string fen)
     position = Position(fen);
 }
 
-void Engine::test() const
+int Engine::test() const
 {
     int argc {1};
     char* argv[1];
@@ -224,6 +224,8 @@ void Engine::test() const
     result = RUN_ALL_TESTS();
 
     delete argv[0];
+
+    return result;
 }
 
 std::string Engine::print() const

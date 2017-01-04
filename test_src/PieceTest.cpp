@@ -142,7 +142,9 @@ TEST_F(PieceTest, operatorEQ_ShouldReturnTrueForIdenticalPieces)
     Piece p1(Color::BLACK, Rank::KNIGHT, Square("e4"));
     Piece p2(Color::BLACK, Rank::KNIGHT, Square("e4"));
 
-    EXPECT_EQ(true, p1 == p2);
+    bool expected = true;
+
+    EXPECT_EQ(expected, p1 == p2);
 }
 
 TEST_F(PieceTest, operatorNEQ_ShouldReturnTrueForIdenticalPieces)
@@ -150,7 +152,9 @@ TEST_F(PieceTest, operatorNEQ_ShouldReturnTrueForIdenticalPieces)
     Piece p1(Color::BLACK, Rank::KNIGHT, Square("e4"));
     Piece p2(Color::BLACK, Rank::PAWN, Square("e4"));
 
-    EXPECT_EQ(true, p1 != p2);
+    bool expected = true;
+
+    EXPECT_EQ(expected, p1 != p2);
 }
 
 TEST_F(PieceTest, isValid_ShouldReturnFalseIfMemberIsNull)
@@ -162,7 +166,9 @@ TEST_F(PieceTest, isValid_ShouldReturnFalseIfMemberIsNull)
     Piece p2 {Color::WHITE, Rank::NONE, s2};
     Piece p3 {Color::NONE, Rank::KING, s2};
 
-    EXPECT_EQ(false, p1.isValid());
-    EXPECT_EQ(false, p2.isValid());
-    EXPECT_EQ(false, p3.isValid());
+    bool expected = false;
+
+    EXPECT_EQ(expected, p1.isValid());
+    EXPECT_EQ(expected, p2.isValid());
+    EXPECT_EQ(expected, p3.isValid());
 }
