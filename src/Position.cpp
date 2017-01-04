@@ -226,8 +226,6 @@ void Position::makeMove(const Move& move)
         return;
     }
 
-    
-
     sourceLocation = move.getMovingPiece().getSquare().toBitboard();
     targetLocation = move.getTargetSquare().toBitboard();
     sourceColor = move.getMovingPiece().getColor();
@@ -314,18 +312,16 @@ void Position::makeMove(const Move& move)
 
             if (capturedPiece.isValid())
             {
-                if (!enPassantTarget.isEmpty())
+                if (!enPassantTarget.isEmpty() &&
+                    targetLocation == enPassantTarget)
                 {
-                    if (targetLocation == enPassantTarget)
+                    if (sourceColor == Color::WHITE)
                     {
-                        if (sourceColor == Color::WHITE)
-                        {
-                            removePieceAt(targetLocation >> 8);
-                        }
-                        else
-                        {
-                            removePieceAt(targetLocation << 8);
-                        }
+                        removePieceAt(targetLocation >> 8);
+                    }
+                    else
+                    {
+                        removePieceAt(targetLocation << 8);
                     }
                 }
                 else
@@ -973,6 +969,7 @@ void Position::generatePawnAdvancesAt(Bitboard b, MoveList& moves)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
+        movingPiece.getColor() != colorToMove ||
         isPiecePinned(movingPiece, Direction::E) ||
         isPiecePinned(movingPiece, Direction::W) ||
         isPiecePinned(movingPiece, Direction::NW) ||
@@ -1061,6 +1058,7 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
 
     if (!movePiece.isValid() ||
         movePiece.getRank() != Rank::PAWN ||
+        movePiece.getColor() != colorToMove ||
         isPiecePinned(movePiece, Direction::N) ||
         isPiecePinned(movePiece, Direction::S) ||
         isPiecePinned(movePiece, Direction::E) ||
@@ -1183,6 +1181,7 @@ void Position::generatePawnDblAdvancesAt(Bitboard b, MoveList& moves)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
+        movingPiece.getColor() != colorToMove ||
         isPiecePinned(movingPiece, Direction::E) ||
         isPiecePinned(movingPiece, Direction::W) ||
         isPiecePinned(movingPiece, Direction::SE) ||
@@ -1233,6 +1232,7 @@ void Position::generateSlidingMovesAt(Bitboard b, Direction d,
     Piece piece = getPieceAt({b});
 
     if (!piece.isValid() ||
+        piece.getColor() != colorToMove ||
         isSlidingPiecePinned(piece, d))
     {
         return;
@@ -1282,7 +1282,7 @@ bool Position::getHighBitBlockerByDirection(Direction direction) const
     if (direction == Direction::N ||
         direction == Direction::NW ||
         direction == Direction::NE ||
-        direction == Direction::W)
+        direction == Direction::E)
     {
         return false;
     }
@@ -1430,7 +1430,7 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
 
     highMask = 0x00ULL;
     lowMask = 0x00ULL;
-    tmp = location << offset;
+    tmp = (location & 0x007E7E7E7E7E7E00ULL) << offset;
 
     while (tmp != 0x00ULL)
     {
@@ -1445,10 +1445,10 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
             break;
         }
 
-        tmp = tmp << offset;
+        tmp = (tmp & 0x007E7E7E7E7E7E00ULL) << offset;
     }
 
-    tmp = location >> offset;
+    tmp = (location & 0x007E7E7E7E7E7E00ULL) >> offset;
 
     while (tmp != 0x00ULL)
     {
@@ -1463,7 +1463,7 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
             break;
         }
 
-        tmp = tmp >> offset;
+        tmp = (tmp & 0x007E7E7E7E7E7E00ULL) >> offset;
     }
 
     if (pinnedKingLocation.inMask(lowMask) &&
@@ -1712,9 +1712,9 @@ bool Position::isSquareAttacked(Square s) const
     Bitboard opposingBishops =
         colorToMove == Color::WHITE ? blackBishops : whiteBishops;
     Bitboard opposingRooks =
-        colorToMove == Color::WHITE ? blackRooks : whiteBishops;
+        colorToMove == Color::WHITE ? blackRooks : whiteRooks;
     Bitboard opposingQueens =
-        colorToMove == Color::WHITE ? blackQueens : whiteKnights;
+        colorToMove == Color::WHITE ? blackQueens : whiteQueens;
 
     if ((LookupData::knightAttacks[squareIndex] & opposingKnights) !=
         0x0000000000000000ULL)
