@@ -1536,8 +1536,8 @@ bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
         result = isPiecePinned(p, Direction::E) ||
             isPiecePinned(p, Direction::W) ||
             isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
+            isPiecePinned(p, Direction::NW) ||
+            isPiecePinned(p, Direction::SE) ||
             isPiecePinned(p, Direction::S); 
     }
     else if (d == Direction::SW)
@@ -1643,6 +1643,7 @@ bool Position::isMoveLegal(const Move& m)
         findPiece(p.getColor(), Rank::KING);
 
     bool result = false;
+    bool isCastle = m.isCastle();
 
     if (kingLocationVector.empty())
     {
@@ -1664,7 +1665,7 @@ bool Position::isMoveLegal(const Move& m)
         }
         else
         {
-            if (m.isCastle())
+            if (isCastle)
             {
                 result = isCastleLegal(m.getTargetSquare());
             }
@@ -1674,7 +1675,7 @@ bool Position::isMoveLegal(const Move& m)
             }
         }
     }
-    else
+    else if (!isCastle)
     {
         makeMove(m);
         makeMove({Piece {}, Square {}, Rank::NONE});
