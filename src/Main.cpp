@@ -23,9 +23,7 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../test_include/TuxedoCatTest.hpp"
 #include "../include/Controller.hpp"
-#include <iostream>
 
 using namespace TuxedoCat;
 

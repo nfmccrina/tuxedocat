@@ -23,6 +23,7 @@
 */
 
 #include "Move.hpp"
+#include "../include/Utility.hpp"
 
 using namespace TuxedoCat;
 
@@ -65,13 +66,13 @@ bool Move::isCastle() const
         (
         (
         mp.getColor() == Color::WHITE &&
-        mp.getSquare().toBitboard().inMask(0x0000000000000010ULL) &&
-        targetSquare.toBitboard().inMask(0x0000000000000044ULL)
+        Utility::inMask(mp.getSquare().toBitboard(), 0x0000000000000010ULL) &&
+        Utility::inMask(targetSquare.toBitboard(), 0x0000000000000044ULL)
         ) ||
         (
         mp.getColor() == Color::BLACK &&
-        mp.getSquare().toBitboard().inMask(0x1000000000000000ULL) &&
-        targetSquare.toBitboard().inMask(0x4400000000000000ULL)
+        Utility::inMask(mp.getSquare().toBitboard(), 0x1000000000000000ULL) &&
+        Utility::inMask(targetSquare.toBitboard(), 0x4400000000000000ULL)
         )
         );
 }

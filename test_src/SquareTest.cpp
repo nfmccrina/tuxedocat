@@ -33,7 +33,7 @@ TEST_F(SquareTest, Constructor_ShouldInitializeFromStringCorrectly)
 {
     Square s("b1");
 
-    EXPECT_EQ(Bitboard(0x0000000000000002ULL), s.toBitboard());
+    EXPECT_EQ(0x0000000000000002ULL, s.toBitboard());
 }
 
 TEST_F(SquareTest, WhenUsingStringCtor_ShouldBeZeroIfInvalid)
@@ -65,7 +65,7 @@ TEST_F(SquareTest, WhenUsingPairCtor_ShouldBeZeroIfInvalid)
 
 TEST_F(SquareTest, WhenUsingBitboardCtor_ShouldThrowExceptionIfInvalid)
 {
-    Square s {Bitboard {0x00ULL}};
+    Square s {{0x00ULL}};
 
     bool f = false;
 
@@ -74,7 +74,7 @@ TEST_F(SquareTest, WhenUsingBitboardCtor_ShouldThrowExceptionIfInvalid)
 
 TEST_F(SquareTest, toBitboard_ShouldConvertToBitboardCorrectly)
 {
-    Bitboard b {0x0000000020000000ULL};
+    uint64_t b {0x0000000020000000ULL};
     Square s {b};
 
     EXPECT_EQ(b, s.toBitboard());
@@ -82,7 +82,7 @@ TEST_F(SquareTest, toBitboard_ShouldConvertToBitboardCorrectly)
 
 TEST_F(SquareTest, toCoordinates_ShouldConvertToCoordinatesCorrectly)
 {
-    Bitboard b {0x0000000020000000ULL};
+    uint64_t b {0x0000000020000000ULL};
     Square s {b};
 
     std::pair<int, int> result = s.toCoordinates();
@@ -93,7 +93,7 @@ TEST_F(SquareTest, toCoordinates_ShouldConvertToCoordinatesCorrectly)
 
 TEST_F(SquareTest, toString_ShouldConvertToAlgebraicNotationCorrectly)
 {
-    Bitboard b {0x0000000020000000ULL};
+    uint64_t b {0x0000000020000000ULL};
     Square s {b};
 
     EXPECT_EQ("f4", s.toString());

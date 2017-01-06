@@ -40,7 +40,7 @@ TEST_F(MoveTest, getMovingPiece_ShouldReturnTheMovingPiece)
 
     EXPECT_EQ(Color::WHITE, m.getMovingPiece().getColor());
     EXPECT_EQ(Rank::KNIGHT, m.getMovingPiece().getRank());
-    EXPECT_EQ(Bitboard(0x0000000000000002ULL),
+    EXPECT_EQ(0x0000000000000002ULL,
         m.getMovingPiece().getSquare().toBitboard());
 }
 
@@ -49,7 +49,7 @@ TEST_F(MoveTest, getTargetSquare_ShouldReturnTheTargetSquare)
     Move m(Piece(Color::WHITE, Rank::KNIGHT, Square("b1")),
         Square("a3"), Rank::NONE);
 
-    EXPECT_EQ(Bitboard(0x0000000000010000ULL),
+    EXPECT_EQ(0x0000000000010000ULL,
         m.getTargetSquare().toBitboard());
 }
 

@@ -23,6 +23,7 @@
 */
 
 #include "../include/Utility.hpp"
+#include "../include/LookupData.hpp"
 
 using namespace TuxedoCat;
 
@@ -40,4 +41,198 @@ std::vector<std::string> Utility::split(const std::string &s, char delim) {
 	std::vector<std::string> elems;
 	split(s, delim, elems);
 	return elems;
+}
+
+void Utility::flipBit(uint64_t& value, int bitIndex)
+{
+    if (bitIndex >= 0 && bitIndex < 64)
+    {
+        value ^= (0x01ULL << bitIndex);
+    }
+}
+
+bool Utility::inMask(uint64_t value, uint64_t  mask)
+{
+    return (value & mask) == value;
+}
+
+bool Utility::isEmpty(uint64_t value)
+{
+    return value == 0x00ULL;
+}
+
+int Utility::lsb(uint64_t value)
+{
+#ifdef USE_FFS_BUILTIN
+    return __builtin_ffsll(value) - 1
+#else
+    /*
+    * begin wiki code
+    */
+
+    if (value == 0x0000000000000000ULL)
+    {
+            return -1;
+    }
+
+    uint64_t debruijn64 = 0x03F79D71B4CB0A89ULL;
+    return LookupData::index64[((value & ((~value) + 1)) * debruijn64) >> 58];
+
+    /*
+    * end wiki code
+    */
+#endif
+}
+
+int Utility::msb(uint64_t value)
+{
+#ifndef USE_BUILTIN_CLZ
+    if (value == 0x00)
+    {
+        return -1;
+    }
+
+    return 63 - __builtin_clzll(value);
+#else
+    /*
+    * begin wiki code
+    */
+
+    uint64_t x {value};
+    if (x == 0x0000000000000000ULL)
+    {
+            return -1;
+    }
+
+    uint64_t debruijn64 = 0x03F79D71B4CB0A89ULL;
+    x |= x >> 1;
+    x |= x >> 2;
+    x |= x >> 4;
+    x |= x >> 8;
+    x |= x >> 16;
+    x |= x >> 32;
+    return LookupData::index64Reverse[(x * debruijn64) >> 58];
+
+    /*
+    * end wiki code
+    */
+#endif
+}
+
+int Utility::popcount(uint64_t value)
+{
+#ifdef USE_BUILTIN_POPCOUNT
+    return __builtin_popcount(value)
+#else
+    /*
+    * begin wiki code
+    */
+
+    uint64_t x = value; 
+
+    x = x - ((x >> 1) & LookupData::k1);
+    x = (x & LookupData::k2) + ((x >> 2) & LookupData::k2);
+    x = (x + (x >> 4)) & LookupData::k4;
+    x = (x * LookupData::kf) >> 56;
+
+    return (int)x;
+
+    /*
+    * end wiki code
+    */
+#endif
+}
+
+std::string Utility::toAlgebraicCoordinate(uint64_t value)
+{
+    uint64_t mask {0x00000000000000FFULL};
+    int rank {0};
+    int file {0};
+
+    if (value == 0x00ULL)
+    {
+        return "";
+    }
+
+    while ((value & mask) == 0x00ULL)
+    {
+        rank++;
+        mask <<= 8;
+    }
+
+    mask = 0x0101010101010101ULL;
+
+    while ((value & mask) == 0x00ULL)
+    {
+        file++;
+        mask <<= 1;
+    }
+
+    return std::string(1, static_cast<char>(file + 97)) +
+        std::to_string(rank + 1);
+}
+
+std::pair<int, int> Utility::toCoordinates(uint64_t value)
+{
+    std::string msg {"Bitboard::toCoordinates: Bitboard must only have one bit set to generate a coordinate"};
+    uint64_t mask {0x00000000000000FFULL};
+    int rank {0};
+    int file {0};
+
+    if (value == 0x00ULL)
+    {
+        return std::pair<int, int> {0, 0};
+    }
+
+    while ((value & mask) == 0x00ULL)
+    {
+        rank++;
+        mask <<= 8;
+    }
+
+    mask = 0x0101010101010101ULL;
+
+    while ((value & mask) == 0x00ULL)
+    {
+        file++;
+        mask <<= 1;
+    }
+
+    return std::pair<int, int>(rank, file);
+}
+
+std::string Utility::toString(uint64_t value)
+{
+    std::stringstream ss;
+    uint64_t currentValue {0x0100000000000000ULL};
+
+    for (int row = 7; row >= 0; row--)
+    {
+        for (int col = 0; col < 8; col++)
+        {
+            if ((currentValue & value) != 0x00ULL)
+            {
+                ss << "*";
+            }
+            else
+            {
+                ss << "-";
+            }
+
+            if (col != 7)
+            {
+                currentValue = currentValue << 1;
+                ss << " ";
+            }
+        }
+
+        if (row != 0)
+        {
+            ss << std::endl;
+        }
+
+        currentValue = currentValue >> 15;
+    }
+
+    return ss.str();
 }

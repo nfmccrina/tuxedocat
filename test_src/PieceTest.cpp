@@ -120,7 +120,7 @@ TEST_F(PieceTest, getSquare_ShouldReturnTheCorrectSquare)
 {
     Piece p(Color::BLACK, Rank::QUEEN, Square("d6"));
 
-    EXPECT_EQ(Bitboard(0x0000080000000000ULL), p.getSquare().toBitboard());
+    EXPECT_EQ(0x0000080000000000ULL, p.getSquare().toBitboard());
 }
 
 TEST_F(PieceTest, getColor_ShouldReturnTheCorrectColor)

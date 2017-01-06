@@ -37,5 +37,15 @@ namespace TuxedoCat
             std::vector<std::string> &elems);
         static std::vector<std::string> split(const std::string &s,
             char delim);
+
+        static void flipBit(uint64_t& value, int bitIndex);
+        static bool inMask(uint64_t value, uint64_t  mask);
+        static bool isEmpty(uint64_t value);
+        static int lsb(uint64_t value);
+        static int msb(uint64_t value);
+        static int popcount(uint64_t value);
+        static std::string toAlgebraicCoordinate(uint64_t value);
+        static std::pair<int, int> toCoordinates(uint64_t value);
+        static std::string toString(uint64_t value);
 	};
 }

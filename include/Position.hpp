@@ -50,27 +50,27 @@ namespace TuxedoCat
         std::string toString() const;
         void unmakeMove();
     private:
-        void addPieceAt(Bitboard location, Color c, Rank r);
+        void addPieceAt(uint64_t location, Color c, Rank r);
         void computeMoveNotation(MoveList& moves);
         void computeSlidingMoves(int index, Piece p, bool highBitBlock,
             const std::array<uint64_t, 64>& rayMask, MoveList& moves);
-        Bitboard computePinningPieceMask(Direction direction) const;
+        uint64_t computePinningPieceMask(Direction direction) const;
         std::vector<Square> findPiece(Color c, Rank r) const;
         void generateCastles(MoveList& moves);
         void generateKingMovesAt(Square s, MoveList& moves);
         void generateKnightMovesAt(Square s, MoveList& moves);
-        void generatePawnAdvancesAt(Bitboard b, MoveList& moves);
-        void generatePawnCapturesAt(Bitboard b, MoveList& moves);
-        void generatePawnDblAdvancesAt(Bitboard b, MoveList& moves);
-        void generateSlidingMovesAt(Bitboard b, Direction d,
+        void generatePawnAdvancesAt(uint64_t b, MoveList& moves);
+        void generatePawnCapturesAt(uint64_t b, MoveList& moves);
+        void generatePawnDblAdvancesAt(uint64_t b, MoveList& moves);
+        void generateSlidingMovesAt(uint64_t b, Direction d,
             MoveList& moves);
-        int getBlockerIndex(Bitboard mask, bool highBitBlock);
-        void getMovesFromMask(Bitboard mask, Piece p,
+        int getBlockerIndex(uint64_t mask, bool highBitBlock);
+        void getMovesFromMask(uint64_t mask, Piece p,
             bool inCheck, MoveList& moves);
         bool getHighBitBlockerByDirection(Direction direction) const;
         int getOffsetFromDirection(Direction direction) const;
-        Bitboard getOpposingPieces(Color c) const;
-        Bitboard getOwnPieces(Color c) const;
+        uint64_t getOpposingPieces(Color c) const;
+        uint64_t getOwnPieces(Color c) const;
         Piece getPieceAt(Square s) const;
         bool isCastleLegal(Square s) const;
         bool isInCheck(Color c) const;
@@ -80,30 +80,30 @@ namespace TuxedoCat
         bool isSlidingPiecePinned(const Piece p, Direction d) const;
         bool isSquareAttacked(Square s) const;
         bool isSquareEmpty(Square s) const;
-        void removePieceAt(Bitboard location);
+        void removePieceAt(uint64_t location);
         void parseFEN(std::string fen);
         void updatePieces();
 
-        Bitboard allPieces;
-        Bitboard blackBishops;
-        Bitboard blackKing;
-        Bitboard blackKnights;
-        Bitboard blackPawns;
-        Bitboard blackPieces;
-        Bitboard blackQueens;
-        Bitboard blackRooks;
+        uint64_t allPieces;
+        uint64_t blackBishops;
+        uint64_t blackKing;
+        uint64_t blackKnights;
+        uint64_t blackPawns;
+        uint64_t blackPieces;
+        uint64_t blackQueens;
+        uint64_t blackRooks;
         CastlingStatus castlingStatus;
         Color colorToMove;
-        Bitboard enPassantTarget;
+        uint64_t enPassantTarget;
         uint32_t fullMoveCounter;
         uint32_t halfMoveCounter;
         std::stack<Position> positionStack;
-        Bitboard whiteBishops;
-        Bitboard whiteKing;
-        Bitboard whiteKnights;
-        Bitboard whitePawns;
-        Bitboard whitePieces;
-        Bitboard whiteQueens;
-        Bitboard whiteRooks;
+        uint64_t whiteBishops;
+        uint64_t whiteKing;
+        uint64_t whiteKnights;
+        uint64_t whitePawns;
+        uint64_t whitePieces;
+        uint64_t whiteQueens;
+        uint64_t whiteRooks;
     };
 }

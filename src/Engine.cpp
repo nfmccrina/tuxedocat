@@ -26,9 +26,11 @@
 #include "../include/Move.hpp"
 #include "../include/MoveList.hpp"
 #include "../include/MoveSearchCriteria.hpp"
-#include "../test_include/TuxedoCatTest.hpp"
+#include "../include/gtest/gtest.h"
 #include <sstream>
 #include <iostream>
+#include <chrono>
+#include <ctime>
 
 using namespace TuxedoCat;
 
@@ -112,7 +114,17 @@ void Engine::run()
                     }
                 }
 
-                std::cout << "Leaf nodes: " << perft(depth) << std::endl;
+                std::chrono::time_point<std::chrono::system_clock> start;
+                std::chrono::time_point<std::chrono::system_clock> end;
+                start = std::chrono::system_clock::now();
+
+                std::cout << "Leaf nodes: " << perft(depth);
+
+                end = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsed_seconds = end - start;
+
+                std::cout << " (" << elapsed_seconds.count()
+                    << "s)" << std::endl;
             }
             else if (msgType == MessageType::USERMOVE)
             {
@@ -129,6 +141,7 @@ void Engine::run()
 uint64_t Engine::perft(int depth)
 {
     MoveList availableMoves;
+    uint64_t count {0};
     position.generateMoves(Rank::NONE, availableMoves);
 
     if (depth <= 1)
@@ -137,8 +150,6 @@ uint64_t Engine::perft(int depth)
     }
     else
     {
-        uint64_t count = 0;
-
         for (int moveIndex = 0; moveIndex < availableMoves.size();
             moveIndex++)
         {

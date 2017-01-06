@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "Bitboard.hpp"
 #include <string>
 #include <cstdint>
 #include <utility>
@@ -37,10 +36,10 @@ namespace TuxedoCat
         Square();
         Square(std::string s);
         Square(std::pair<int, int> coord);
-        Square(Bitboard bitboard);
+        Square(uint64_t bitboard);
 
         bool isValid() const;
-        Bitboard toBitboard() const;
+        uint64_t toBitboard() const;
         std::pair<int, int> toCoordinates() const;
         std::string toString() const;
 
@@ -49,7 +48,7 @@ namespace TuxedoCat
         void initializeFromAlgebraicNotation(std::string s);
         bool isAlgebraicDescValid(std::string s) const;
     
-        Bitboard location;
+        uint64_t location;
     };
 
     bool operator==(Square a, Square b);

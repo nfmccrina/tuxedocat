@@ -24,6 +24,7 @@
 */
 
 #include "Square.hpp"
+#include "Utility.hpp"
 
 using namespace TuxedoCat;
 
@@ -53,7 +54,7 @@ Square::Square(std::pair<int, int> coord)
     }
 }
 
-Square::Square(Bitboard bitboard)
+Square::Square(uint64_t bitboard)
     : location(bitboard)
 {
 }
@@ -64,22 +65,22 @@ Square::Square(Bitboard bitboard)
 
 bool Square::isValid() const
 {
-    return !location.isEmpty();
+    return !Utility::isEmpty(location);
 }
 
-Bitboard Square::toBitboard() const
+uint64_t Square::toBitboard() const
 {
     return location;
 }
 
 std::pair<int, int> Square::toCoordinates() const
 {
-    return location.toCoordinates();
+    return Utility::toCoordinates(location);
 }
 
 std::string Square::toString() const
 {
-    return location.toAlgebraicCoordinate();
+    return Utility::toAlgebraicCoordinate(location);
 }
 
 // end public methods
@@ -121,7 +122,7 @@ void Square::initializeFromAlgebraicNotation(std::string s)
 
     rank = std::stoi(s.substr(1)) - 1;
 
-    location = Bitboard(0x0000000000000001ULL << ((rank * 8) + file));
+    location = 0x0000000000000001ULL << ((rank * 8) + file);
 }
 
 bool Square::isAlgebraicDescValid(std::string s) const

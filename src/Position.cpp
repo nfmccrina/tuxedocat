@@ -72,8 +72,8 @@ Position::Position(const Position& p)
 
 void Position::generateMoves(Rank rank, MoveList& moves)
 {
-    Bitboard pieces;
-    Bitboard currentSquare;
+    uint64_t pieces;
+    uint64_t currentSquare;
     int currentIndex;
 
     if (colorToMove == Color::WHITE)
@@ -92,7 +92,7 @@ void Position::generateMoves(Rank rank, MoveList& moves)
 
     while (pieces != 0x00ULL)
     {
-        currentIndex = pieces.lsb();
+        currentIndex = Utility::lsb(pieces);
         currentSquare = 0x01ULL << currentIndex;
 
         if (rank == Rank::NONE || rank == Rank::PAWN)
@@ -172,7 +172,7 @@ void Position::generateMoves(Rank rank, MoveList& moves)
                 Direction::SW, moves);
         }
 
-        pieces.flipBit(currentIndex);
+        Utility::flipBit(pieces, currentIndex);
     }
 
     computeMoveNotation(moves);
@@ -201,9 +201,9 @@ Move Position::getMoveFromString(std::string s) const
 
 void Position::makeMove(const Move& move)
 {
-    Bitboard sourceLocation;
-    Bitboard targetLocation;
-    Bitboard tmpEnPassant;
+    uint64_t sourceLocation;
+    uint64_t targetLocation;
+    uint64_t tmpEnPassant;
     Color sourceColor;
     Rank sourceRank;
     Rank promotedRank;
@@ -233,7 +233,7 @@ void Position::makeMove(const Move& move)
     capturedPiece = getPieceAt(Square(targetLocation));
     promotedRank = move.getPromotedRank();
 
-    if (!enPassantTarget.isEmpty())
+    if (!Utility::isEmpty(enPassantTarget))
     {
         tmpEnPassant = enPassantTarget;
     }
@@ -312,7 +312,7 @@ void Position::makeMove(const Move& move)
 
             if (capturedPiece.isValid())
             {
-                if (!enPassantTarget.isEmpty() &&
+                if (!Utility::isEmpty(enPassantTarget) &&
                     targetLocation == enPassantTarget)
                 {
                     if (sourceColor == Color::WHITE)
@@ -375,7 +375,7 @@ void Position::makeMove(const Move& move)
         fullMoveCounter++;
     }
 
-    if (!enPassantTarget.isEmpty())
+    if (!Utility::isEmpty(enPassantTarget))
     {
         if (tmpEnPassant == enPassantTarget)
         {
@@ -485,7 +485,7 @@ void Position::unmakeMove()
 
 // begin private methods
 
-void Position::addPieceAt(Bitboard loc, Color c, Rank r)
+void Position::addPieceAt(uint64_t loc, Color c, Rank r)
 {
     if (r == Rank::QUEEN)
     {
@@ -643,8 +643,8 @@ void Position::computeMoveNotation(MoveList& moves)
             }
             else
             {
-                if (move.getTargetSquare().toBitboard()
-                    .inMask(0x4000000000000040ULL))
+                if (Utility::inMask(move.getTargetSquare().toBitboard(),
+                    0x4000000000000040ULL))
                 {
                     san << "0-0";
                 }
@@ -701,9 +701,8 @@ void Position::computeMoveNotation(MoveList& moves)
 void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,
     const std::array<uint64_t, 64>& rayMask, MoveList& moves)
 {
-    Bitboard moveMask {0x0000000000000000ULL};
-    Bitboard opposingPieces;
-    Bitboard ownPieces;
+    uint64_t moveMask {0x0000000000000000ULL};
+    uint64_t ownPieces;
     int blockerIndex;
     bool inCheck {false};
 
@@ -722,9 +721,9 @@ void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,
     getMovesFromMask(moveMask, p, inCheck, moves);
 }
 
-Bitboard Position::computePinningPieceMask(Direction direction) const
+uint64_t Position::computePinningPieceMask(Direction direction) const
 {
-    Bitboard mask;
+    uint64_t mask;
 
     if (colorToMove == Color::BLACK)
     {
@@ -757,8 +756,8 @@ Bitboard Position::computePinningPieceMask(Direction direction) const
 std::vector<Square> Position::findPiece(Color c, Rank r) const
 {
     std::vector<Square> locations;
-    Bitboard bitboard;
-    Bitboard currentLocation;
+    uint64_t bitboard;
+    uint64_t currentLocation;
 
     if (r == Rank::PAWN)
     {
@@ -796,7 +795,7 @@ std::vector<Square> Position::findPiece(Color c, Rank r) const
 
     while (bitboard != 0x00)
     {
-        currentLocation = 0x01ULL << bitboard.lsb();
+        currentLocation = 0x01ULL << Utility::lsb(bitboard);
 
         locations.push_back(Square(currentLocation));
 
@@ -863,10 +862,10 @@ void Position::generateKingMovesAt(Square s, MoveList& moves)
     int locationIndex;
     int currentIndex;
     Piece piece = getPieceAt(s);
-    Bitboard location = s.toBitboard();
-    Bitboard moveMask = 0x0000000000000000ULL;
-    Bitboard currentMove;
-    Bitboard ownPieces;
+    uint64_t location = s.toBitboard();
+    uint64_t moveMask = 0x0000000000000000ULL;
+    uint64_t currentMove;
+    uint64_t ownPieces;
 
     if (!piece.isValid() || piece.getRank() != Rank::KING ||
         piece.getColor() != colorToMove)
@@ -875,12 +874,12 @@ void Position::generateKingMovesAt(Square s, MoveList& moves)
     }
 
     ownPieces = getOwnPieces(colorToMove);
-    locationIndex = location.lsb();
+    locationIndex = Utility::lsb(location);
     moveMask = LookupData::kingAttacks[locationIndex] & (~ownPieces);
 
     while (moveMask != 0x0000000000000000ULL)
     {
-        currentIndex = moveMask.lsb();
+        currentIndex = Utility::lsb(moveMask);
         currentMove = 0x01ULL << currentIndex;
         Move m(piece, currentMove, Rank::NONE);
 
@@ -889,19 +888,19 @@ void Position::generateKingMovesAt(Square s, MoveList& moves)
             moves.addMove(m);
         }
 
-        moveMask.flipBit(currentIndex);
+        Utility::flipBit(moveMask, currentIndex);
     }
 }
 
 void Position::generateKnightMovesAt(Square s, MoveList& moves)
 {
     Piece piece = getPieceAt(s);
-    Bitboard location = s.toBitboard();
+    uint64_t location = s.toBitboard();
     int locationIndex;
-    Bitboard moveMask = 0x0000000000000000ULL;
-    Bitboard currentMove;
+    uint64_t moveMask = 0x0000000000000000ULL;
+    uint64_t currentMove;
     Color color;
-    Bitboard ownPieces;
+    uint64_t ownPieces;
     int currentIndex;
     bool inCheck {false};
 
@@ -942,13 +941,13 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
         }
     }
 
-    locationIndex = location.lsb();
+    locationIndex = Utility::lsb(location);
 
     moveMask = LookupData::knightAttacks[locationIndex] & (~ownPieces);
 
     while (moveMask != 0x0000000000000000ULL)
     {
-        currentIndex = moveMask.lsb();
+        currentIndex = Utility::lsb(moveMask);
         currentMove = 0x01ULL << currentIndex;
         Move m(piece, Square(currentMove), Rank::NONE);
 
@@ -957,14 +956,14 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
             moves.addMove(m);
         }
 
-        moveMask = moveMask.flipBit(currentIndex);
+        Utility::flipBit(moveMask, currentIndex);
     }
 }
 
-void Position::generatePawnAdvancesAt(Bitboard b, MoveList& moves)
+void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
 {
-    Bitboard legalMask;
-    Bitboard target;
+    uint64_t legalMask;
+    uint64_t target;
     Piece movingPiece = getPieceAt(Square(b));
     bool inCheck {false};
 
@@ -1001,9 +1000,10 @@ void Position::generatePawnAdvancesAt(Bitboard b, MoveList& moves)
         }
     }
 
-    if (b.inMask(legalMask) && !target.inMask(allPieces))
+    if (Utility::inMask(b, legalMask) &&
+        !Utility::inMask(target, allPieces))
     {
-        if (target.inMask(0xFF000000000000FFULL))
+        if (Utility::inMask(target, 0xFF000000000000FFULL))
         {
             Move m1(movingPiece, target, Rank::QUEEN);
             Move m2(movingPiece, target, Rank::ROOK);
@@ -1042,16 +1042,16 @@ void Position::generatePawnAdvancesAt(Bitboard b, MoveList& moves)
     }
 }
 
-void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
+void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
 {
-    Bitboard validRankMask;
-    Bitboard validCaptureLeftMask;
-    Bitboard validCaptureRightMask;
-    Bitboard captureLeftTarget {0x00ULL};
-    Bitboard captureRightTarget {0x00ULL};
-    Bitboard targets;
-    Bitboard currentSquare;
-    Bitboard opposingPieces;
+    uint64_t validRankMask;
+    uint64_t validCaptureLeftMask;
+    uint64_t validCaptureRightMask;
+    uint64_t captureLeftTarget {0x00ULL};
+    uint64_t captureRightTarget {0x00ULL};
+    uint64_t targets;
+    uint64_t currentSquare;
+    uint64_t opposingPieces;
     int currentIndex;
     Piece movePiece = getPieceAt(Square(b));
     bool inCheck {false};
@@ -1070,9 +1070,9 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
     if (colorToMove == Color::WHITE)
     {
             
-        validRankMask.setValue(0x00FFFFFFFFFFFFFFULL);
-        validCaptureLeftMask.setValue(0xFEFEFEFEFEFEFEFEULL);
-        validCaptureRightMask.setValue(0x7F7F7F7F7F7F7F7FULL);
+        validRankMask = 0x00FFFFFFFFFFFFFFULL;
+        validCaptureLeftMask = 0xFEFEFEFEFEFEFEFEULL;
+        validCaptureRightMask = 0x7F7F7F7F7F7F7F7FULL;
 
         if (!isPiecePinned(movePiece, Direction::SW) &&
             !isPiecePinned(movePiece, Direction::NE))
@@ -1097,9 +1097,9 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
     }
     else
     {
-        validRankMask.setValue(0xFFFFFFFFFFFFFF00ULL);
-        validCaptureLeftMask.setValue(0x7F7F7F7F7F7F7F7FULL);
-        validCaptureRightMask.setValue(0xFEFEFEFEFEFEFEFEULL);
+        validRankMask = 0xFFFFFFFFFFFFFF00ULL;
+        validCaptureLeftMask = 0x7F7F7F7F7F7F7F7FULL;
+        validCaptureRightMask = 0xFEFEFEFEFEFEFEFEULL;
 
         if (!isPiecePinned(movePiece, Direction::SW) &&
             !isPiecePinned(movePiece, Direction::NE))
@@ -1128,10 +1128,10 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
 
     while (targets != 0x00ULL)
     {
-        currentIndex = targets.lsb();
+        currentIndex = Utility::lsb(targets);
         currentSquare = 0x01ULL << currentIndex;
 
-        if (currentSquare.inMask(0xFF000000000000FFULL))
+        if (Utility::inMask(currentSquare, 0xFF000000000000FFULL))
         {
             Move m1(movePiece, currentSquare, Rank::QUEEN);
             Move m2(movePiece, currentSquare, Rank::ROOK);
@@ -1168,15 +1168,15 @@ void Position::generatePawnCapturesAt(Bitboard b, MoveList& moves)
             }
         }
 
-        targets.flipBit(currentIndex);
+        Utility::flipBit(targets, currentIndex);
     }
 }
 
-void Position::generatePawnDblAdvancesAt(Bitboard b, MoveList& moves)
+void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
 {
-    Bitboard legalMask;
-    Bitboard target;
-    Bitboard firstSquare;
+    uint64_t legalMask;
+    uint64_t target;
+    uint64_t firstSquare;
     Piece movingPiece = getPieceAt(Square(b));
     bool inCheck {false};
 
@@ -1215,9 +1215,9 @@ void Position::generatePawnDblAdvancesAt(Bitboard b, MoveList& moves)
         }
     }
 
-    if (b.inMask(legalMask) &&
-        !firstSquare.inMask(allPieces) &&
-        !target.inMask(allPieces))
+    if (Utility::inMask(b, legalMask) &&
+        !Utility::inMask(firstSquare, allPieces) &&
+        !Utility::inMask(target, allPieces))
     {
         Move m(movingPiece, target, Rank::NONE);
 
@@ -1226,7 +1226,7 @@ void Position::generatePawnDblAdvancesAt(Bitboard b, MoveList& moves)
     }
 }
 
-void Position::generateSlidingMovesAt(Bitboard b, Direction d,
+void Position::generateSlidingMovesAt(uint64_t b, Direction d,
     MoveList& moves)
 {
     Piece piece = getPieceAt({b});
@@ -1238,32 +1238,32 @@ void Position::generateSlidingMovesAt(Bitboard b, Direction d,
         return;
     }
 
-    return computeSlidingMoves(b.lsb(), piece,
+    return computeSlidingMoves(Utility::lsb(b), piece,
         getHighBitBlockerByDirection(d),
         LookupData::getRayAttacksByDirection(d), moves);
 }
 
-int Position::getBlockerIndex(Bitboard mask, bool highBitBlock)
+int Position::getBlockerIndex(uint64_t mask, bool highBitBlock)
 {
     if (highBitBlock)
     {
-        return (mask & allPieces).msb();
+        return Utility::msb(mask & allPieces);
     }
     else
     {
-        return (mask & allPieces).lsb();
+        return Utility::lsb(mask & allPieces);
     }
 }
 
-void Position::getMovesFromMask(Bitboard mask, Piece p,
+void Position::getMovesFromMask(uint64_t mask, Piece p,
     bool inCheck, MoveList& moves)
 {
     int currentIndex;
-    Bitboard currentMove;
+    uint64_t currentMove;
 
     while (mask != 0x0000000000000000ULL)
     {
-        currentIndex = mask.lsb();
+        currentIndex = Utility::lsb(mask);
         currentMove = 0x001ULL << currentIndex;
 
         Move m {p, currentMove, Rank::NONE};
@@ -1273,7 +1273,7 @@ void Position::getMovesFromMask(Bitboard mask, Piece p,
             moves.addMove(m);
         }
 
-        mask.flipBit(currentIndex);
+        Utility::flipBit(mask, currentIndex);
     }
 }
 
@@ -1316,7 +1316,7 @@ int Position::getOffsetFromDirection(Direction direction) const
     return offset;
 }
 
-Bitboard Position::getOpposingPieces(Color c) const
+uint64_t Position::getOpposingPieces(Color c) const
 {
     if (c == Color::WHITE)
     {
@@ -1328,7 +1328,7 @@ Bitboard Position::getOpposingPieces(Color c) const
     }
 }
 
-Bitboard Position::getOwnPieces(Color c) const
+uint64_t Position::getOwnPieces(Color c) const
 {
     if (c == Color::WHITE)
     {
@@ -1406,13 +1406,13 @@ Piece Position::getPieceAt(Square s) const
 bool Position::isPiecePinned(const Piece pinnedPiece,
     Direction direction) const
 {
-    Bitboard location = pinnedPiece.getSquare().toBitboard();
+    uint64_t location = pinnedPiece.getSquare().toBitboard();
     bool result = false;
-    Bitboard pinningPieceMask;
-    Bitboard pinnedKingLocation;
-    Bitboard tmp;
-    Bitboard highMask = 0x00ULL;
-    Bitboard lowMask = 0x00ULL;
+    uint64_t pinningPieceMask;
+    uint64_t pinnedKingLocation;
+    uint64_t tmp;
+    uint64_t highMask = 0x00ULL;
+    uint64_t lowMask = 0x00ULL;
     int offset;
 
     if (colorToMove == Color::WHITE)
@@ -1434,13 +1434,13 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
 
     while (tmp != 0x00ULL)
     {
-        if (tmp.inMask(pinningPieceMask) ||
-            tmp.inMask(pinnedKingLocation))
+        if (Utility::inMask(tmp, pinningPieceMask) ||
+            Utility::inMask(tmp, pinnedKingLocation))
         {
             highMask = highMask | tmp;
             break;
         }
-        else if (tmp.inMask(blackPieces | whitePieces))
+        else if (Utility::inMask(tmp, blackPieces | whitePieces))
         {
             break;
         }
@@ -1452,13 +1452,13 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
 
     while (tmp != 0x00ULL)
     {
-        if (tmp.inMask(pinningPieceMask) ||
-            tmp.inMask(pinnedKingLocation))
+        if (Utility::inMask(tmp, pinningPieceMask) ||
+            Utility::inMask(tmp, pinnedKingLocation))
         {
             lowMask = lowMask | tmp;
             break;
         }
-        else if (tmp.inMask(blackPieces | whitePieces))
+        else if (Utility::inMask(tmp, blackPieces | whitePieces))
         {
             break;
         }
@@ -1466,14 +1466,14 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
         tmp = (tmp & 0x007E7E7E7E7E7E00ULL) >> offset;
     }
 
-    if (pinnedKingLocation.inMask(lowMask) &&
-        !pinnedKingLocation.inMask(highMask) &&
+    if (Utility::inMask(pinnedKingLocation, lowMask) &&
+        !Utility::inMask(pinnedKingLocation, highMask) &&
         highMask != 0x00ULL)
     {
         result = true;
     }
-    else if (pinnedKingLocation.inMask(highMask) &&
-        !pinnedKingLocation.inMask(lowMask) &&
+    else if (Utility::inMask(pinnedKingLocation, highMask) &&
+        !Utility::inMask(pinnedKingLocation, lowMask) &&
         lowMask != 0x00ULL)
     {
         result = true;
@@ -1705,16 +1705,16 @@ bool Position::isMoveLegal(const Move& m)
 bool Position::isSquareAttacked(Square s) const        
 {
     bool result = false;
-    int squareIndex = s.toBitboard().lsb();
-    Bitboard square = s.toBitboard();
+    int squareIndex = Utility::lsb(s.toBitboard());
+    uint64_t square = s.toBitboard();
     int blockerIndex;
-    Bitboard opposingKnights =
+    uint64_t opposingKnights =
         colorToMove == Color::WHITE ? blackKnights : whiteKnights;
-    Bitboard opposingBishops =
+    uint64_t opposingBishops =
         colorToMove == Color::WHITE ? blackBishops : whiteBishops;
-    Bitboard opposingRooks =
+    uint64_t opposingRooks =
         colorToMove == Color::WHITE ? blackRooks : whiteRooks;
-    Bitboard opposingQueens =
+    uint64_t opposingQueens =
         colorToMove == Color::WHITE ? blackQueens : whiteQueens;
 
     if ((LookupData::knightAttacks[squareIndex] & opposingKnights) !=
@@ -1723,8 +1723,7 @@ bool Position::isSquareAttacked(Square s) const
         result = true;
     }
 
-    blockerIndex = (LookupData::rayAttacksN[squareIndex] & allPieces)
-        .lsb();
+    blockerIndex = Utility::lsb(LookupData::rayAttacksN[squareIndex] & allPieces);
 
     if (blockerIndex != -1)
     {
@@ -1735,8 +1734,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksNE[squareIndex] &
-        allPieces).lsb();
+    blockerIndex = Utility::lsb(LookupData::rayAttacksNE[squareIndex] &
+        allPieces);
 
     if (blockerIndex != -1)
     {
@@ -1747,8 +1746,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksE[squareIndex] &
-        (allPieces)).lsb();
+    blockerIndex = Utility::lsb(LookupData::rayAttacksE[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1759,8 +1758,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksSE[squareIndex] &
-        (allPieces)).msb();
+    blockerIndex = Utility::msb(LookupData::rayAttacksSE[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1771,8 +1770,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksS[squareIndex] &
-        (allPieces)).msb();
+    blockerIndex = Utility::msb(LookupData::rayAttacksS[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1783,8 +1782,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksSW[squareIndex] &
-        (allPieces)).msb();
+    blockerIndex = Utility::msb(LookupData::rayAttacksSW[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1795,8 +1794,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksW[squareIndex] &
-        (allPieces)).msb();
+    blockerIndex = Utility::msb(LookupData::rayAttacksW[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1807,8 +1806,8 @@ bool Position::isSquareAttacked(Square s) const
         }
     }
 
-    blockerIndex = Bitboard(LookupData::rayAttacksNW[squareIndex] &
-        (allPieces)).lsb();
+    blockerIndex = Utility::lsb(LookupData::rayAttacksNW[squareIndex] &
+        (allPieces));
 
     if (blockerIndex != -1)
     {
@@ -1857,10 +1856,10 @@ bool Position::isSquareAttacked(Square s) const
 
 bool Position::isSquareEmpty(Square s) const
 {
-    return (allPieces & s.toBitboard()).isEmpty();
+    return Utility::isEmpty(allPieces & s.toBitboard());
 }
 
-void Position::removePieceAt(Bitboard loc)
+void Position::removePieceAt(uint64_t loc)
 {
     whitePawns = whitePawns & (~loc);
     whiteKnights = whiteKnights & (~loc);
@@ -1883,7 +1882,7 @@ void Position::parseFEN(std::string fen)
 {
     std::vector<std::string> fenParts;
     std::vector<std::string> rankInfo;
-    Bitboard currentSquare = 0x0000000000000000ULL;
+    uint64_t currentSquare = 0x0000000000000000ULL;
     std::string currentCharacter;
     Color currentColor {Color::NONE};
     Rank currentRank {Rank::NONE};
@@ -1980,7 +1979,7 @@ void Position::parseFEN(std::string fen)
     }
     else
     {
-        Bitboard epLoc = Square(fenParts[3]).toBitboard();
+        uint64_t epLoc = Square(fenParts[3]).toBitboard();
         
         if (epLoc != 0x00)
         {
