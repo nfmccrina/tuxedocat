@@ -178,7 +178,7 @@ std::string Engine::divide(int depth)
             totalCount++;
             moveCount++;
 
-            output << availableMoves[index].getNotation() << ": 1"
+            output << availableMoves[index].notation << ": 1"
                 << std::endl;
         }
 
@@ -198,7 +198,7 @@ std::string Engine::divide(int depth)
 
             totalCount += localCount;
 
-            output << availableMoves[index].getNotation() << ": "
+            output << availableMoves[index].notation << ": "
                 << localCount << std::endl;
         }
     }
@@ -263,7 +263,7 @@ void Engine::handleUserMoveMessage(const Message& msg)
             }
             else
             {
-                position.generateMoves(m.getMovingPiece().getRank(), ml);
+                position.generateMoves(m.movingPiece.rank, ml);
 
                 if (ml.contains(m,
                     MoveSearchCriteria::MOVING_PIECE_COLOR |

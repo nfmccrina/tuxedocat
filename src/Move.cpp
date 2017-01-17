@@ -32,29 +32,9 @@ Move::Move()
 {
 }
 
-Move::Move(Piece mp, Square tl, Rank pr)
+Move::Move(Piece mp, uint64_t tl, Rank pr)
     : movingPiece(mp), targetSquare(tl), promotedRank(pr)
 {
-}
-
-Piece Move::getMovingPiece() const
-{
-    return this->movingPiece;
-}
-
-std::string Move::getNotation() const
-{
-    return notation;
-}
-
-Square Move::getTargetSquare() const
-{
-    return this->targetSquare;
-}
-
-Rank Move::getPromotedRank() const
-{
-    return this->promotedRank;
 }
 
 bool Move::isCastle() const
@@ -62,28 +42,46 @@ bool Move::isCastle() const
     const Piece& mp {movingPiece};
 
     return isValid() &&
-        mp.getRank() == Rank::KING &&
+        mp.rank == Rank::KING &&
         (
         (
-        mp.getColor() == Color::WHITE &&
-        Utility::inMask(mp.getSquare().toBitboard(), 0x0000000000000010ULL) &&
-        Utility::inMask(targetSquare.toBitboard(), 0x0000000000000044ULL)
+        mp.color == Color::WHITE && mp.square == 0x10ULL &&
+        Utility::inMask(targetSquare, 0x0000000000000044ULL)
         ) ||
         (
-        mp.getColor() == Color::BLACK &&
-        Utility::inMask(mp.getSquare().toBitboard(), 0x1000000000000000ULL) &&
-        Utility::inMask(targetSquare.toBitboard(), 0x4400000000000000ULL)
+        mp.color == Color::BLACK && mp.square == 0x1000000000000000ULL &&
+        Utility::inMask(targetSquare, 0x4400000000000000ULL)
         )
         );
 }
 
 bool Move::isValid() const
 {
-    return movingPiece.isValid() &&
-        targetSquare.isValid();
-}
+    if (!movingPiece.isValid())
+    {
+        return false;
+    }
 
-void Move::setNotation(std::string s)
-{
-    notation = s;
+    if (targetSquare == 0x00)
+    {
+        return false;
+    }
+
+    if (movingPiece.rank == Rank::PAWN &&
+        movingPiece.color == Color::WHITE &&
+        Utility::inMask(targetSquare, 0xFF00000000000000ULL) &&
+        promotedRank == Rank::NONE)
+    {
+        return false;
+    }
+
+    if (movingPiece.rank == Rank::PAWN &&
+        movingPiece.color == Color::BLACK &&
+        Utility::inMask(targetSquare, 0x00000000000000FFULL) &&
+        promotedRank == Rank::NONE)
+    {
+        return false;
+    }
+
+    return true;
 }

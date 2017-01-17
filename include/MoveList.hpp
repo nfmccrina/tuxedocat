@@ -25,7 +25,7 @@
 #pragma once
 
 #include "Move.hpp"
-#include <array>
+#include <vector>
 
 namespace TuxedoCat
 {
@@ -41,7 +41,7 @@ namespace TuxedoCat
 
         Move& operator[](int pos);
     private:
-        std::array<Move, 250> moves;
+        std::vector<Move> moves;
         int currentIndex;
         
         static const int MAX_SIZE = 250;

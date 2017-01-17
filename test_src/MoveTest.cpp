@@ -28,42 +28,14 @@
 #include "../include/Piece.hpp"
 #include "../include/Color.hpp"
 #include "../include/Rank.hpp"
-#include "../include/Square.hpp"
+#include "../include/Utility.hpp"
 #include "../include/gtest/gtest.h"
 
 using namespace TuxedoCat;
 
-TEST_F(MoveTest, getMovingPiece_ShouldReturnTheMovingPiece)
-{
-    Move m(Piece(Color::WHITE, Rank::KNIGHT, Square("b1")),
-        Square("a3"), Rank::NONE);
-
-    EXPECT_EQ(Color::WHITE, m.getMovingPiece().getColor());
-    EXPECT_EQ(Rank::KNIGHT, m.getMovingPiece().getRank());
-    EXPECT_EQ(0x0000000000000002ULL,
-        m.getMovingPiece().getSquare().toBitboard());
-}
-
-TEST_F(MoveTest, getTargetSquare_ShouldReturnTheTargetSquare)
-{
-    Move m(Piece(Color::WHITE, Rank::KNIGHT, Square("b1")),
-        Square("a3"), Rank::NONE);
-
-    EXPECT_EQ(0x0000000000010000ULL,
-        m.getTargetSquare().toBitboard());
-}
-
-TEST_F(MoveTest, getPromotedRank_ShouldReturnThePromotedRank)
-{
-    Move m(Piece(Color::WHITE, Rank::PAWN, Square("b7")),
-        Square("b8"), Rank::QUEEN);
-
-    EXPECT_EQ(Rank::QUEEN, m.getPromotedRank());
-}
-
 TEST_F(MoveTest, isValid_ShouldReturnFalseIfMemberIsInvalid)
 {
-    Move m {Piece(), Square {"e2"}, Rank::NONE};
+    Move m {Piece(), Utility::algebraicToBitboard("e2"), Rank::NONE};
     bool expected = false;
 
     EXPECT_EQ(expected, m.isValid());
@@ -71,17 +43,21 @@ TEST_F(MoveTest, isValid_ShouldReturnFalseIfMemberIsInvalid)
 
 TEST_F(MoveTest, isCastle_ShouldReturnTrueIfMoveIsCastle)
 {
-    Move m1 {Piece {Color::WHITE, Rank::KING, Square {"e1"}},
-        Square {"g1"}, Rank::NONE};
+    Move m1 {
+        Piece {Color::WHITE, Rank::KING, Utility::algebraicToBitboard("e1")},
+        Utility::algebraicToBitboard("g1"), Rank::NONE};
         
-    Move m2 {Piece {Color::WHITE, Rank::KING, Square {"e1"}},
-        Square {"c1"}, Rank::NONE};
+    Move m2 {
+        Piece {Color::WHITE, Rank::KING, Utility::algebraicToBitboard("e1")},
+        Utility::algebraicToBitboard("c1"), Rank::NONE};
 
-    Move m3 {Piece {Color::BLACK, Rank::KING, Square {"e8"}},
-        Square {"g8"}, Rank::NONE};
+    Move m3 {
+        Piece {Color::BLACK, Rank::KING, Utility::algebraicToBitboard("e8")},
+        Utility::algebraicToBitboard("g8"), Rank::NONE};
 
-    Move m4 {Piece {Color::BLACK, Rank::KING, Square {"e8"}},
-        Square {"c8"}, Rank::NONE};
+    Move m4 {
+        Piece {Color::BLACK, Rank::KING, Utility::algebraicToBitboard("e8")},
+        Utility::algebraicToBitboard("c8"), Rank::NONE};
 
     bool expected = true;
 
@@ -93,11 +69,13 @@ TEST_F(MoveTest, isCastle_ShouldReturnTrueIfMoveIsCastle)
 
 TEST_F(MoveTest, isCastle_ShouldReturnFalseIfMoveIsNotCastle)
 {
-    Move m1 {Piece {Color::BLACK, Rank::KING, Square {"e1"}},
-        Square {"g1"}, Rank::NONE};
+    Move m1 {
+        Piece {Color::BLACK, Rank::KING, Utility::algebraicToBitboard("e1")},
+        Utility::algebraicToBitboard("g1"), Rank::NONE};
         
-    Move m2 {Piece {Color::WHITE, Rank::ROOK, Square {"e1"}},
-        Square {"c1"}, Rank::NONE};
+    Move m2 {
+        Piece {Color::WHITE, Rank::ROOK, Utility::algebraicToBitboard("e1")},
+        Utility::algebraicToBitboard("c1"), Rank::NONE};
 
     bool expected = false;
 

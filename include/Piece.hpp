@@ -26,7 +26,6 @@
 
 #include "Color.hpp"
 #include "Rank.hpp"
-#include "Square.hpp"
 #include <string>
 #include <cstdint>
 
@@ -36,19 +35,13 @@ namespace TuxedoCat
     {
     public:
         Piece();
-        Piece(Color c, Rank r, Square s);
-        Color getColor() const;
-        Rank getRank() const;
-        Square getSquare() const;
+        Piece(Color c, Rank r, uint64_t s);
+        Piece(const Piece& p);
         bool isValid() const;
         std::string toString() const;
 
-    private:
-        Color color;
-        Rank rank;
-        Square square;
+        const Color color;
+        const Rank rank;
+        const uint64_t square;
     };
-
-    bool operator==(Piece a, Piece b);
-    bool operator!=(Piece a, Piece b);
 }

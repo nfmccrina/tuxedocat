@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <utility>
 
 namespace TuxedoCat
 {
@@ -40,12 +41,17 @@ namespace TuxedoCat
 
         static void flipBit(uint64_t& value, int bitIndex);
         static bool inMask(uint64_t value, uint64_t  mask);
-        static bool isEmpty(uint64_t value);
         static int lsb(uint64_t value);
         static int msb(uint64_t value);
         static int popcount(uint64_t value);
         static std::string toAlgebraicCoordinate(uint64_t value);
         static std::pair<int, int> toCoordinates(uint64_t value);
         static std::string toString(uint64_t value);
+        static uint64_t algebraicToBitboard(std::string s);
+        static uint64_t coordinatesToBitboard(std::pair<int, int> coord);
+
+    private:
+        static bool isAlgebraicDescValid(std::string s);
+        static bool areCoordinatesValid(std::pair<int, int> coord);
 	};
 }

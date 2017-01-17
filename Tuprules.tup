@@ -1,6 +1,6 @@
 CXX=clang++
-CXXFLAGS=-Wall -Werror -pedantic -std=c++11 -g
-LDFLAGS=
+CXXFLAGS=-Wall -Werror -pedantic -std=c++11 -pg
+LDFLAGS=-pg
 LIBS=
 BUILDDIR=build
 SRCDIR=src

@@ -28,35 +28,25 @@
 using namespace TuxedoCat;
 
 Piece::Piece()
-    : color(Color::NONE), rank(Rank::NONE)
+    : color(Color::NONE), rank(Rank::NONE), square(0x00ULL)
 {
 }
 
-Piece::Piece(Color c, Rank r, Square s)
+Piece::Piece(Color c, Rank r, uint64_t s)
     : color(c), rank(r), square(s)
 {
 }
 
-Color Piece::getColor() const
+Piece::Piece(const Piece& p)
+    : color(p.color), rank(p.rank), square(p.square)
 {
-    return this->color;
-}
-
-Rank Piece::getRank() const
-{
-    return this->rank;
-}
-
-Square Piece::getSquare() const
-{
-    return this->square;
 }
 
 bool Piece::isValid() const
 {
     return color != Color::NONE &&
         rank != Rank::NONE &&
-        square.isValid();
+        square != 0;
 }
 
 std::string Piece::toString() const
@@ -69,16 +59,4 @@ std::string Piece::toString() const
     }
 
     return chRank;
-}
-
-bool TuxedoCat::operator==(Piece a, Piece b)
-{
-    return a.getColor() == b.getColor() &&
-        a.getRank() == b.getRank() &&
-        a.getSquare() == b.getSquare();
-}
-
-bool TuxedoCat::operator!=(Piece a, Piece b)
-{
-    return !(a == b);
 }

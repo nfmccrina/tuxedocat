@@ -23,7 +23,8 @@
 */
 
 #include "../include/MoveList.hpp"
-#include "MoveSearchCriteria.hpp"
+#include "../include/Utility.hpp"
+#include "../include/MoveSearchCriteria.hpp"
 
 using namespace TuxedoCat;
 
@@ -36,7 +37,8 @@ void MoveList::addMove(Move m)
 {
     if (currentIndex < (MoveList::MAX_SIZE - 1))
     {
-        moves[++currentIndex] = m;
+        moves.push_back(m);
+        currentIndex++;
     }
 }
 
@@ -50,8 +52,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
         {
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_COLOR) != 0)
             {
-                if (m.getMovingPiece().getColor() ==
-                    moves[count].getMovingPiece().getColor())
+                if (m.movingPiece.color ==
+                    moves[count].movingPiece.color)
                 {
                     total++;
                     continue;
@@ -60,8 +62,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_RANK) != 0)
             {
-                if (m.getMovingPiece().getRank() ==
-                    moves[count].getMovingPiece().getRank())
+                if (m.movingPiece.rank ==
+                    moves[count].movingPiece.rank)
                 {
                     total++;
                     continue;
@@ -70,8 +72,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE) != 0)
             {
-                if (m.getMovingPiece().getSquare() ==
-                    moves[count].getMovingPiece().getSquare())
+                if (m.movingPiece.square ==
+                    moves[count].movingPiece.square)
                 {
                     total++;
                     continue;
@@ -81,8 +83,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK)
                 != 0)
             {
-                if (m.getMovingPiece().getSquare().toString()[1] ==
-                    moves[count].getMovingPiece().getSquare().toString()[1])
+                if (Utility::toString(m.movingPiece.square)[1] ==
+                    Utility::toString(moves[count].movingPiece.square)[1])
                 {
                     total++;
                     continue;
@@ -92,8 +94,10 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE)
                 != 0)
             {
-                if (m.getMovingPiece().getSquare().toString()[0] ==
-                    moves[count].getMovingPiece().getSquare().toString()[0])
+                if (Utility::toAlgebraicCoordinate(
+                        m.movingPiece.square)[0] ==
+                    Utility::toAlgebraicCoordinate(
+                        moves[count].movingPiece.square)[0])
                 {
                     total++;
                     continue;
@@ -102,8 +106,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::TARGET_SQUARE) != 0)
             {
-                if (m.getTargetSquare() ==
-                    moves[count].getTargetSquare())
+                if (m.targetSquare ==
+                    moves[count].targetSquare)
                 {
                     total++;
                     continue;
@@ -112,8 +116,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::PROMOTED_RANK) != 0)
             {
-                if (m.getPromotedRank() ==
-                    moves[count].getPromotedRank())
+                if (m.promotedRank ==
+                    moves[count].promotedRank)
                 {
                     total++;
                     continue;
@@ -124,8 +128,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
         {
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_COLOR) != 0)
             {
-                if (m.getMovingPiece().getColor() !=
-                    moves[count].getMovingPiece().getColor())
+                if (m.movingPiece.color !=
+                    moves[count].movingPiece.color)
                 {
                     continue;
                 }
@@ -133,8 +137,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_RANK) != 0)
             {
-                if (m.getMovingPiece().getRank() !=
-                    moves[count].getMovingPiece().getRank())
+                if (m.movingPiece.rank !=
+                    moves[count].movingPiece.rank)
                 {
                     continue;
                 }
@@ -142,8 +146,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE) != 0)
             {
-                if (m.getMovingPiece().getSquare() !=
-                    moves[count].getMovingPiece().getSquare())
+                if (m.movingPiece.square !=
+                    moves[count].movingPiece.square)
                 {
                     continue;
                 }
@@ -152,8 +156,10 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK)
                 != 0)
             {
-                if (m.getMovingPiece().getSquare().toString()[1] !=
-                    moves[count].getMovingPiece().getSquare().toString()[1])
+                if (Utility::toAlgebraicCoordinate(
+                        m.movingPiece.square)[1] !=
+                    Utility::toAlgebraicCoordinate(
+                        moves[count].movingPiece.square)[1])
                 {
                     continue;
                 }
@@ -162,8 +168,10 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
             if ((criteria & MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE)
                 != 0)
             {
-                if (m.getMovingPiece().getSquare().toString()[0] !=
-                    moves[count].getMovingPiece().getSquare().toString()[0])
+                if (Utility::toAlgebraicCoordinate(
+                    m.movingPiece.square)[0] !=
+                    Utility::toAlgebraicCoordinate(
+                        moves[count].movingPiece.square)[0])
                 {
                     continue;
                 }
@@ -171,8 +179,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::TARGET_SQUARE) != 0)
             {
-                if (m.getTargetSquare() !=
-                    moves[count].getTargetSquare())
+                if (m.targetSquare !=
+                    moves[count].targetSquare)
                 {
                     continue;
                 }
@@ -180,8 +188,8 @@ int MoveList::contains(Move m, int criteria, bool matchAny) const
 
             if ((criteria & MoveSearchCriteria::PROMOTED_RANK) != 0)
             {
-                if (m.getPromotedRank() !=
-                    moves[count].getPromotedRank())
+                if (m.promotedRank !=
+                    moves[count].promotedRank)
                 {
                     continue;
                 }

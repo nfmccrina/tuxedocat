@@ -113,7 +113,7 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         }
 
         if ((rank == Rank::NONE || rank == Rank::BISHOP) &&
-            getPieceAt(currentSquare).getRank() == Rank::BISHOP)
+            getPieceAt(currentSquare).rank == Rank::BISHOP)
         {
             generateSlidingMovesAt(currentSquare,
                 Direction::NE, moves);
@@ -129,7 +129,7 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         }
 
         if ((rank == Rank::NONE || rank == Rank::ROOK) &&
-            getPieceAt(currentSquare).getRank() == Rank::ROOK)
+            getPieceAt(currentSquare).rank == Rank::ROOK)
         {
             generateSlidingMovesAt(currentSquare,
                 Direction::N, moves);
@@ -145,7 +145,7 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         }
 
         if ((rank == Rank::NONE || rank == Rank::QUEEN) &&
-            getPieceAt(currentSquare).getRank() == Rank::QUEEN)
+            getPieceAt(currentSquare).rank == Rank::QUEEN)
         {
             generateSlidingMovesAt(currentSquare,
                 Direction::N, moves);
@@ -182,11 +182,11 @@ Move Position::getMoveFromString(std::string s) const
 {
     if (s.size() < 4)
     {
-        return Move(Piece(), Square(), Rank::NONE);
+        return Move({}, 0x00ULL, Rank::NONE);
     }
 
-    Square source {s.substr(0, 2)};
-    Square target {s.substr(2, 2)};
+    uint64_t source {Utility::algebraicToBitboard(s.substr(0, 2))};
+    uint64_t target {Utility::algebraicToBitboard(s.substr(2, 2))};
 
     if (s.size() < 5)
     {
@@ -201,13 +201,13 @@ Move Position::getMoveFromString(std::string s) const
 
 void Position::makeMove(const Move& move)
 {
-    uint64_t sourceLocation;
-    uint64_t targetLocation;
+    uint64_t sourceLocation {move.movingPiece.square};
+    uint64_t targetLocation {move.targetSquare};
     uint64_t tmpEnPassant;
-    Color sourceColor;
-    Rank sourceRank;
-    Rank promotedRank;
-    Piece capturedPiece;
+    Color sourceColor {move.movingPiece.color};
+    Rank sourceRank {move.movingPiece.rank};
+    Rank promotedRank {move.promotedRank};
+    Piece capturedPiece {getPieceAt(targetLocation)};
 
     positionStack.push(*this);
 
@@ -226,14 +226,7 @@ void Position::makeMove(const Move& move)
         return;
     }
 
-    sourceLocation = move.getMovingPiece().getSquare().toBitboard();
-    targetLocation = move.getTargetSquare().toBitboard();
-    sourceColor = move.getMovingPiece().getColor();
-    sourceRank = move.getMovingPiece().getRank();
-    capturedPiece = getPieceAt(Square(targetLocation));
-    promotedRank = move.getPromotedRank();
-
-    if (!Utility::isEmpty(enPassantTarget))
+    if (enPassantTarget != 0x00ULL)
     {
         tmpEnPassant = enPassantTarget;
     }
@@ -312,7 +305,7 @@ void Position::makeMove(const Move& move)
 
             if (capturedPiece.isValid())
             {
-                if (!Utility::isEmpty(enPassantTarget) &&
+                if (enPassantTarget != 0x00ULL &&
                     targetLocation == enPassantTarget)
                 {
                     if (sourceColor == Color::WHITE)
@@ -375,7 +368,7 @@ void Position::makeMove(const Move& move)
         fullMoveCounter++;
     }
 
-    if (!Utility::isEmpty(enPassantTarget))
+    if (enPassantTarget != 0x00ULL)
     {
         if (tmpEnPassant == enPassantTarget)
         {
@@ -418,15 +411,16 @@ void Position::makeMove(const Move& move)
 
 std::string Position::toString() const
 {
-    Piece currentPiece;
     std::stringstream ss;
 
     for (int row = 7; row >= 0; row--)
     {
         for (int col = 0; col < 8; col++)
         {
-            currentPiece =
-                getPieceAt(Square(std::pair<int, int>(row, col)));
+            Piece currentPiece {
+                getPieceAt(Utility::coordinatesToBitboard(
+                    std::pair<int, int>(row, col)))};
+
             if (currentPiece.isValid())
             {
                 ss << currentPiece.toString();
@@ -565,7 +559,7 @@ void Position::computeMoveNotation(MoveList& moves)
     {
         san.str("");
         Move& move = moves[count];
-        Rank movingRank = move.getMovingPiece().getRank();
+        Rank movingRank = move.movingPiece.rank;
 
         if (movingRank != Rank::PAWN)
         {
@@ -617,33 +611,34 @@ void Position::computeMoveNotation(MoveList& moves)
 
                     if (filesDiffer)
                     {
-                        san << move.getMovingPiece().getSquare()
-                            .toString()[0];
+                        san << Utility::toAlgebraicCoordinate(
+                            move.movingPiece.square)[0];
                     }
                     else if (ranksDiffer)
                     {
-                        san << move.getMovingPiece().getSquare()
-                            .toString()[1];
+                        san << Utility::toAlgebraicCoordinate(
+                            move.movingPiece.square)[1];
                     }
                     else
                     {
-                        san << move.getMovingPiece().getSquare()
-                            .toString()[0];
-                        san << move.getMovingPiece().getSquare()
-                            .toString()[1];
+                        san << Utility::toAlgebraicCoordinate(
+                            move.movingPiece.square)[0];
+                        san << Utility::toAlgebraicCoordinate(
+                            move.movingPiece.square)[1];
                     }
                 }
 
-                if (!isSquareEmpty(move.getTargetSquare()))
+                if (!isSquareEmpty(move.targetSquare))
                 {
                     san << "x";
                 }
 
-                san << move.getTargetSquare().toString();
+                san << Utility::toAlgebraicCoordinate(
+                    move.targetSquare);
             }
             else
             {
-                if (Utility::inMask(move.getTargetSquare().toBitboard(),
+                if (Utility::inMask(move.targetSquare,
                     0x4000000000000040ULL))
                 {
                     san << "0-0";
@@ -658,29 +653,31 @@ void Position::computeMoveNotation(MoveList& moves)
         {
             bool ep = false;
 
-            if (!isSquareEmpty(move.getTargetSquare()))
+            if (!isSquareEmpty(move.targetSquare))
             {
-                san << move.getMovingPiece().getSquare().toString()[0];
+                san << Utility::toAlgebraicCoordinate(
+                    move.movingPiece.square)[0];
                 san << "x";
 
-                if (move.getTargetSquare().toBitboard() == enPassantTarget)
+                if (move.targetSquare == enPassantTarget)
                 {
                     ep = true;
                 }
             }
 
-            san << move.getTargetSquare().toString();
+            san << Utility::toAlgebraicCoordinate(
+                move.targetSquare);
 
             if (ep)
             {
                 san << "e.p.";
             }
 
-            if (move.getPromotedRank() != Rank::NONE)
+            if (move.promotedRank != Rank::NONE)
             {
                 san << "=";
 
-                std::string pr {rankToString(move.getPromotedRank())};
+                std::string pr {rankToString(move.promotedRank)};
                 san <<  std::toupper(pr[0]);
             }
         }
@@ -694,7 +691,7 @@ void Position::computeMoveNotation(MoveList& moves)
 
         unmakeMove();
 
-        move.setNotation(san.str());
+        move.notation = san.str();
     }
 }
 
@@ -721,43 +718,9 @@ void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,
     getMovesFromMask(moveMask, p, inCheck, moves);
 }
 
-uint64_t Position::computePinningPieceMask(Direction direction) const
+uint64_t Position::findPiece(Color c, Rank r) const
 {
-    uint64_t mask;
-
-    if (colorToMove == Color::BLACK)
-    {
-        if (direction == Direction::N || direction == Direction::S ||
-            direction == Direction::E || direction == Direction::W)
-        {
-            mask = whiteQueens | whiteRooks;
-        }
-        else
-        {
-            mask = whiteQueens | whiteBishops;
-        }
-    }
-    else
-    {
-        if (direction == Direction::N || direction == Direction::S ||
-            direction == Direction::W || direction == Direction::E)
-        {
-            mask = blackQueens | blackRooks;
-        }
-        else
-        {
-            mask = blackQueens | blackBishops;
-        }
-    }
-
-    return mask;
-}
-
-std::vector<Square> Position::findPiece(Color c, Rank r) const
-{
-    std::vector<Square> locations;
     uint64_t bitboard;
-    uint64_t currentLocation;
 
     if (r == Rank::PAWN)
     {
@@ -793,32 +756,21 @@ std::vector<Square> Position::findPiece(Color c, Rank r) const
         bitboard = bitboard & blackPieces;
     }
 
-    while (bitboard != 0x00)
-    {
-        currentLocation = 0x01ULL << Utility::lsb(bitboard);
-
-        locations.push_back(Square(currentLocation));
-
-        bitboard = bitboard & (~currentLocation);
-    }
-
-    return locations;
+    return bitboard;
 }
 
 void Position::generateCastles(MoveList& moves)
 {
-    Piece piece;
-
     if (colorToMove == Color::WHITE)
     {
-        piece = getPieceAt(Square(std::pair<int, int>(0, 4)));
+        Piece piece {getPieceAt(0x0000000000000010ULL)};
 
-        if (piece.isValid() && piece.getRank() == Rank::KING &&
-            piece.getColor() == Color::WHITE)
+        if (piece.isValid() && piece.rank == Rank::KING &&
+            piece.color == Color::WHITE)
         {
-            Move castleKingSide(piece, Square(std::pair<int, int>(0, 6)),
+            Move castleKingSide(piece, 0x0000000000000040ULL,
                 Rank::NONE);
-            Move castleQueenSide(piece, Square(std::pair<int, int>(0, 2)),
+            Move castleQueenSide(piece, 0x0000000000000004ULL,
                 Rank::NONE);
 
             if (isMoveLegal(castleKingSide))
@@ -834,14 +786,14 @@ void Position::generateCastles(MoveList& moves)
     }
     else
     {
-        piece = getPieceAt(Square(std::pair<int, int>(7, 4)));
+        Piece piece {getPieceAt(0x1000000000000000ULL)};
 
-        if (piece.isValid() && piece.getRank() == Rank::KING &&
-            piece.getColor() == Color::BLACK)
+        if (piece.isValid() && piece.rank == Rank::KING &&
+            piece.color == Color::BLACK)
         {
-            Move castleKingSide(piece, Square(std::pair<int, int>(7, 6)),
+            Move castleKingSide(piece, 0x4000000000000000ULL,
                 Rank::NONE);
-            Move castleQueenSide(piece, Square(std::pair<int, int>(7, 2)),
+            Move castleQueenSide(piece, 0x0400000000000000ULL,
                 Rank::NONE);
 
             if (isMoveLegal(castleKingSide))
@@ -857,18 +809,18 @@ void Position::generateCastles(MoveList& moves)
     }
 }
 
-void Position::generateKingMovesAt(Square s, MoveList& moves)
+void Position::generateKingMovesAt(uint64_t s, MoveList& moves)
 {
     int locationIndex;
     int currentIndex;
     Piece piece = getPieceAt(s);
-    uint64_t location = s.toBitboard();
+    uint64_t location = s;
     uint64_t moveMask = 0x0000000000000000ULL;
     uint64_t currentMove;
     uint64_t ownPieces;
 
-    if (!piece.isValid() || piece.getRank() != Rank::KING ||
-        piece.getColor() != colorToMove)
+    if (!piece.isValid() || piece.rank != Rank::KING ||
+        piece.color != colorToMove)
     {
         return;
     }
@@ -892,10 +844,10 @@ void Position::generateKingMovesAt(Square s, MoveList& moves)
     }
 }
 
-void Position::generateKnightMovesAt(Square s, MoveList& moves)
+void Position::generateKnightMovesAt(uint64_t s, MoveList& moves)
 {
     Piece piece = getPieceAt(s);
-    uint64_t location = s.toBitboard();
+    uint64_t location = s;
     int locationIndex;
     uint64_t moveMask = 0x0000000000000000ULL;
     uint64_t currentMove;
@@ -906,7 +858,8 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
 
     if (
         !piece.isValid() ||
-        piece.getRank() != Rank::KNIGHT ||
+        piece.rank != Rank::KNIGHT ||
+        piece.color != colorToMove ||
         isPiecePinned(piece, Direction::N) ||
         isPiecePinned(piece, Direction::E) ||
         isPiecePinned(piece, Direction::S) ||
@@ -920,7 +873,7 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
         return;
     }
 
-    color = piece.getColor();
+    color = piece.color;
 
     if (color == Color::WHITE)
     {
@@ -928,7 +881,7 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
 
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(whiteKing));
+            inCheck = isSquareAttacked(whiteKing);
         }
     }
     else
@@ -937,7 +890,7 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
 
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(blackKing));
+            inCheck = isSquareAttacked(blackKing);
         }
     }
 
@@ -949,7 +902,7 @@ void Position::generateKnightMovesAt(Square s, MoveList& moves)
     {
         currentIndex = Utility::lsb(moveMask);
         currentMove = 0x01ULL << currentIndex;
-        Move m(piece, Square(currentMove), Rank::NONE);
+        Move m(piece, currentMove, Rank::NONE);
 
         if ((inCheck && isMoveLegal(m)) || !inCheck)
         {
@@ -964,11 +917,11 @@ void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
 {
     uint64_t legalMask;
     uint64_t target;
-    Piece movingPiece = getPieceAt(Square(b));
+    Piece movingPiece = getPieceAt(b);
     bool inCheck {false};
 
-    if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
-        movingPiece.getColor() != colorToMove ||
+    if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
+        movingPiece.color != colorToMove ||
         isPiecePinned(movingPiece, Direction::E) ||
         isPiecePinned(movingPiece, Direction::W) ||
         isPiecePinned(movingPiece, Direction::NW) ||
@@ -986,7 +939,7 @@ void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
 
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(whiteKing));
+            inCheck = isSquareAttacked(whiteKing);
         }
     }
     else
@@ -996,7 +949,7 @@ void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
 
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(blackKing));
+            inCheck = isSquareAttacked(blackKing);
         }
     }
 
@@ -1053,12 +1006,12 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
     uint64_t currentSquare;
     uint64_t opposingPieces;
     int currentIndex;
-    Piece movePiece = getPieceAt(Square(b));
+    Piece movePiece = getPieceAt(b);
     bool inCheck {false};
 
     if (!movePiece.isValid() ||
-        movePiece.getRank() != Rank::PAWN ||
-        movePiece.getColor() != colorToMove ||
+        movePiece.rank != Rank::PAWN ||
+        movePiece.color != colorToMove ||
         isPiecePinned(movePiece, Direction::N) ||
         isPiecePinned(movePiece, Direction::S) ||
         isPiecePinned(movePiece, Direction::E) ||
@@ -1092,7 +1045,7 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
 
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(whiteKing));
+            inCheck = isSquareAttacked(whiteKing);
         }
     }
     else
@@ -1119,7 +1072,7 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
 
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(blackKing));
+            inCheck = isSquareAttacked(blackKing);
         }
     }
 
@@ -1177,11 +1130,11 @@ void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
     uint64_t legalMask;
     uint64_t target;
     uint64_t firstSquare;
-    Piece movingPiece = getPieceAt(Square(b));
+    Piece movingPiece = getPieceAt(b);
     bool inCheck {false};
 
-    if (!movingPiece.isValid() || movingPiece.getRank() != Rank::PAWN ||
-        movingPiece.getColor() != colorToMove ||
+    if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
+        movingPiece.color != colorToMove ||
         isPiecePinned(movingPiece, Direction::E) ||
         isPiecePinned(movingPiece, Direction::W) ||
         isPiecePinned(movingPiece, Direction::SE) ||
@@ -1200,7 +1153,7 @@ void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
 
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(whiteKing));
+            inCheck = isSquareAttacked(whiteKing);
         }
     }
     else
@@ -1211,7 +1164,7 @@ void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
 
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(blackKing));
+            inCheck = isSquareAttacked(blackKing);
         }
     }
 
@@ -1229,10 +1182,10 @@ void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
 void Position::generateSlidingMovesAt(uint64_t b, Direction d,
     MoveList& moves)
 {
-    Piece piece = getPieceAt({b});
+    Piece piece = getPieceAt(b);
 
     if (!piece.isValid() ||
-        piece.getColor() != colorToMove ||
+        piece.color != colorToMove ||
         isSlidingPiecePinned(piece, d))
     {
         return;
@@ -1340,55 +1293,55 @@ uint64_t Position::getOwnPieces(Color c) const
     }
 }
 
-Piece Position::getPieceAt(Square s) const
+Piece Position::getPieceAt(uint64_t s) const
 {
     if (!isSquareEmpty(s))
     {
-        if ((whitePawns & s.toBitboard()) != 0x00)
+        if ((whitePawns & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::PAWN, s);
         }
-        else if ((whiteKnights & s.toBitboard()) != 0x00)
+        else if ((whiteKnights & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::KNIGHT, s);
         }
-        else if ((whiteBishops & s.toBitboard()) != 0x00)
+        else if ((whiteBishops & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::BISHOP, s);
         }
-        else if ((whiteRooks & s.toBitboard()) != 0x00)
+        else if ((whiteRooks & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::ROOK, s);
         }
-        else if ((whiteQueens & s.toBitboard()) != 0x00)
+        else if ((whiteQueens & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::QUEEN, s);
         }
-        else if ((whiteKing & s.toBitboard()) != 0x00)
+        else if ((whiteKing & s) != 0x00)
         {
             return Piece(Color::WHITE, Rank::KING, s);
         }
-        else if ((blackPawns & s.toBitboard()) != 0x00)
+        else if ((blackPawns & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::PAWN, s);
         }
-        else if ((blackKnights & s.toBitboard()) != 0x00)
+        else if ((blackKnights & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::KNIGHT, s);
         }
-        else if ((blackBishops & s.toBitboard()) != 0x00)
+        else if ((blackBishops & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::BISHOP, s);
         }
-        else if ((blackRooks & s.toBitboard()) != 0x00)
+        else if ((blackRooks & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::ROOK, s);
         }
-        else if ((blackQueens & s.toBitboard()) != 0x00)
+        else if ((blackQueens & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::QUEEN, s);
         }
-        else if ((blackKing & s.toBitboard()) != 0x00)
+        else if ((blackKing & s) != 0x00)
         {
             return Piece(Color::BLACK, Rank::KING, s);
         }
@@ -1403,17 +1356,79 @@ Piece Position::getPieceAt(Square s) const
     }
 }
 
+uint64_t Position::getPotentialPinningPiece(uint64_t loc, Direction dir) const
+{
+    int index;
+
+    if (colorToMove == Color::BLACK)
+    {
+        if (dir == Direction::N || dir == Direction::S ||
+            dir == Direction::E || dir == Direction::W)
+        {
+            if (dir == Direction::N || dir == Direction::E)
+            {
+                index = Utility::lsb(whiteQueens | whiteRooks);
+            }
+            else
+            {
+                index = Utility::msb(whiteQueens | whiteRooks);
+            }
+        }
+        else
+        {
+            if (dir == Direction::NE || dir == Direction::NW)
+            {
+                index = Utility::lsb(whiteQueens | whiteBishops);
+            }
+            else
+            {
+                index = Utility::msb(whiteQueens | whiteBishops);
+            }
+        }
+    }
+    else
+    {
+        if (dir == Direction::N || dir == Direction::S ||
+            dir == Direction::E || dir == Direction::W)
+        {
+            if (dir == Direction::N || dir == Direction::E)
+            {
+                index = Utility::lsb(blackQueens | blackRooks);
+            }
+            else
+            {
+                index = Utility::msb(blackQueens | blackRooks);
+            }
+        }
+        else
+        {
+            if (dir == Direction::NE || dir == Direction::NW)
+            {
+                index = Utility::lsb(blackQueens | blackBishops);
+            }
+            else
+            {
+                index = Utility::msb(blackQueens | blackBishops);
+            }
+        }
+    }
+
+    if (index >= 0)
+    {
+        return 0x01ULL << index;
+    }
+    else
+    {
+        return 0x00ULL;
+    }
+}
+
 bool Position::isPiecePinned(const Piece pinnedPiece,
     Direction direction) const
 {
-    uint64_t location = pinnedPiece.getSquare().toBitboard();
-    bool result = false;
-    uint64_t pinningPieceMask;
+    uint64_t location {pinnedPiece.square};
+    uint64_t pinningPiece {getPotentialPinningPiece(location, direction)};
     uint64_t pinnedKingLocation;
-    uint64_t tmp;
-    uint64_t highMask = 0x00ULL;
-    uint64_t lowMask = 0x00ULL;
-    int offset;
 
     if (colorToMove == Color::WHITE)
     {
@@ -1424,62 +1439,15 @@ bool Position::isPiecePinned(const Piece pinnedPiece,
         pinnedKingLocation = blackKing;
     }
 
-    pinningPieceMask = computePinningPieceMask(direction);
-
-    offset = getOffsetFromDirection(direction);
-
-    highMask = 0x00ULL;
-    lowMask = 0x00ULL;
-    tmp = (location & 0x007E7E7E7E7E7E00ULL) << offset;
-
-    while (tmp != 0x00ULL)
+    if (pinningPiece != 0x00ULL)
     {
-        if (Utility::inMask(tmp, pinningPieceMask) ||
-            Utility::inMask(tmp, pinnedKingLocation))
-        {
-            highMask = highMask | tmp;
-            break;
-        }
-        else if (Utility::inMask(tmp, blackPieces | whitePieces))
-        {
-            break;
-        }
-
-        tmp = (tmp & 0x007E7E7E7E7E7E00ULL) << offset;
+        return (LookupData::betweenLookup[pinnedKingLocation][pinningPiece] &
+            allPieces) == location;
     }
-
-    tmp = (location & 0x007E7E7E7E7E7E00ULL) >> offset;
-
-    while (tmp != 0x00ULL)
+    else
     {
-        if (Utility::inMask(tmp, pinningPieceMask) ||
-            Utility::inMask(tmp, pinnedKingLocation))
-        {
-            lowMask = lowMask | tmp;
-            break;
-        }
-        else if (Utility::inMask(tmp, blackPieces | whitePieces))
-        {
-            break;
-        }
-
-        tmp = (tmp & 0x007E7E7E7E7E7E00ULL) >> offset;
+        return false;
     }
-
-    if (Utility::inMask(pinnedKingLocation, lowMask) &&
-        !Utility::inMask(pinnedKingLocation, highMask) &&
-        highMask != 0x00ULL)
-    {
-        result = true;
-    }
-    else if (Utility::inMask(pinnedKingLocation, highMask) &&
-        !Utility::inMask(pinnedKingLocation, lowMask) &&
-        lowMask != 0x00ULL)
-    {
-        result = true;
-    }
-
-    return result;
 }
 
 bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
@@ -1562,53 +1530,51 @@ bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
     return result;
 }
 
-bool Position::isCastleLegal(Square s) const
+bool Position::isCastleLegal(uint64_t s) const
 {
     bool result = false;
 
-    if (s.toBitboard() == 0x0000000000000040ULL)
+    if (s == 0x0000000000000040ULL)
     {
         result = colorToMove == Color::WHITE &&
             castlingStatus.getWhiteKingSide() &&
-            isSquareEmpty(Square {"f1"}) &&
-            isSquareEmpty(Square {"g1"}) &&
-            !isSquareAttacked(Square {"e1"}) &&
-            !isSquareAttacked(Square {"f1"}) &&
-            !isSquareAttacked(Square {"g1"}); 
+            isSquareEmpty(0x20ULL) &&
+            isSquareEmpty(0x40ULL) &&
+            !isSquareAttacked(0x10ULL) &&
+            !isSquareAttacked(0x20ULL) &&
+            !isSquareAttacked(0x40ULL); 
     }
-    else if (s.toBitboard() == 0x0000000000000004ULL)
+    else if (s == 0x0000000000000004ULL)
     {
         result = colorToMove == Color::WHITE &&
             castlingStatus.getWhiteQueenSide() &&
-            isSquareEmpty(Square {"d1"}) &&
-            isSquareEmpty(Square {"c1"}) &&
-            isSquareEmpty(Square {"b1"}) &&
-            !isSquareAttacked(Square {"e1"}) &&
-            !isSquareAttacked(Square {"d1"}) &&
-            !isSquareAttacked(Square {"c1"}) &&
-            !isSquareAttacked(Square {"b1"}); 
+            isSquareEmpty(0x08ULL) &&
+            isSquareEmpty(0x04ULL) &&
+            isSquareEmpty(0x02ULL) &&
+            !isSquareAttacked(0x10ULL) &&
+            !isSquareAttacked(0x08ULL) &&
+            !isSquareAttacked(0x04ULL);
     }
-    else if (s.toBitboard() == 0x4000000000000000ULL)
+    else if (s == 0x4000000000000000ULL)
     {
         result = colorToMove == Color::BLACK &&
             castlingStatus.getBlackKingSide() &&
-            isSquareEmpty(Square {"f8"}) &&
-            isSquareEmpty(Square {"g8"}) &&
-            !isSquareAttacked(Square {"e8"}) &&
-            !isSquareAttacked(Square {"f8"}) &&
-            !isSquareAttacked(Square {"g8"});
+            isSquareEmpty(0x2000000000000000ULL) &&
+            isSquareEmpty(0x4000000000000000ULL) &&
+            !isSquareAttacked(0x1000000000000000ULL) &&
+            !isSquareAttacked(0x2000000000000000ULL) &&
+            !isSquareAttacked(0x4000000000000000ULL);
     }
-    else if (s.toBitboard() == 0x0400000000000000ULL)
+    else if (s == 0x0400000000000000ULL)
     {
         result = colorToMove == Color::BLACK &&
             castlingStatus.getBlackQueenSide() &&
-            isSquareEmpty(Square {"d8"}) &&
-            isSquareEmpty(Square {"c8"}) &&
-            isSquareEmpty(Square {"b8"}) &&
-            !isSquareAttacked(Square {"e8"}) &&
-            !isSquareAttacked(Square {"d8"}) &&
-            !isSquareAttacked(Square {"c8"}) &&
-            !isSquareAttacked(Square {"b8"}); 
+            isSquareEmpty(0x0800000000000000ULL) &&
+            isSquareEmpty(0x0400000000000000ULL) &&
+            isSquareEmpty(0x0200000000000000ULL) &&
+            !isSquareAttacked(0x1000000000000000ULL) &&
+            !isSquareAttacked(0x0800000000000000ULL) &&
+            !isSquareAttacked(0x0400000000000000ULL);
     }
 
     return result;
@@ -1622,14 +1588,14 @@ bool Position::isInCheck(Color c) const
     {
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(whiteKing));
+            inCheck = isSquareAttacked(whiteKing);
         }
     }
     else
     {
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(Square(blackKing));
+            inCheck = isSquareAttacked(blackKing);
         }
     }
 
@@ -1638,28 +1604,25 @@ bool Position::isInCheck(Color c) const
 
 bool Position::isMoveLegal(const Move& m)
 {
-    Piece p = m.getMovingPiece();
-    std::vector<Square> kingLocationVector =
-        findPiece(p.getColor(), Rank::KING);
+    Piece p = m.movingPiece;
+    uint64_t kingLocation {findPiece(p.color, Rank::KING)};
 
     bool result = false;
     bool isCastle = m.isCastle();
 
-    if (kingLocationVector.empty())
+    if (kingLocation == 0x00ULL)
     {
         return false;
     }
 
-    if (colorToMove != m.getMovingPiece().getColor())
+    if (colorToMove != m.movingPiece.color)
     {
         return false;
     }
-
-    Square kingLocation = kingLocationVector[0];
 
     if (!isSquareAttacked(kingLocation))
     {
-        if (p.getRank() != Rank::KING)
+        if (p.rank != Rank::KING)
         {
             result = true;
         }
@@ -1667,9 +1630,9 @@ bool Position::isMoveLegal(const Move& m)
         {
             if (isCastle)
             {
-                result = isCastleLegal(m.getTargetSquare());
+                result = isCastleLegal(m.targetSquare);
             }
-            else if (!isSquareAttacked(m.getTargetSquare()))
+            else if (!isSquareAttacked(m.targetSquare))
             {
                 result = true;
             }
@@ -1678,9 +1641,9 @@ bool Position::isMoveLegal(const Move& m)
     else if (!isCastle)
     {
         makeMove(m);
-        makeMove({Piece {}, Square {}, Rank::NONE});
+        makeMove({Piece {}, 0x00ULL, Rank::NONE});
 
-        if (p.getRank() != Rank::KING)
+        if (p.rank != Rank::KING)
         {
             if (!isSquareAttacked(kingLocation))
             {
@@ -1689,7 +1652,7 @@ bool Position::isMoveLegal(const Move& m)
         }
         else
         {
-            if (!isSquareAttacked(m.getTargetSquare()))
+            if (!isSquareAttacked(m.targetSquare))
             {
                 result = true;
             }
@@ -1702,11 +1665,10 @@ bool Position::isMoveLegal(const Move& m)
     return result;
 }
 
-bool Position::isSquareAttacked(Square s) const        
+bool Position::isSquareAttacked(uint64_t square) const        
 {
     bool result = false;
-    int squareIndex = Utility::lsb(s.toBitboard());
-    uint64_t square = s.toBitboard();
+    int squareIndex = Utility::lsb(square);
     int blockerIndex;
     uint64_t opposingKnights =
         colorToMove == Color::WHITE ? blackKnights : whiteKnights;
@@ -1854,9 +1816,9 @@ bool Position::isSquareAttacked(Square s) const
     return result;
 }
 
-bool Position::isSquareEmpty(Square s) const
+bool Position::isSquareEmpty(uint64_t s) const
 {
-    return Utility::isEmpty(allPieces & s.toBitboard());
+    return ((allPieces & s) == 0x00ULL);
 }
 
 void Position::removePieceAt(uint64_t loc)
@@ -1979,7 +1941,7 @@ void Position::parseFEN(std::string fen)
     }
     else
     {
-        uint64_t epLoc = Square(fenParts[3]).toBitboard();
+        uint64_t epLoc = Utility::algebraicToBitboard(fenParts[3]);
         
         if (epLoc != 0x00)
         {

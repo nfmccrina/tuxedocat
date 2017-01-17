@@ -27,20 +27,25 @@
 
 using namespace TuxedoCat;
 
-void Utility::split(const std::string &s, char delim, std::vector<std::string> &elems) {
-	std::stringstream ss;
-	ss.str(s);
-	std::string item;
-	while (std::getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
+void Utility::split(const std::string &s, char delim,
+    std::vector<std::string> &elems)
+{
+    std::stringstream ss;
+    ss.str(s);
+    std::string item;
+
+    while (std::getline(ss, item, delim))
+    {
+        elems.push_back(item);
+    }
 }
 
 
-std::vector<std::string> Utility::split(const std::string &s, char delim) {
-	std::vector<std::string> elems;
-	split(s, delim, elems);
-	return elems;
+std::vector<std::string> Utility::split(const std::string &s, char delim)
+{
+    std::vector<std::string> elems;
+    split(s, delim, elems);
+    return elems;
 }
 
 void Utility::flipBit(uint64_t& value, int bitIndex)
@@ -54,11 +59,6 @@ void Utility::flipBit(uint64_t& value, int bitIndex)
 bool Utility::inMask(uint64_t value, uint64_t  mask)
 {
     return (value & mask) == value;
-}
-
-bool Utility::isEmpty(uint64_t value)
-{
-    return value == 0x00ULL;
 }
 
 int Utility::lsb(uint64_t value)
@@ -86,7 +86,7 @@ int Utility::lsb(uint64_t value)
 
 int Utility::msb(uint64_t value)
 {
-#ifndef USE_BUILTIN_CLZ
+#ifdef USE_BUILTIN_CLZ
     if (value == 0x00)
     {
         return -1;
@@ -235,4 +235,58 @@ std::string Utility::toString(uint64_t value)
     }
 
     return ss.str();
+}
+
+uint64_t Utility::algebraicToBitboard(std::string s)
+{
+    int rank {0};
+    int file {0};
+
+    if (!Utility::isAlgebraicDescValid(s))
+    {
+        return 0x00ULL;
+    }
+
+    file = static_cast<int>(s[0]);
+
+    if (file > 96 && file < 105)
+    {
+        file -= 97;
+    }
+    else if (file > 64 && file < 73)
+    {
+        file -= 65;
+    }
+    else
+    {
+        return 0x00ULL;
+    }
+
+    rank = std::stoi(s.substr(1)) - 1;
+
+    return (0x0000000000000001ULL << ((rank * 8) + file));
+}
+
+bool Utility::isAlgebraicDescValid(std::string s)
+{
+    return s.find_first_of("abcdefghABCDEFGH") == 0 &&
+        s.find_first_of("12345678") == 1;
+}
+
+uint64_t Utility::coordinatesToBitboard(std::pair<int, int> coord)
+{
+    if (!Utility::areCoordinatesValid(coord))
+    {
+        return 0x00ULL;
+    }
+    else
+    {
+        return 0x01 << ((coord.first * 8) + coord.second);
+    }
+}
+
+bool Utility::areCoordinatesValid(std::pair<int, int> coord)
+{
+    return coord.first >= 0 && coord.first < 8 &&
+        coord.second >= 0 && coord.second < 8;
 }

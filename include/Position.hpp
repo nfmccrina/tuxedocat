@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "Square.hpp"
 #include "CastlingStatus.hpp"
 #include "Color.hpp"
 #include "Piece.hpp"
@@ -54,11 +53,10 @@ namespace TuxedoCat
         void computeMoveNotation(MoveList& moves);
         void computeSlidingMoves(int index, Piece p, bool highBitBlock,
             const std::array<uint64_t, 64>& rayMask, MoveList& moves);
-        uint64_t computePinningPieceMask(Direction direction) const;
-        std::vector<Square> findPiece(Color c, Rank r) const;
+        uint64_t findPiece(Color c, Rank r) const;
         void generateCastles(MoveList& moves);
-        void generateKingMovesAt(Square s, MoveList& moves);
-        void generateKnightMovesAt(Square s, MoveList& moves);
+        void generateKingMovesAt(uint64_t s, MoveList& moves);
+        void generateKnightMovesAt(uint64_t s, MoveList& moves);
         void generatePawnAdvancesAt(uint64_t b, MoveList& moves);
         void generatePawnCapturesAt(uint64_t b, MoveList& moves);
         void generatePawnDblAdvancesAt(uint64_t b, MoveList& moves);
@@ -71,15 +69,16 @@ namespace TuxedoCat
         int getOffsetFromDirection(Direction direction) const;
         uint64_t getOpposingPieces(Color c) const;
         uint64_t getOwnPieces(Color c) const;
-        Piece getPieceAt(Square s) const;
-        bool isCastleLegal(Square s) const;
+        Piece getPieceAt(uint64_t s) const;
+        uint64_t getPotentialPinningPiece(uint64_t loc, Direction dir) const;
+        bool isCastleLegal(uint64_t s) const;
         bool isInCheck(Color c) const;
         bool isMoveLegal(const Move& m);
         bool isPiecePinned(const Piece pinnedPiece,
             Direction direction) const;
         bool isSlidingPiecePinned(const Piece p, Direction d) const;
-        bool isSquareAttacked(Square s) const;
-        bool isSquareEmpty(Square s) const;
+        bool isSquareAttacked(uint64_t s) const;
+        bool isSquareEmpty(uint64_t s) const;
         void removePieceAt(uint64_t location);
         void parseFEN(std::string fen);
         void updatePieces();

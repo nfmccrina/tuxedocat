@@ -23,11 +23,12 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
+#include "../include/Utility.hpp"
 #include "../include/gtest/gtest.h"
 
-class SquareTest : public ::testing::Test
-{
-};
+using namespace TuxedoCat;
 
+TEST(UtilityTest, msb_ShouldCorrectlyCalculateMSB)
+{
+    EXPECT_EQ(48, Utility::msb(0x0001000000010101ULL));
+}

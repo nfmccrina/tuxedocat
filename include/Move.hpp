@@ -27,7 +27,6 @@
 #include "Move.hpp"
 #include "Piece.hpp"
 #include "Rank.hpp"
-#include "Square.hpp"
 #include <cstdint>
 #include <string>
 
@@ -37,18 +36,12 @@ namespace TuxedoCat
     {
     public:
         Move();
-        Move(Piece mp, Square tl, Rank pr);
-        Piece getMovingPiece() const;
-        std::string getNotation() const;
-        Square getTargetSquare() const;
-        Rank getPromotedRank() const;
+        Move(Piece mp, uint64_t tl, Rank pr);
         bool isValid() const;
         bool isCastle() const;
-        void setNotation(std::string s);
 
-    private:
         Piece movingPiece;
-        Square targetSquare;
+        uint64_t targetSquare;
         Rank promotedRank;
         std::string notation;
     };

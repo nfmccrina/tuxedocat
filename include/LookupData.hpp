@@ -50,6 +50,7 @@ namespace TuxedoCat
         static const std::array<uint64_t, 64> rankMask;
         static const std::array<uint64_t, 64> swneMask;
         static const std::array<uint64_t, 64> nwseMask;
+        static const std::array<std::array<uint64_t, 64>, 64> betweenLookup;
         static const int index64[64];
         static const int index64Reverse[64];
         static const uint64_t k1;
