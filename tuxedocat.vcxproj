@@ -74,6 +74,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\nmccrina\src\tuxedocat\include;C:\Users\nmccrina\src\tuxedocat\include\gtest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -81,6 +82,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\nmccrina\src\tuxedocat\include;C:\Users\nmccrina\src\tuxedocat\include\gtest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -90,6 +92,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\nmccrina\src\tuxedocat\include;C:\Users\nmccrina\src\tuxedocat\include\gtest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -103,6 +106,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>C:\Users\nmccrina\src\tuxedocat\include;C:\Users\nmccrina\src\tuxedocat\include\gtest;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
@@ -117,47 +121,88 @@
     <None Include="Tuprules.tup" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Bitboard.cpp" />
     <ClCompile Include="src\CastlingStatus.cpp" />
     <ClCompile Include="src\Color.cpp" />
+    <ClCompile Include="src\Controller.cpp" />
+    <ClCompile Include="src\DivideMessage.cpp" />
     <ClCompile Include="src\Engine.cpp" />
+    <ClCompile Include="src\Interface.cpp" />
     <ClCompile Include="src\LookupData.cpp" />
     <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Message.cpp" />
+    <ClCompile Include="src\MessageArgument.cpp" />
+    <ClCompile Include="src\MessageQueue.cpp" />
     <ClCompile Include="src\Move.cpp" />
+    <ClCompile Include="src\MoveList.cpp" />
+    <ClCompile Include="src\PerftMessage.cpp" />
     <ClCompile Include="src\Piece.cpp" />
     <ClCompile Include="src\Position.cpp" />
+    <ClCompile Include="src\PrintMessage.cpp" />
+    <ClCompile Include="src\QuitMessage.cpp" />
     <ClCompile Include="src\Rank.cpp" />
-    <ClCompile Include="src\Square.cpp" />
+    <ClCompile Include="src\SetBoardMessage.cpp" />
+    <ClCompile Include="src\TestMessage.cpp" />
+    <ClCompile Include="src\UndoMoveMessage.cpp" />
+    <ClCompile Include="src\UserMoveMessage.cpp" />
     <ClCompile Include="src\Utility.cpp" />
-    <ClCompile Include="test_src\BitboardTest.cpp" />
-    <ClCompile Include="test_src\EngineTest.cpp" />
     <ClCompile Include="test_src\MoveTest.cpp" />
     <ClCompile Include="test_src\PieceTest.cpp" />
-    <ClCompile Include="test_src\PositionTest.cpp" />
-    <ClCompile Include="test_src\SquareTest.cpp" />
+    <ClCompile Include="test_src\UtilityTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\Bitboard.hpp" />
-    <ClInclude Include="include\BitboardConversionException.hpp" />
     <ClInclude Include="include\CastlingStatus.hpp" />
     <ClInclude Include="include\Color.hpp" />
+    <ClInclude Include="include\Controller.hpp" />
     <ClInclude Include="include\Direction.hpp" />
+    <ClInclude Include="include\DivideMessage.hpp" />
     <ClInclude Include="include\Engine.hpp" />
-    <ClInclude Include="include\InvalidSquareException.hpp" />
+    <ClInclude Include="include\gtest\gtest-death-test.h" />
+    <ClInclude Include="include\gtest\gtest-message.h" />
+    <ClInclude Include="include\gtest\gtest-param-test.h" />
+    <ClInclude Include="include\gtest\gtest-printers.h" />
+    <ClInclude Include="include\gtest\gtest-spi.h" />
+    <ClInclude Include="include\gtest\gtest-test-part.h" />
+    <ClInclude Include="include\gtest\gtest-typed-test.h" />
+    <ClInclude Include="include\gtest\gtest.h" />
+    <ClInclude Include="include\gtest\gtest_pred_impl.h" />
+    <ClInclude Include="include\gtest\gtest_prod.h" />
+    <ClInclude Include="include\gtest\internal\custom\gtest-port.h" />
+    <ClInclude Include="include\gtest\internal\custom\gtest-printers.h" />
+    <ClInclude Include="include\gtest\internal\custom\gtest.h" />
+    <ClInclude Include="include\gtest\internal\gtest-death-test-internal.h" />
+    <ClInclude Include="include\gtest\internal\gtest-filepath.h" />
+    <ClInclude Include="include\gtest\internal\gtest-internal.h" />
+    <ClInclude Include="include\gtest\internal\gtest-linked_ptr.h" />
+    <ClInclude Include="include\gtest\internal\gtest-param-util-generated.h" />
+    <ClInclude Include="include\gtest\internal\gtest-param-util.h" />
+    <ClInclude Include="include\gtest\internal\gtest-port-arch.h" />
+    <ClInclude Include="include\gtest\internal\gtest-port.h" />
+    <ClInclude Include="include\gtest\internal\gtest-string.h" />
+    <ClInclude Include="include\gtest\internal\gtest-tuple.h" />
+    <ClInclude Include="include\gtest\internal\gtest-type-util.h" />
+    <ClInclude Include="include\Interface.hpp" />
     <ClInclude Include="include\LookupData.hpp" />
+    <ClInclude Include="include\Message.hpp" />
+    <ClInclude Include="include\MessageArgument.hpp" />
+    <ClInclude Include="include\MessageQueue.hpp" />
+    <ClInclude Include="include\Messages.hpp" />
+    <ClInclude Include="include\MessageType.hpp" />
     <ClInclude Include="include\Move.hpp" />
+    <ClInclude Include="include\MoveList.hpp" />
+    <ClInclude Include="include\MoveSearchCriteria.hpp" />
+    <ClInclude Include="include\PerftMessage.hpp" />
     <ClInclude Include="include\Piece.hpp" />
     <ClInclude Include="include\Position.hpp" />
+    <ClInclude Include="include\PrintMessage.hpp" />
+    <ClInclude Include="include\QuitMessage.hpp" />
     <ClInclude Include="include\Rank.hpp" />
-    <ClInclude Include="include\Square.hpp" />
+    <ClInclude Include="include\SetBoardMessage.hpp" />
+    <ClInclude Include="include\TestMessage.hpp" />
+    <ClInclude Include="include\UndoMoveMessage.hpp" />
+    <ClInclude Include="include\UserMoveMessage.hpp" />
     <ClInclude Include="include\Utility.hpp" />
-    <ClInclude Include="test_include\BitboardTest.hpp" />
-    <ClInclude Include="test_include\EngineTest.hpp" />
     <ClInclude Include="test_include\MoveTest.hpp" />
     <ClInclude Include="test_include\PieceTest.hpp" />
-    <ClInclude Include="test_include\PositionTest.hpp" />
-    <ClInclude Include="test_include\SquareTest.hpp" />
-    <ClInclude Include="test_include\TuxedoCatTest.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="logos\TuxedoCat 1.bmp" />
