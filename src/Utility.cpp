@@ -281,12 +281,12 @@ uint64_t Utility::coordinatesToBitboard(std::pair<int, int> coord)
     }
     else
     {
-        return 0x01 << ((coord.first * 8) + coord.second);
+        return 0x01ULL << ((coord.first * 8) + coord.second);
     }
 }
 
 bool Utility::areCoordinatesValid(std::pair<int, int> coord)
 {
-    return coord.first >= 0 && coord.first < 8 &&
-        coord.second >= 0 && coord.second < 8;
+    return coord.first >= 0 && coord.first < 8 && coord.second >= 0
+        && coord.second < 8;
 }

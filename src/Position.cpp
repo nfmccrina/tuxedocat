@@ -1356,92 +1356,132 @@ Piece Position::getPieceAt(uint64_t s) const
     }
 }
 
-uint64_t Position::getPotentialPinningPiece(uint64_t loc, Direction dir) const
+uint64_t Position::getPinnedPieceByDirection(int kingIndex, uint64_t ownPieces,
+    Direction d) const
 {
-    int index;
+    uint64_t betweenMask {0x00ULL};
+    int pinningPieceIndex {getPotentialPinningPiece(kingIndex, d)};
 
-    if (colorToMove == Color::BLACK)
+    if (pinningPieceIndex != -1)
     {
-        if (dir == Direction::N || dir == Direction::S ||
-            dir == Direction::E || dir == Direction::W)
+        betweenMask = LookupData::betweenLookup[kingIndex][pinningPieceIndex] &
+            allPieces;
+
+        if (Utility::popcount(betweenMask) == 1 &&
+            (betweenMask & ownPieces) != 0x00ULL)
         {
-            if (dir == Direction::N || dir == Direction::E)
-            {
-                index = Utility::lsb(whiteQueens | whiteRooks);
-            }
-            else
-            {
-                index = Utility::msb(whiteQueens | whiteRooks);
-            }
+            return betweenMask;
+        }
+    }
+
+    return 0x00ULL;
+}
+
+uint64_t Position::getPinnedPieces(Color c) const
+{
+    uint64_t pinnedPieces {0x00ULL};
+    uint64_t ownPieces {c == Color::WHITE ? whitePieces : blackPieces};
+    int kingIndex {Utility::lsb(c == Color::WHITE ? whiteKing : blackKing)};
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::N);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::NE);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::NW);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::W);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::E);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::SW);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::SE);
+
+    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::S);
+
+    return pinnedPieces;
+}
+
+int Position::getPotentialPinningPiece(uint64_t loc, Direction dir) const
+{
+    int index {-1};
+    int locationIndex {Utility::lsb(loc)};
+    uint64_t potentialPinners {0x00ULL};
+    uint64_t queensRooks {0x00ULL};
+    uint64_t queensBishops {0x00ULL};
+
+    if (colorToMove == Color::WHITE)
+    {
+        queensRooks = blackQueens | blackRooks;
+        queensBishops = blackQueens | blackBishops;
+    }
+    else
+    {
+        queensRooks = whiteQueens | whiteRooks;
+        queensBishops = whiteQueens | whiteBishops;
+    }
+
+    if (dir == Direction::N || dir == Direction::S ||
+        dir == Direction::E || dir == Direction::W)
+    {
+        potentialPinners = queensRooks &
+            LookupData::getRayAttacksByDirection(dir)[locationIndex];
+
+        if (dir == Direction::N || dir == Direction::E)
+        {
+            index = Utility::lsb(potentialPinners);
         }
         else
         {
-            if (dir == Direction::NE || dir == Direction::NW)
-            {
-                index = Utility::lsb(whiteQueens | whiteBishops);
-            }
-            else
-            {
-                index = Utility::msb(whiteQueens | whiteBishops);
-            }
+
+            index = Utility::msb(potentialPinners);
         }
     }
     else
     {
-        if (dir == Direction::N || dir == Direction::S ||
-            dir == Direction::E || dir == Direction::W)
+        potentialPinners = queensBishops &
+            LookupData::getRayAttacksByDirection(dir)[locationIndex];
+
+        if (dir == Direction::NE || dir == Direction::NW)
         {
-            if (dir == Direction::N || dir == Direction::E)
-            {
-                index = Utility::lsb(blackQueens | blackRooks);
-            }
-            else
-            {
-                index = Utility::msb(blackQueens | blackRooks);
-            }
+            index = Utility::lsb(potentialPinners);
         }
         else
         {
-            if (dir == Direction::NE || dir == Direction::NW)
-            {
-                index = Utility::lsb(blackQueens | blackBishops);
-            }
-            else
-            {
-                index = Utility::msb(blackQueens | blackBishops);
-            }
+            index = Utility::msb(potentialPinners);
         }
     }
 
-    if (index >= 0)
-    {
-        return 0x01ULL << index;
-    }
-    else
-    {
-        return 0x00ULL;
-    }
+    return index;
 }
 
 bool Position::isPiecePinned(const Piece pinnedPiece,
     Direction direction) const
 {
     uint64_t location {pinnedPiece.square};
-    uint64_t pinningPiece {getPotentialPinningPiece(location, direction)};
-    uint64_t pinnedKingLocation;
+    int pinningPiece {getPotentialPinningPiece(location, direction)};
+    int pinnedKingIndex;
 
     if (colorToMove == Color::WHITE)
     {
-        pinnedKingLocation = whiteKing;
+        pinnedKingIndex = Utility::msb(whiteKing);
     }
     else
     {
-        pinnedKingLocation = blackKing;
+        pinnedKingIndex = Utility::lsb(blackKing);
     }
 
-    if (pinningPiece != 0x00ULL)
+    if (pinningPiece != -1)
     {
-        return (LookupData::betweenLookup[pinnedKingLocation][pinningPiece] &
+        return (LookupData::betweenLookup[pinnedKingIndex][pinningPiece] &
             allPieces) == location;
     }
     else

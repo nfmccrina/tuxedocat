@@ -70,7 +70,10 @@ namespace TuxedoCat
         uint64_t getOpposingPieces(Color c) const;
         uint64_t getOwnPieces(Color c) const;
         Piece getPieceAt(uint64_t s) const;
-        uint64_t getPotentialPinningPiece(uint64_t loc, Direction dir) const;
+        uint64_t getPinnedPieceByDirection(int kingIndex, uint64_t ownPieces,
+            Direction d) const;
+        uint64_t getPinnedPieces(Color c) const;
+        int getPotentialPinningPiece(uint64_t loc, Direction dir) const;
         bool isCastleLegal(uint64_t s) const;
         bool isInCheck(Color c) const;
         bool isMoveLegal(const Move& m);

@@ -24,7 +24,7 @@
 */
 
 #include "betweenLookupGen.hpp"
-#include <iostream>
+#include <fstream>
 
 using namespace TuxedoCat;
 
@@ -32,6 +32,8 @@ int main()
 {
     BetweenLookupGen lookupGen;
 
-    std::cout << lookupGen.generateArray() << std::endl;
+    std::ofstream fout {"output.txt", std::ios_base::out};
+
+    fout << lookupGen.generateArray() << std::endl;
     return 0;
 }
