@@ -1,8 +1,0 @@
-CXX=clang++
-CXXFLAGS=-Wall -Werror -Wextra -pedantic -std=c++11 -O3
-LDFLAGS=
-LIBS=
-BUILDDIR=build
-SRCDIR=src
-TESTDIR=test_src
-INCLUDES=-I./include
