@@ -73,12 +73,11 @@ namespace TuxedoCat
         uint64_t getPinnedPieceByDirection(int kingIndex, uint64_t ownPieces,
             Direction d) const;
         uint64_t getPinnedPieces(Color c) const;
-        int getPotentialPinningPiece(uint64_t loc, Direction dir) const;
+        int getPotentialPinningPiece(int locationIndex, Direction dir) const;
         bool isCastleLegal(uint64_t s) const;
         bool isInCheck(Color c) const;
         bool isMoveLegal(const Move& m);
-        bool isPiecePinned(const Piece pinnedPiece,
-            Direction direction) const;
+        bool isPiecePinned(uint64_t location, Direction direction) const;
         bool isSlidingPiecePinned(const Piece p, Direction d) const;
         bool isSquareAttacked(uint64_t s) const;
         bool isSquareEmpty(uint64_t s) const;
@@ -107,5 +106,7 @@ namespace TuxedoCat
         uint64_t whitePieces;
         uint64_t whiteQueens;
         uint64_t whiteRooks;
+
+        uint64_t currentPinnedPieces;
     };
 }

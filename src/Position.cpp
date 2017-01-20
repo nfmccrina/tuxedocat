@@ -91,6 +91,8 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         generateCastles(moves);
     }
 
+    currentPinnedPieces = getPinnedPieces(colorToMove);
+
     while (pieces != 0x00ULL)
     {
         currentIndex = Utility::lsb(pieces);
@@ -208,7 +210,25 @@ void Position::makeMove(const Move& move)
     Color sourceColor {move.movingPiece.color};
     Rank sourceRank {move.movingPiece.rank};
     Rank promotedRank {move.promotedRank};
-    Piece capturedPiece {getPieceAt(targetLocation)};
+    uint64_t capturedPieceLocation;
+
+    if (sourceRank == Rank::PAWN && targetLocation == enPassantTarget)
+    {
+        if (sourceColor == Color::WHITE)
+        {
+            capturedPieceLocation = targetLocation >> 8;
+        }
+        else
+        {
+            capturedPieceLocation = targetLocation << 8;
+        }
+    }
+    else
+    {
+        capturedPieceLocation = targetLocation;
+    }
+
+    Piece capturedPiece {getPieceAt(capturedPieceLocation)};
 
     positionStack.push(*this);
 
@@ -353,6 +373,10 @@ void Position::makeMove(const Move& move)
                 removePieceAt(targetLocation);
                 halfMoveCounter = 0;
             }
+            else
+            {
+                halfMoveCounter++;
+            }
 
             addPieceAt(targetLocation, sourceColor, sourceRank);
             removePieceAt(sourceLocation);
@@ -413,11 +437,16 @@ void Position::makeMove(const Move& move)
 std::string Position::toString() const
 {
     std::stringstream ss;
+    bool castlesAvailable {false};
 
     for (int row = 7; row >= 0; row--)
     {
+        ss << "+---+---+---+---+---+---+---+---+" << std::endl;
+
         for (int col = 0; col < 8; col++)
         {
+            ss << "| ";
+
             Piece currentPiece {
                 getPieceAt(Utility::coordinatesToBitboard(
                     std::pair<int, int>(row, col)))};
@@ -428,19 +457,65 @@ std::string Position::toString() const
             }
             else
             {
-                ss << "-";
-            }
-
-            if (col != 7)
-            {
                 ss << " ";
             }
+
+            ss << " ";
         }
 
-        ss << std::endl;
+        ss << "|" << std::endl;
     }
+        
+    ss << "+---+---+---+---+---+---+---+---+" << std::endl;
 
     ss << "To Move: " << colorToString(colorToMove) << std::endl;    
+    ss << "Castling availability: ";
+
+    if (castlingStatus.getWhiteKingSide())
+    {
+        ss << "K";
+        castlesAvailable = true;
+    }
+
+    if (castlingStatus.getWhiteQueenSide())
+    {
+        ss << "Q";
+        castlesAvailable = true;
+    }
+
+    if (castlingStatus.getBlackKingSide())
+    {
+        ss << "k";
+        castlesAvailable = true;
+    }
+
+    if (castlingStatus.getBlackQueenSide())
+    {
+        ss << "q";
+        castlesAvailable = true;
+    }
+
+    if (!castlesAvailable)
+    {
+        ss << "N/A";
+    }
+
+    ss << std::endl;
+    ss << "En passant: ";
+
+    if (enPassantTarget != 0x00ULL)
+    {
+        ss << Utility::toAlgebraicCoordinate(enPassantTarget);
+    }
+    else
+    {
+        ss << "N/A";
+    }
+
+    ss << std::endl;
+    ss << "Half move counter: " << halfMoveCounter;
+    ss << std::endl;
+    ss << "Full move counter: " << fullMoveCounter;
 
     return ss.str();
 }
@@ -860,18 +935,24 @@ void Position::generateKnightMovesAt(uint64_t s, MoveList& moves)
     if (
         !piece.isValid() ||
         piece.rank != Rank::KNIGHT ||
-        piece.color != colorToMove ||
-        isPiecePinned(piece, Direction::N) ||
-        isPiecePinned(piece, Direction::E) ||
-        isPiecePinned(piece, Direction::S) ||
-        isPiecePinned(piece, Direction::W) ||
-        isPiecePinned(piece, Direction::SE) ||
-        isPiecePinned(piece, Direction::NE) ||
-        isPiecePinned(piece, Direction::SW) ||
-        isPiecePinned(piece, Direction::NW)
-        )
+        piece.color != colorToMove)
     {
         return;
+    }
+
+    if ((piece.square & currentPinnedPieces) != 0x00ULL)
+    {
+        if (isPiecePinned(piece.square, Direction::N) ||
+            isPiecePinned(piece.square, Direction::E) ||
+            isPiecePinned(piece.square, Direction::S) ||
+            isPiecePinned(piece.square, Direction::W) ||
+            isPiecePinned(piece.square, Direction::SE) ||
+            isPiecePinned(piece.square, Direction::NE) ||
+            isPiecePinned(piece.square, Direction::SW) ||
+            isPiecePinned(piece.square, Direction::NW))
+        {
+            return;
+        }
     }
 
     color = piece.color;
@@ -922,15 +1003,22 @@ void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
-        movingPiece.color != colorToMove ||
-        isPiecePinned(movingPiece, Direction::E) ||
-        isPiecePinned(movingPiece, Direction::W) ||
-        isPiecePinned(movingPiece, Direction::NW) ||
-        isPiecePinned(movingPiece, Direction::SE) ||
-        isPiecePinned(movingPiece, Direction::NE) ||
-        isPiecePinned(movingPiece, Direction::SW))
+        movingPiece.color != colorToMove)
     {
         return;
+    }
+
+    if ((movingPiece.square & currentPinnedPieces) != 0x00ULL)
+    {
+        if (isPiecePinned(movingPiece.square, Direction::E) ||
+            isPiecePinned(movingPiece.square, Direction::W) ||
+            isPiecePinned(movingPiece.square, Direction::NW) ||
+            isPiecePinned(movingPiece.square, Direction::SE) ||
+            isPiecePinned(movingPiece.square, Direction::NE) ||
+            isPiecePinned(movingPiece.square, Direction::SW))
+        {
+            return;
+        }
     }
 
     if (colorToMove == Color::WHITE)
@@ -1009,16 +1097,24 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
     int currentIndex;
     Piece movePiece = getPieceAt(b);
     bool inCheck {false};
+    bool piecePinned {(movePiece.square & currentPinnedPieces) != 0x00ULL};
 
     if (!movePiece.isValid() ||
         movePiece.rank != Rank::PAWN ||
-        movePiece.color != colorToMove ||
-        isPiecePinned(movePiece, Direction::N) ||
-        isPiecePinned(movePiece, Direction::S) ||
-        isPiecePinned(movePiece, Direction::E) ||
-        isPiecePinned(movePiece, Direction::W))
+        movePiece.color != colorToMove)
     {
         return;
+    }
+
+    if (piecePinned)
+    {
+        if (isPiecePinned(movePiece.square, Direction::N) ||
+            isPiecePinned(movePiece.square, Direction::S) ||
+            isPiecePinned(movePiece.square, Direction::E) ||
+            isPiecePinned(movePiece.square, Direction::W))
+        {
+            return;
+        }
     }
 
     if (colorToMove == Color::WHITE)
@@ -1028,15 +1124,31 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
         validCaptureLeftMask = 0xFEFEFEFEFEFEFEFEULL;
         validCaptureRightMask = 0x7F7F7F7F7F7F7F7FULL;
 
-        if (!isPiecePinned(movePiece, Direction::SW) &&
-            !isPiecePinned(movePiece, Direction::NE))
+        if (piecePinned)
+        {
+            if (!isPiecePinned(movePiece.square, Direction::SW) &&
+                !isPiecePinned(movePiece.square, Direction::NE))
+            {
+                captureLeftTarget = (
+                    (b & validRankMask) & validCaptureLeftMask) << 7;
+            }
+        }
+        else
         {
             captureLeftTarget = (
                 (b & validRankMask) & validCaptureLeftMask) << 7;
         }
 
-        if (!isPiecePinned(movePiece, Direction::SE) &&
-            !isPiecePinned(movePiece, Direction::NW))
+        if (piecePinned)
+        {
+            if (!isPiecePinned(movePiece.square, Direction::SE) &&
+                !isPiecePinned(movePiece.square, Direction::NW))
+            {
+                captureRightTarget = (
+                    (b & validRankMask) & validCaptureRightMask) << 9;
+            }
+        }
+        else
         {
             captureRightTarget = (
                 (b & validRankMask) & validCaptureRightMask) << 9;
@@ -1055,15 +1167,31 @@ void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
         validCaptureLeftMask = 0x7F7F7F7F7F7F7F7FULL;
         validCaptureRightMask = 0xFEFEFEFEFEFEFEFEULL;
 
-        if (!isPiecePinned(movePiece, Direction::SW) &&
-            !isPiecePinned(movePiece, Direction::NE))
+        if (piecePinned)
+        {
+            if (!isPiecePinned(movePiece.square, Direction::SW) &&
+                !isPiecePinned(movePiece.square, Direction::NE))
+            {
+                captureLeftTarget = (
+                    (b & validRankMask) & validCaptureLeftMask) >> 7;
+            }
+        }
+        else
         {
             captureLeftTarget = (
                 (b & validRankMask) & validCaptureLeftMask) >> 7;
         }
 
-        if (!isPiecePinned(movePiece, Direction::SE) &&
-            !isPiecePinned(movePiece, Direction::NW))
+        if (piecePinned)
+        {
+            if (!isPiecePinned(movePiece.square, Direction::SE) &&
+                !isPiecePinned(movePiece.square, Direction::NW))
+            {
+                captureRightTarget = (
+                    (b & validRankMask) & validCaptureRightMask) >> 9;
+            }
+        }
+        else
         {
             captureRightTarget = (
                 (b & validRankMask) & validCaptureRightMask) >> 9;
@@ -1135,15 +1263,22 @@ void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
     bool inCheck {false};
 
     if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
-        movingPiece.color != colorToMove ||
-        isPiecePinned(movingPiece, Direction::E) ||
-        isPiecePinned(movingPiece, Direction::W) ||
-        isPiecePinned(movingPiece, Direction::SE) ||
-        isPiecePinned(movingPiece, Direction::NW) ||
-        isPiecePinned(movingPiece, Direction::SW) ||
-        isPiecePinned(movingPiece, Direction::NE))
+        movingPiece.color != colorToMove)
     {
         return;
+    }
+
+    if ((movingPiece.square & currentPinnedPieces) != 0x00ULL)
+    {
+        if (isPiecePinned(movingPiece.square, Direction::E) ||
+            isPiecePinned(movingPiece.square, Direction::W) ||
+            isPiecePinned(movingPiece.square, Direction::SE) ||
+            isPiecePinned(movingPiece.square, Direction::NW) ||
+            isPiecePinned(movingPiece.square, Direction::SW) ||
+            isPiecePinned(movingPiece.square, Direction::NE))
+        {
+            return;
+        }
     }
 
     if (colorToMove == Color::WHITE)
@@ -1186,10 +1321,18 @@ void Position::generateSlidingMovesAt(uint64_t b, Direction d,
     Piece piece = getPieceAt(b);
 
     if (!piece.isValid() ||
-        piece.color != colorToMove ||
-        isSlidingPiecePinned(piece, d))
+        piece.color != colorToMove)
     {
         return;
+    }
+
+
+    if ((piece.square & currentPinnedPieces) != 0x00ULL)
+    {
+        if (isSlidingPiecePinned(piece, d))
+        {
+            return;
+        }
     }
 
     return computeSlidingMoves(Utility::lsb(b), piece,
@@ -1411,10 +1554,9 @@ uint64_t Position::getPinnedPieces(Color c) const
     return pinnedPieces;
 }
 
-int Position::getPotentialPinningPiece(uint64_t loc, Direction dir) const
+int Position::getPotentialPinningPiece(int locationIndex, Direction dir) const
 {
     int index {-1};
-    int locationIndex {Utility::lsb(loc)};
     uint64_t potentialPinners {0x00ULL};
     uint64_t queensRooks {0x00ULL};
     uint64_t queensBishops {0x00ULL};
@@ -1464,11 +1606,11 @@ int Position::getPotentialPinningPiece(uint64_t loc, Direction dir) const
     return index;
 }
 
-bool Position::isPiecePinned(const Piece pinnedPiece,
+bool Position::isPiecePinned(uint64_t location,
     Direction direction) const
 {
-    uint64_t location {pinnedPiece.square};
-    int pinningPiece {getPotentialPinningPiece(location, direction)};
+    int pinningPiece {getPotentialPinningPiece(Utility::lsb(location),
+        direction)};
     int pinnedKingIndex;
 
     if (colorToMove == Color::WHITE)
@@ -1497,75 +1639,75 @@ bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
 
     if (d == Direction::N)
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::NE) ||
+            isPiecePinned(p.square, Direction::SW) ||
+            isPiecePinned(p.square, Direction::SE); 
     }
     else if (d == Direction::S)
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::NE) ||
+            isPiecePinned(p.square, Direction::SW) ||
+            isPiecePinned(p.square, Direction::SE); 
     }
     else if (d == Direction::W)
     {
-        result = isPiecePinned(p, Direction::S) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::S) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::NE) ||
+            isPiecePinned(p.square, Direction::SW) ||
+            isPiecePinned(p.square, Direction::SE); 
     }
     else if (d == Direction::E)
     {
-        result = isPiecePinned(p, Direction::S) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::S) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::NE) ||
+            isPiecePinned(p.square, Direction::SW) ||
+            isPiecePinned(p.square, Direction::SE); 
     }
     else if (d == Direction::NW)
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::NE) ||
-            isPiecePinned(p, Direction::SW) ||
-            isPiecePinned(p, Direction::S); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::NE) ||
+            isPiecePinned(p.square, Direction::SW) ||
+            isPiecePinned(p.square, Direction::S); 
     }
     else if (d == Direction::NE)
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::SE) ||
-            isPiecePinned(p, Direction::S); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::SE) ||
+            isPiecePinned(p.square, Direction::S); 
     }
     else if (d == Direction::SW)
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::S) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::S) ||
+            isPiecePinned(p.square, Direction::SE); 
     }
     else
     {
-        result = isPiecePinned(p, Direction::E) ||
-            isPiecePinned(p, Direction::W) ||
-            isPiecePinned(p, Direction::NW) ||
-            isPiecePinned(p, Direction::N) ||
-            isPiecePinned(p, Direction::S) ||
-            isPiecePinned(p, Direction::SE); 
+        result = isPiecePinned(p.square, Direction::E) ||
+            isPiecePinned(p.square, Direction::W) ||
+            isPiecePinned(p.square, Direction::NW) ||
+            isPiecePinned(p.square, Direction::N) ||
+            isPiecePinned(p.square, Direction::S) ||
+            isPiecePinned(p.square, Direction::SW); 
     }
 
     return result;

@@ -79,7 +79,17 @@ void Engine::run()
                     }
                 }
 
-                std::cout << divide(depth) << std::endl;
+                std::chrono::time_point<std::chrono::system_clock> start;
+                std::chrono::time_point<std::chrono::system_clock> end;
+                start = std::chrono::system_clock::now();
+
+                std::cout << divide(depth);
+
+                end = std::chrono::system_clock::now();
+                std::chrono::duration<double> elapsed_seconds = end - start;
+
+                std::cout << " [" << elapsed_seconds.count()
+                    << "s]" << std::endl;
             }
             else if (msgType == MessageType::SETBOARD)
             {
@@ -118,13 +128,13 @@ void Engine::run()
                 std::chrono::time_point<std::chrono::system_clock> end;
                 start = std::chrono::system_clock::now();
 
-                std::cout << "Leaf nodes: " << perft(depth);
+                std::cout << "Nodes searched: " << perft(depth);
 
                 end = std::chrono::system_clock::now();
                 std::chrono::duration<double> elapsed_seconds = end - start;
 
-                std::cout << " (" << elapsed_seconds.count()
-                    << "s)" << std::endl;
+                std::cout << " [" << elapsed_seconds.count()
+                    << "s]" << std::endl;
             }
             else if (msgType == MessageType::USERMOVE)
             {
@@ -181,8 +191,6 @@ std::string Engine::divide(int depth)
             output << availableMoves[index].notation << ": 1"
                 << std::endl;
         }
-
-        output << "Leaf nodes: " << moveCount << std::endl;
     }
     else
     {
@@ -202,6 +210,8 @@ std::string Engine::divide(int depth)
                 << localCount << std::endl;
         }
     }
+
+    output << "Nodes searched: " << totalCount;
 
     return output.str();
 }
