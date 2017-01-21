@@ -23,10 +23,10 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Position.hpp"
-#include "../include/LookupData.hpp"
-#include "../include/Utility.hpp"
-#include "../include/MoveSearchCriteria.hpp"
+#include "Position.hpp"
+#include "LookupData.hpp"
+#include "Utility.hpp"
+#include "MoveSearchCriteria.hpp"
 #include <sstream>
 #include <iostream>
 #include <vector>

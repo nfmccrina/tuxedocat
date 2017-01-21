@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/DivideMessage.hpp"
+#include "DivideMessage.hpp"
 #include <string>
 
 using namespace TuxedoCat;

@@ -22,9 +22,9 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/UserMoveMessage.hpp"
-#include "../include/MessageType.hpp"
-#include "../include/MessageArgument.hpp"
+#include "UserMoveMessage.hpp"
+#include "MessageType.hpp"
+#include "MessageArgument.hpp"
 #include <string>
 
 using namespace TuxedoCat;

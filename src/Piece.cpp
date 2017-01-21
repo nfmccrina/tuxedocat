@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Piece.hpp"
+#include "Piece.hpp"
 #include <cctype>
 
 using namespace TuxedoCat;

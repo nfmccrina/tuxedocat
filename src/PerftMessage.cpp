@@ -22,9 +22,9 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/PerftMessage.hpp"
-#include "../include/MessageType.hpp"
-#include "../include/MessageArgument.hpp"
+#include "PerftMessage.hpp"
+#include "MessageType.hpp"
+#include "MessageArgument.hpp"
 #include <string>
 
 using namespace TuxedoCat;

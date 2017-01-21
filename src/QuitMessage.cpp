@@ -22,8 +22,8 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/QuitMessage.hpp"
-#include "../include/MessageType.hpp"
+#include "QuitMessage.hpp"
+#include "MessageType.hpp"
 
 using namespace TuxedoCat;
 

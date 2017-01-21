@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Rank.hpp"
+#include "Rank.hpp"
 #include <iostream>
 #include <cctype>
 

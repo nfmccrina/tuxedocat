@@ -23,13 +23,13 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../test_include/MoveTest.hpp"
-#include "../include/Move.hpp"
-#include "../include/Piece.hpp"
-#include "../include/Color.hpp"
-#include "../include/Rank.hpp"
-#include "../include/Utility.hpp"
-#include "../include/gtest/gtest.h"
+#include "MoveTest.hpp"
+#include "Move.hpp"
+#include "Piece.hpp"
+#include "Color.hpp"
+#include "Rank.hpp"
+#include "Utility.hpp"
+#include "gtest/gtest.h"
 
 using namespace TuxedoCat;
 

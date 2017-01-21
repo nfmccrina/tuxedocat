@@ -22,8 +22,8 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/PrintMessage.hpp"
-#include "../include/MessageType.hpp"
+#include "PrintMessage.hpp"
+#include "MessageType.hpp"
 
 using namespace TuxedoCat;
 

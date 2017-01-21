@@ -23,8 +23,8 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/TestMessage.hpp"
-#include "../include/MessageType.hpp"
+#include "TestMessage.hpp"
+#include "MessageType.hpp"
 
 using namespace TuxedoCat;
 

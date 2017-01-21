@@ -22,10 +22,10 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Controller.hpp"
-#include "../include/Engine.hpp"
-#include "../include/MessageQueue.hpp"
-#include "../include/Interface.hpp"
+#include "Controller.hpp"
+#include "Engine.hpp"
+#include "MessageQueue.hpp"
+#include "Interface.hpp"
 #include <thread>
 #include <functional>
 

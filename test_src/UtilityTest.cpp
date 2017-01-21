@@ -23,12 +23,17 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Utility.hpp"
-#include "../include/gtest/gtest.h"
+#include "Utility.hpp"
+#include "gtest/gtest.h"
 
 using namespace TuxedoCat;
 
 TEST(UtilityTest, msb_ShouldCorrectlyCalculateMSB)
 {
     EXPECT_EQ(48, Utility::msb(0x0001000000010101ULL));
+}
+
+TEST(UtilityTest, msb_ShouldReturnNegativeOneIfInputZero)
+{
+    EXPECT_EQ(-1, Utility::msb(0x00ULL));
 }

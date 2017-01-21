@@ -23,7 +23,7 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/LookupData.hpp"
+#include "LookupData.hpp"
 
 using namespace TuxedoCat;
 

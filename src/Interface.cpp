@@ -22,10 +22,10 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Interface.hpp"
-#include "../include/MessageQueue.hpp"
-#include "../include/Utility.hpp"
-#include "../include/Messages.hpp"
+#include "Interface.hpp"
+#include "MessageQueue.hpp"
+#include "Utility.hpp"
+#include "Messages.hpp"
 #include <iostream>
 #include <vector>
 #include <stdexcept>

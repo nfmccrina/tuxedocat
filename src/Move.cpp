@@ -23,7 +23,7 @@
 */
 
 #include "Move.hpp"
-#include "../include/Utility.hpp"
+#include "Utility.hpp"
 
 using namespace TuxedoCat;
 

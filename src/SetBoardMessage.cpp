@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/SetBoardMessage.hpp"
+#include "SetBoardMessage.hpp"
 
 using namespace TuxedoCat;
 

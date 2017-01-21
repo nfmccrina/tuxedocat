@@ -22,11 +22,11 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Engine.hpp"
-#include "../include/Move.hpp"
-#include "../include/MoveList.hpp"
-#include "../include/MoveSearchCriteria.hpp"
-#include "../include/gtest/gtest.h"
+#include "Engine.hpp"
+#include "Move.hpp"
+#include "MoveList.hpp"
+#include "MoveSearchCriteria.hpp"
+#include "gtest/gtest.h"
 #include <sstream>
 #include <iostream>
 #include <chrono>

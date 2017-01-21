@@ -1,5 +1,6 @@
 .tup/
 build/
+DebugBuild/
 .vs/
 log.txt
 *.o

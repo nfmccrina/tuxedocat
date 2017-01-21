@@ -32,18 +32,20 @@ built on Windows.
 
 ### Linux
 
-TuxedoCat used Tup rather than make as a build system, so you'll need that
-unless you want to compile it manually.
+TuxedoCat uses CMake to generate build scripts, so you'll need that
+unless you want to compile it all manually.
 
-Instructions for installing Tup can be found at http://gittup.org/tup/index.html
+You can get CMake from https://cmake.org/download/. On Linux you can do
+`apt-get install cmake` or equivalent.
 
-To build TuxedoCat, cd into the toplevel directory and run
+To build a debug version of the engine, do the following:
+`mkdir DebugBuild`
+`cd DebugBuild`
+`cmake -D CMAKE_BUILD_TYPE=Debug ..`
+`make`
 
-`tup init` (if building for the first time)
-
-`tup`
-
-The executable (named "tuxedocat") will be in the build/ directory.
+To build a release version, just replace "Debug" with "Release" in the steps
+above.
 
 ## Usage
 
@@ -55,12 +57,14 @@ TuxedoCat responds to commands from the CECP (Chess Engine Communication
 Protocol, or 'Winboard' protocol) protocol. Only a couple of the important ones
 are implemented right now.
 
-perft <depth>: Runs a move generation test from the current position, giving
+perft [depth]: Runs a move generation test from the current position, giving
 the number of unique "games" that can be played from the position to the given
 depth.
 
-divide <depth>: Similar to perft, but prints a list of the root moves and how
+divide [depth]: Similar to perft, but prints a list of the root moves and how
 many of the perft branches originate from each move.
+
+test: Runs a small suite of unit tests.
 
 ## Logging
 

@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/MessageArgument.hpp"
+#include "MessageArgument.hpp"
 
 using namespace TuxedoCat;
 

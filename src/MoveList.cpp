@@ -22,9 +22,9 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/MoveList.hpp"
-#include "../include/Utility.hpp"
-#include "../include/MoveSearchCriteria.hpp"
+#include "MoveList.hpp"
+#include "Utility.hpp"
+#include "MoveSearchCriteria.hpp"
 
 using namespace TuxedoCat;
 

@@ -22,7 +22,7 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Message.hpp"
+#include "Message.hpp"
 
 using namespace TuxedoCat;
 

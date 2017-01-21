@@ -22,8 +22,8 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Utility.hpp"
-#include "../include/LookupData.hpp"
+#include "Utility.hpp"
+#include "LookupData.hpp"
 
 using namespace TuxedoCat;
 

@@ -23,7 +23,7 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/Controller.hpp"
+#include "Controller.hpp"
 
 using namespace TuxedoCat;
 

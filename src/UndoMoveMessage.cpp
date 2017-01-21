@@ -23,8 +23,8 @@
 * USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "../include/UndoMoveMessage.hpp"
-#include "../include/MessageType.hpp"
+#include "UndoMoveMessage.hpp"
+#include "MessageType.hpp"
 
 using namespace TuxedoCat;
 
