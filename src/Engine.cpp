@@ -178,7 +178,7 @@ std::string Engine::divide(int depth)
     int moveCount = 0;
     MoveList availableMoves;
 
-    position.generateMoves(Rank::NONE, availableMoves);
+    position.generateMoves(Rank::NONE, availableMoves, true);
     std::stringstream output;
 
     if (depth <= 1)

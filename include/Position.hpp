@@ -43,28 +43,28 @@ namespace TuxedoCat
         Position(std::string fen);
         Position(const Position& p);
 
-        void generateMoves(Rank rank, MoveList& moves);
+        void generateMoves(Rank rank, MoveList& moves,
+            bool calculateNotation = false);
         Move getMoveFromString(std::string s) const;
         void makeMove(const Move& move);
         std::string toString() const;
         void unmakeMove();
     private:
         void addPieceAt(uint64_t location, Color c, Rank r);
+        void calculateInCheck();
+        void calculatePinnedPieces();
         void computeMoveNotation(MoveList& moves);
         void computeSlidingMoves(int index, Piece p, bool highBitBlock,
             const std::array<uint64_t, 64>& rayMask, MoveList& moves);
-        uint64_t findPiece(Color c, Rank r) const;
         void generateCastles(MoveList& moves);
         void generateKingMovesAt(uint64_t s, MoveList& moves);
-        void generateKnightMovesAt(uint64_t s, MoveList& moves);
-        void generatePawnAdvancesAt(uint64_t b, MoveList& moves);
-        void generatePawnCapturesAt(uint64_t b, MoveList& moves);
-        void generatePawnDblAdvancesAt(uint64_t b, MoveList& moves);
-        void generateSlidingMovesAt(uint64_t b, Direction d,
+        void generateKnightMoves(MoveList& moves);
+        void generatePawnAdvances(MoveList& moves);
+        void generatePawnCaptures(MoveList& moves);
+        void generateSlidingMovesAt(Piece p, Direction d,
             MoveList& moves);
         int getBlockerIndex(uint64_t mask, bool highBitBlock);
-        void getMovesFromMask(uint64_t mask, Piece p,
-            bool inCheck, MoveList& moves);
+        void getMovesFromMask(uint64_t mask, Piece p, MoveList& moves);
         bool getHighBitBlockerByDirection(Direction direction) const;
         int getOffsetFromDirection(Direction direction) const;
         uint64_t getOpposingPieces(Color c) const;
@@ -72,15 +72,11 @@ namespace TuxedoCat
         Piece getPieceAt(uint64_t s) const;
         uint64_t getPinnedPieceByDirection(int kingIndex, uint64_t ownPieces,
             Direction d) const;
-        uint64_t getPinnedPieces(Color c) const;
         int getPotentialPinningPiece(int locationIndex, Direction dir) const;
         bool isCastleLegal(uint64_t s) const;
-        bool isInCheck(Color c) const;
         bool isMoveLegal(const Move& m);
-        bool isPiecePinned(uint64_t location, Direction direction) const;
         bool isSlidingPiecePinned(const Piece p, Direction d) const;
         bool isSquareAttacked(uint64_t s) const;
-        bool isSquareEmpty(uint64_t s) const;
         void removePieceAt(uint64_t location);
         void parseFEN(std::string fen);
         void updatePieces();
@@ -107,6 +103,16 @@ namespace TuxedoCat
         uint64_t whiteQueens;
         uint64_t whiteRooks;
 
+        uint64_t currentPinnedPiecesN;
+        uint64_t currentPinnedPiecesE;
+        uint64_t currentPinnedPiecesW;
+        uint64_t currentPinnedPiecesS;
+        uint64_t currentPinnedPiecesNE;
+        uint64_t currentPinnedPiecesNW;
+        uint64_t currentPinnedPiecesSE;
+        uint64_t currentPinnedPiecesSW;
         uint64_t currentPinnedPieces;
+
+        bool inCheck;
     };
 }

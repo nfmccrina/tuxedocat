@@ -38,13 +38,35 @@ using namespace TuxedoCat;
 // begin constructors
 
 Position::Position(std::string fen)
-    : castlingStatus(CastlingStatus(false, false, false, false))
+    : castlingStatus(CastlingStatus(false, false, false, false)),
+        currentPinnedPiecesN(0x00ULL),
+        currentPinnedPiecesE(0x00ULL),
+        currentPinnedPiecesW(0x00ULL),
+        currentPinnedPiecesS(0x00ULL),
+        currentPinnedPiecesNE(0x00ULL),
+        currentPinnedPiecesNW(0x00ULL),
+        currentPinnedPiecesSE(0x00ULL),
+        currentPinnedPiecesSW(0x00ULL),
+        currentPinnedPieces(0x00ULL),
+        inCheck(false)
 {
     parseFEN(fen);
+
+    updatePieces();
 }
 
 Position::Position(const Position& p)
-    : castlingStatus(p.castlingStatus)
+    : castlingStatus(p.castlingStatus),
+        currentPinnedPiecesN(0x00ULL),
+        currentPinnedPiecesE(0x00ULL),
+        currentPinnedPiecesW(0x00ULL),
+        currentPinnedPiecesS(0x00ULL),
+        currentPinnedPiecesNE(0x00ULL),
+        currentPinnedPiecesNW(0x00ULL),
+        currentPinnedPiecesSE(0x00ULL),
+        currentPinnedPiecesSW(0x00ULL),
+        currentPinnedPieces(0x00ULL),
+        inCheck(false)
 {
     whitePawns = p.whitePawns;
     whiteKnights = p.whiteKnights;
@@ -65,13 +87,23 @@ Position::Position(const Position& p)
     fullMoveCounter = p.fullMoveCounter;
     colorToMove = p.colorToMove;
     allPieces = p.allPieces;
+    currentPinnedPieces = p.currentPinnedPieces;
+    currentPinnedPiecesN = p.currentPinnedPiecesN;
+    currentPinnedPiecesS = p.currentPinnedPiecesS;
+    currentPinnedPiecesE = p.currentPinnedPiecesE;
+    currentPinnedPiecesW = p.currentPinnedPiecesW;
+    currentPinnedPiecesNE = p.currentPinnedPiecesNE;
+    currentPinnedPiecesNW = p.currentPinnedPiecesNW;
+    currentPinnedPiecesSE = p.currentPinnedPiecesSE;
+    currentPinnedPiecesSW = p.currentPinnedPiecesSW;
+    inCheck = p.inCheck;
 }
 
 // end constructors
 
 // begin public methods
 
-void Position::generateMoves(Rank rank, MoveList& moves)
+void Position::generateMoves(Rank rank, MoveList& moves, bool calculateNotation)
 {
     uint64_t pieces;
     uint64_t currentSquare;
@@ -86,28 +118,38 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         pieces = blackPieces;
     }
 
+    calculateInCheck();
+    calculatePinnedPieces();
+
     if (rank == Rank::NONE || rank == Rank::KING)
     {
         generateCastles(moves);
     }
 
-    currentPinnedPieces = getPinnedPieces(colorToMove);
+    if (rank == Rank::NONE || rank == Rank::PAWN)
+    {
+        generatePawnCaptures(moves);
+        generatePawnAdvances(moves);
+    }
+
+    if (rank == Rank::NONE || rank == Rank::KNIGHT)
+    {
+        generateKnightMoves(moves);
+    }
+
+    pieces = pieces & (~(whitePawns | blackPawns)) &
+        (~(whiteKnights | blackKnights));
 
     while (pieces != 0x00ULL)
     {
         currentIndex = Utility::lsb(pieces);
         currentSquare = 0x01ULL << currentIndex;
+        Piece currentPiece {getPieceAt(currentSquare)};
 
-        if (rank == Rank::NONE || rank == Rank::PAWN)
+        if (!currentPiece.isValid() || currentPiece.color != colorToMove)
         {
-            generatePawnCapturesAt(currentSquare, moves);
-            generatePawnAdvancesAt(currentSquare, moves);
-            generatePawnDblAdvancesAt(currentSquare, moves);
-        }
-
-        if (rank == Rank::NONE || rank == Rank::KNIGHT)
-        {
-            generateKnightMovesAt(currentSquare, moves);
+            Utility::flipBit(pieces, currentIndex);
+            continue;
         }
 
         if (rank == Rank::NONE || rank == Rank::KING)
@@ -116,69 +158,183 @@ void Position::generateMoves(Rank rank, MoveList& moves)
         }
 
         if ((rank == Rank::NONE || rank == Rank::BISHOP) &&
-            getPieceAt(currentSquare).rank == Rank::BISHOP)
+            currentPiece.rank == Rank::BISHOP)
         {
-            generateSlidingMovesAt(currentSquare,
-                Direction::NE, moves);
-            
-            generateSlidingMovesAt(currentSquare,
-                Direction::NW, moves);
+            if ((currentSquare & currentPinnedPieces) == 0x00ULL)
+            {
+                generateSlidingMovesAt(currentPiece,
+                    Direction::NE, moves);
+                
+                generateSlidingMovesAt(currentPiece,
+                    Direction::NW, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::SE, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::SE, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::SW, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::SW, moves);
+            }
+            else
+            {
+                if (!isSlidingPiecePinned(currentPiece, Direction::NE))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::NE, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::NW))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::NW, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::SW))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::SW, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::SE))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::SE, moves);
+                }
+            }
         }
 
         if ((rank == Rank::NONE || rank == Rank::ROOK) &&
-            getPieceAt(currentSquare).rank == Rank::ROOK)
+            currentPiece.rank == Rank::ROOK)
         {
-            generateSlidingMovesAt(currentSquare,
-                Direction::N, moves);
-            
-            generateSlidingMovesAt(currentSquare,
-                Direction::W, moves);
+            if ((currentSquare & currentPinnedPieces) == 0x00ULL)
+            {
+                generateSlidingMovesAt(currentPiece,
+                    Direction::N, moves);
+                
+                generateSlidingMovesAt(currentPiece,
+                    Direction::W, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::E, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::E, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::S, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::S, moves);
+            }
+            else
+            {
+                if (!isSlidingPiecePinned(currentPiece, Direction::N))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::N, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::S))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::S, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::W))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::W, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::E))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::E, moves);
+                }
+            }
         }
 
         if ((rank == Rank::NONE || rank == Rank::QUEEN) &&
-            getPieceAt(currentSquare).rank == Rank::QUEEN)
+            currentPiece.rank == Rank::QUEEN)
         {
-            generateSlidingMovesAt(currentSquare,
-                Direction::N, moves);
-            
-            generateSlidingMovesAt(currentSquare,
-                Direction::W, moves);
+            if ((currentSquare & currentPinnedPieces) == 0x00ULL)
+            {
+                generateSlidingMovesAt(currentPiece,
+                    Direction::N, moves);
+                
+                generateSlidingMovesAt(currentPiece,
+                    Direction::W, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::E, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::E, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::S, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::S, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::NE, moves);
-            
-            generateSlidingMovesAt(currentSquare,
-                Direction::NW, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::NE, moves);
+                
+                generateSlidingMovesAt(currentPiece,
+                    Direction::NW, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::SE, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::SE, moves);
 
-            generateSlidingMovesAt(currentSquare,
-                Direction::SW, moves);
+                generateSlidingMovesAt(currentPiece,
+                    Direction::SW, moves);
+            }
+            else
+            {
+                if (!isSlidingPiecePinned(currentPiece, Direction::N))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::N, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::S))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::S, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::W))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::W, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::E))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::E, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::NE))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::NE, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::NW))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::NW, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::SW))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::SW, moves);
+                }
+
+                if (!isSlidingPiecePinned(currentPiece, Direction::SE))
+                {
+                    generateSlidingMovesAt(currentPiece,
+                        Direction::SE, moves);
+                }
+            }
         }
 
         Utility::flipBit(pieces, currentIndex);
     }
 
-    computeMoveNotation(moves);
+    if (calculateNotation)
+    {
+        computeMoveNotation(moves);
+    }
 }
 
 Move Position::getMoveFromString(std::string s) const
@@ -441,7 +597,8 @@ std::string Position::toString() const
 
     for (int row = 7; row >= 0; row--)
     {
-        ss << "+---+---+---+---+---+---+---+---+" << std::endl;
+        ss << "  +---+---+---+---+---+---+---+---+" << std::endl;
+        ss << static_cast<char>(row + 49) << " ";
 
         for (int col = 0; col < 8; col++)
         {
@@ -466,7 +623,8 @@ std::string Position::toString() const
         ss << "|" << std::endl;
     }
         
-    ss << "+---+---+---+---+---+---+---+---+" << std::endl;
+    ss << "  +---+---+---+---+---+---+---+---+" << std::endl;
+    ss << "    a   b   c   d   e   f   g   h  " << std::endl;
 
     ss << "To Move: " << colorToString(colorToMove) << std::endl;    
     ss << "Castling availability: ";
@@ -546,6 +704,16 @@ void Position::unmakeMove()
         fullMoveCounter = p.fullMoveCounter;
         colorToMove = p.colorToMove;
         allPieces = p.allPieces;
+        currentPinnedPieces = p.currentPinnedPieces;
+        currentPinnedPiecesN = p.currentPinnedPiecesN;
+        currentPinnedPiecesS = p.currentPinnedPiecesS;
+        currentPinnedPiecesE = p.currentPinnedPiecesE;
+        currentPinnedPiecesW = p.currentPinnedPiecesW;
+        currentPinnedPiecesNE = p.currentPinnedPiecesNE;
+        currentPinnedPiecesNW = p.currentPinnedPiecesNW;
+        currentPinnedPiecesSE = p.currentPinnedPiecesSE;
+        currentPinnedPiecesSW = p.currentPinnedPiecesSW;
+        inCheck = p.inCheck;
 
         positionStack.pop();
     }
@@ -627,6 +795,74 @@ void Position::addPieceAt(uint64_t loc, Color c, Rank r)
     updatePieces();
 }
 
+void Position::calculateInCheck()
+{
+    if (colorToMove == Color::WHITE)
+    {
+        if (whiteKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(whiteKing);
+        }
+    }
+    else
+    {
+        if (blackKing != 0x00ULL)
+        {
+            inCheck = isSquareAttacked(blackKing);
+        }
+    }
+}
+
+void Position::calculatePinnedPieces()
+{
+    uint64_t ownPieces {colorToMove == Color::WHITE ? whitePieces :
+        blackPieces};
+    int kingIndex {Utility::lsb(colorToMove == Color::WHITE ? whiteKing :
+        blackKing)};
+
+    currentPinnedPiecesN = 0x00ULL;
+    currentPinnedPiecesNE = 0x00ULL;
+    currentPinnedPiecesNW = 0x00ULL;
+    currentPinnedPiecesW = 0x00ULL;
+    currentPinnedPiecesE = 0x00ULL;
+    currentPinnedPiecesSW = 0x00ULL;
+    currentPinnedPiecesSE = 0x00ULL;
+    currentPinnedPiecesS = 0x00ULL;
+
+    currentPinnedPiecesN |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::N);
+
+    currentPinnedPiecesNE |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::NE);
+
+    currentPinnedPiecesNW |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::NW);
+
+    currentPinnedPiecesW |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::W);
+
+    currentPinnedPiecesE |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::E);
+
+    currentPinnedPiecesSW |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::SW);
+
+    currentPinnedPiecesSE |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::SE);
+
+    currentPinnedPiecesS |= getPinnedPieceByDirection(kingIndex, ownPieces,
+        Direction::S);
+
+    currentPinnedPieces = currentPinnedPiecesN |
+        currentPinnedPiecesS |
+        currentPinnedPiecesW |
+        currentPinnedPiecesE |
+        currentPinnedPiecesSE |
+        currentPinnedPiecesSW |
+        currentPinnedPiecesNE |
+        currentPinnedPiecesNW;
+}
+
 void Position::computeMoveNotation(MoveList& moves)
 {
     std::stringstream san;
@@ -704,7 +940,7 @@ void Position::computeMoveNotation(MoveList& moves)
                     }
                 }
 
-                if (!isSquareEmpty(move.targetSquare))
+                if ((move.targetSquare & allPieces) != 0x00ULL)
                 {
                     san << "x";
                 }
@@ -729,7 +965,7 @@ void Position::computeMoveNotation(MoveList& moves)
         {
             bool ep = false;
 
-            if (!isSquareEmpty(move.targetSquare))
+            if ((move.targetSquare & allPieces) != 0x00ULL)
             {
                 san << Utility::toAlgebraicCoordinate(
                     move.movingPiece.square)[0];
@@ -760,7 +996,7 @@ void Position::computeMoveNotation(MoveList& moves)
 
         makeMove(move);
 
-        if (isInCheck(colorToMove))
+        if (inCheck)
         {
             san << "+";
         }
@@ -777,10 +1013,8 @@ void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,
     uint64_t moveMask {0x0000000000000000ULL};
     uint64_t ownPieces;
     int blockerIndex;
-    bool inCheck {false};
 
     ownPieces = getOwnPieces(colorToMove);
-    inCheck = isInCheck(colorToMove);
     moveMask = rayMask[index];
 
     blockerIndex = getBlockerIndex(moveMask, highBitBlock);
@@ -791,48 +1025,7 @@ void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,
         moveMask = moveMask & (~ownPieces);
     }
 
-    getMovesFromMask(moveMask, p, inCheck, moves);
-}
-
-uint64_t Position::findPiece(Color c, Rank r) const
-{
-    uint64_t bitboard;
-
-    if (r == Rank::PAWN)
-    {
-        bitboard = whitePawns | blackPawns;
-    }
-    else if (r == Rank::KNIGHT)
-    {
-        bitboard = whiteKnights | blackKnights;
-    }
-    else if (r == Rank::BISHOP)
-    {
-        bitboard = whiteBishops | blackBishops;
-    }
-    else if (r == Rank::ROOK)
-    {
-        bitboard = whiteRooks | blackRooks;
-    }
-    else if (r == Rank::QUEEN)
-    {
-        bitboard = whiteQueens | blackQueens;
-    }
-    else if (r == Rank::KING)
-    {
-        bitboard = whiteKing | blackKing;
-    }
-
-    if (c == Color::WHITE)
-    {
-        bitboard = bitboard & whitePieces;
-    }
-    else
-    {
-        bitboard = bitboard & blackPieces;
-    }
-
-    return bitboard;
+    getMovesFromMask(moveMask, p, moves);
 }
 
 void Position::generateCastles(MoveList& moves)
@@ -920,137 +1113,116 @@ void Position::generateKingMovesAt(uint64_t s, MoveList& moves)
     }
 }
 
-void Position::generateKnightMovesAt(uint64_t s, MoveList& moves)
+void Position::generateKnightMoves(MoveList& moves)
 {
-    Piece piece = getPieceAt(s);
-    uint64_t location = s;
-    int locationIndex;
-    uint64_t moveMask = 0x0000000000000000ULL;
-    uint64_t currentMove;
-    Color color;
-    uint64_t ownPieces;
-    int currentIndex;
-    bool inCheck {false};
+    int currentIndex {0x00ULL};
+    uint64_t currentSquare {0x00ULL};
+    int currentTargetIndex {0x00ULL};
+    uint64_t currentTargetSquare {0x00ULL};
+    uint64_t ownKnights {colorToMove == Color::WHITE ? whiteKnights :
+        blackKnights};
+    uint64_t ownPieces {colorToMove == Color::WHITE ? whitePieces :
+        blackPieces};
+    uint64_t targets {0x00ULL};
+    uint64_t unpinnedKnights {ownKnights & (~currentPinnedPieces)};
 
-    if (
-        !piece.isValid() ||
-        piece.rank != Rank::KNIGHT ||
-        piece.color != colorToMove)
+    while (unpinnedKnights != 0x00ULL)
     {
-        return;
-    }
+        currentIndex = Utility::lsb(unpinnedKnights);
+        currentSquare = 0x01ULL << currentIndex;
 
-    if ((piece.square & currentPinnedPieces) != 0x00ULL)
-    {
-        if (isPiecePinned(piece.square, Direction::N) ||
-            isPiecePinned(piece.square, Direction::E) ||
-            isPiecePinned(piece.square, Direction::S) ||
-            isPiecePinned(piece.square, Direction::W) ||
-            isPiecePinned(piece.square, Direction::SE) ||
-            isPiecePinned(piece.square, Direction::NE) ||
-            isPiecePinned(piece.square, Direction::SW) ||
-            isPiecePinned(piece.square, Direction::NW))
+        targets = LookupData::knightAttacks[currentIndex] & (~ownPieces);
+
+        while (targets != 0x00ULL)
         {
-            return;
-        }
-    }
+            currentTargetIndex = Utility::lsb(targets);
+            currentTargetSquare = 0x01ULL << currentTargetIndex;
 
-    color = piece.color;
+            Move m {getPieceAt(currentSquare), currentTargetSquare, Rank::NONE};
 
-    if (color == Color::WHITE)
-    {
-        ownPieces = whitePieces;
+            if ((inCheck && isMoveLegal(m)) || !inCheck)
+            {
+                moves.addMove(m);
+            }
 
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(whiteKing);
-        }
-    }
-    else
-    {
-        ownPieces = blackPieces;
-
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(blackKing);
-        }
-    }
-
-    locationIndex = Utility::lsb(location);
-
-    moveMask = LookupData::knightAttacks[locationIndex] & (~ownPieces);
-
-    while (moveMask != 0x0000000000000000ULL)
-    {
-        currentIndex = Utility::lsb(moveMask);
-        currentMove = 0x01ULL << currentIndex;
-        Move m(piece, currentMove, Rank::NONE);
-
-        if ((inCheck && isMoveLegal(m)) || !inCheck)
-        {
-            moves.addMove(m);
+            Utility::flipBit(targets, currentTargetIndex);
         }
 
-        Utility::flipBit(moveMask, currentIndex);
+        Utility::flipBit(unpinnedKnights, currentIndex);
     }
 }
 
-void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
+void Position::generatePawnAdvances(MoveList& moves)
 {
-    uint64_t legalMask;
-    uint64_t target;
-    Piece movingPiece = getPieceAt(b);
-    bool inCheck {false};
-
-    if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
-        movingPiece.color != colorToMove)
-    {
-        return;
-    }
-
-    if ((movingPiece.square & currentPinnedPieces) != 0x00ULL)
-    {
-        if (isPiecePinned(movingPiece.square, Direction::E) ||
-            isPiecePinned(movingPiece.square, Direction::W) ||
-            isPiecePinned(movingPiece.square, Direction::NW) ||
-            isPiecePinned(movingPiece.square, Direction::SE) ||
-            isPiecePinned(movingPiece.square, Direction::NE) ||
-            isPiecePinned(movingPiece.square, Direction::SW))
-        {
-            return;
-        }
-    }
+    uint64_t validSingleMask {0x00FFFFFFFFFFFF00ULL};
+    uint64_t validDoubleMask {0x00ULL};
+    uint64_t singleTargets {0x00ULL};
+    uint64_t doubleTargets {0x00ULL};
+    int currentIndex {0x00ULL};
+    uint64_t currentSquare {0x00ULL};
+    uint64_t currentSourceSquare {0x00ULL};
+    uint64_t targets {0x00ULL};
 
     if (colorToMove == Color::WHITE)
     {
-        legalMask = 0x00FFFFFFFFFFFFFFULL;
-        target = b << 8;
-
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(whiteKing);
-        }
+        validDoubleMask = 0x000000000000FF00ULL;
+        singleTargets = ((whitePawns & validSingleMask) << 8) & (~allPieces);
+        doubleTargets = (((((whitePawns & validDoubleMask) << 8) &
+            (~allPieces))) << 8) & (~allPieces);
     }
     else
     {
-        legalMask = 0xFFFFFFFFFFFFFF00ULL;
-        target = b >> 8;
-
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(blackKing);
-        }
+        validDoubleMask = 0x00FF000000000000ULL;
+        singleTargets = ((blackPawns & validSingleMask) >> 8) & (~allPieces);
+        doubleTargets = (((((blackPawns & validDoubleMask) >> 8) &
+            (~allPieces))) >> 8) & (~allPieces);
     }
 
-    if (Utility::inMask(b, legalMask) &&
-        !Utility::inMask(target, allPieces))
+    targets = singleTargets | doubleTargets;
+
+    while (targets != 0x00ULL)
     {
-        if (Utility::inMask(target, 0xFF000000000000FFULL))
+        currentIndex = Utility::lsb(targets);
+        currentSquare = 0x01ULL << currentIndex;
+        currentSourceSquare = 0x00ULL;
+
+        if (colorToMove == Color::WHITE)
         {
-            Move m1(movingPiece, target, Rank::QUEEN);
-            Move m2(movingPiece, target, Rank::ROOK);
-            Move m3(movingPiece, target, Rank::BISHOP);
-            Move m4(movingPiece, target, Rank::KNIGHT);
+            if ((currentSquare & singleTargets) != 0x00ULL)
+            {
+                currentSourceSquare = currentSquare >> 8;
+            }
+            else if ((currentSquare & doubleTargets) != 0x00ULL)
+            {
+                currentSourceSquare = currentSquare >> 16;
+            }
+        }
+        else
+        {
+            if ((currentSquare & singleTargets) != 0x00ULL)
+            {
+                currentSourceSquare = currentSquare << 8;
+            }
+            else if ((currentSquare & doubleTargets) != 0x00ULL)
+            {
+                currentSourceSquare = currentSquare << 16;
+            }
+        }
+
+        Piece currentPiece {getPieceAt(currentSourceSquare)};
+
+        if (isSlidingPiecePinned(currentPiece, Direction::N))
+        {
+            Utility::flipBit(targets, currentIndex);
+            continue;
+        }
+
+        if ((currentSquare & 0xFF000000000000FFULL) != 0x00ULL)
+        {
+            Move m1 {currentPiece, currentSquare, Rank::QUEEN};
+            Move m2 {currentPiece, currentSquare, Rank::ROOK};
+            Move m3 {currentPiece, currentSquare, Rank::BISHOP};
+            Move m4 {currentPiece, currentSquare, Rank::KNIGHT};
 
             if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
@@ -1074,268 +1246,151 @@ void Position::generatePawnAdvancesAt(uint64_t b, MoveList& moves)
         }
         else
         {
-            Move m1(movingPiece, target, Rank::NONE);
+            Move m1(currentPiece, currentSquare, Rank::NONE);
 
             if ((inCheck && isMoveLegal(m1)) || !inCheck)
             {
                 moves.addMove(m1);
             }
         }
+        
+        Utility::flipBit(targets, currentIndex);
     }
 }
 
-void Position::generatePawnCapturesAt(uint64_t b, MoveList& moves)
+void Position::generatePawnCaptures(MoveList& moves)
 {
-    uint64_t validRankMask;
-    uint64_t validCaptureLeftMask;
-    uint64_t validCaptureRightMask;
-    uint64_t captureLeftTarget {0x00ULL};
-    uint64_t captureRightTarget {0x00ULL};
-    uint64_t targets;
-    uint64_t currentSquare;
-    uint64_t opposingPieces;
-    int currentIndex;
-    Piece movePiece = getPieceAt(b);
-    bool inCheck {false};
-    bool piecePinned {(movePiece.square & currentPinnedPieces) != 0x00ULL};
-
-    if (!movePiece.isValid() ||
-        movePiece.rank != Rank::PAWN ||
-        movePiece.color != colorToMove)
-    {
-        return;
-    }
-
-    if (piecePinned)
-    {
-        if (isPiecePinned(movePiece.square, Direction::N) ||
-            isPiecePinned(movePiece.square, Direction::S) ||
-            isPiecePinned(movePiece.square, Direction::E) ||
-            isPiecePinned(movePiece.square, Direction::W))
-        {
-            return;
-        }
-    }
+    uint64_t validLeftMask {0x00ULL};
+    uint64_t validRightMask {0x00ULL};
+    uint64_t leftTargets {0x00ULL};
+    uint64_t rightTargets {0x00ULL};
+    int currentIndex {0x00ULL};
+    uint64_t currentSquare {0x00ULL};
+    int currentSourceIndex {0};
+    uint64_t currentSourceSquare {0x00ULL};
+    uint64_t targets {0x00ULL};
+    uint64_t sources;
 
     if (colorToMove == Color::WHITE)
     {
-            
-        validRankMask = 0x00FFFFFFFFFFFFFFULL;
-        validCaptureLeftMask = 0xFEFEFEFEFEFEFEFEULL;
-        validCaptureRightMask = 0x7F7F7F7F7F7F7F7FULL;
-
-        if (piecePinned)
-        {
-            if (!isPiecePinned(movePiece.square, Direction::SW) &&
-                !isPiecePinned(movePiece.square, Direction::NE))
-            {
-                captureLeftTarget = (
-                    (b & validRankMask) & validCaptureLeftMask) << 7;
-            }
-        }
-        else
-        {
-            captureLeftTarget = (
-                (b & validRankMask) & validCaptureLeftMask) << 7;
-        }
-
-        if (piecePinned)
-        {
-            if (!isPiecePinned(movePiece.square, Direction::SE) &&
-                !isPiecePinned(movePiece.square, Direction::NW))
-            {
-                captureRightTarget = (
-                    (b & validRankMask) & validCaptureRightMask) << 9;
-            }
-        }
-        else
-        {
-            captureRightTarget = (
-                (b & validRankMask) & validCaptureRightMask) << 9;
-        }
-
-        opposingPieces = blackPieces;
-
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(whiteKing);
-        }
+        validLeftMask = 0x00FEFEFEFEFEFE00ULL;
+        validRightMask = 0x007F7F7F7F7F7F00ULL;
+        leftTargets = ((whitePawns & validLeftMask) << 7) & (blackPieces | enPassantTarget);
+        rightTargets = ((whitePawns & validRightMask) << 9) & (blackPieces | enPassantTarget);
     }
     else
     {
-        validRankMask = 0xFFFFFFFFFFFFFF00ULL;
-        validCaptureLeftMask = 0x7F7F7F7F7F7F7F7FULL;
-        validCaptureRightMask = 0xFEFEFEFEFEFEFEFEULL;
-
-        if (piecePinned)
-        {
-            if (!isPiecePinned(movePiece.square, Direction::SW) &&
-                !isPiecePinned(movePiece.square, Direction::NE))
-            {
-                captureLeftTarget = (
-                    (b & validRankMask) & validCaptureLeftMask) >> 7;
-            }
-        }
-        else
-        {
-            captureLeftTarget = (
-                (b & validRankMask) & validCaptureLeftMask) >> 7;
-        }
-
-        if (piecePinned)
-        {
-            if (!isPiecePinned(movePiece.square, Direction::SE) &&
-                !isPiecePinned(movePiece.square, Direction::NW))
-            {
-                captureRightTarget = (
-                    (b & validRankMask) & validCaptureRightMask) >> 9;
-            }
-        }
-        else
-        {
-            captureRightTarget = (
-                (b & validRankMask) & validCaptureRightMask) >> 9;
-        }
-
-        opposingPieces = whitePieces;
-
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(blackKing);
-        }
+        validLeftMask = 0x007F7F7F7F7F7F00ULL;
+        validRightMask = 0x00FEFEFEFEFEFE00ULL;
+        leftTargets = ((blackPawns & validLeftMask) >> 7) & (whitePieces | enPassantTarget);
+        rightTargets = ((blackPawns & validRightMask) >> 9) & (whitePieces | enPassantTarget);
     }
 
-    targets = (captureLeftTarget | captureRightTarget) &
-        (opposingPieces | enPassantTarget);
+    targets = leftTargets | rightTargets;
 
     while (targets != 0x00ULL)
     {
         currentIndex = Utility::lsb(targets);
         currentSquare = 0x01ULL << currentIndex;
 
-        if (Utility::inMask(currentSquare, 0xFF000000000000FFULL))
+        sources = 0x00ULL;
+
+        if (colorToMove == Color::WHITE)
         {
-            Move m1(movePiece, currentSquare, Rank::QUEEN);
-            Move m2(movePiece, currentSquare, Rank::ROOK);
-            Move m3(movePiece, currentSquare, Rank::BISHOP);
-            Move m4(movePiece, currentSquare, Rank::KNIGHT);
-
-            if ((inCheck && isMoveLegal(m1)) || !inCheck)
+            if ((currentSquare & leftTargets) != 0x00ULL)
             {
-                moves.addMove(m1);
+                sources |= currentSquare >> 7;
             }
-
-            if ((inCheck && isMoveLegal(m2)) || !inCheck)
+            
+            if ((currentSquare & rightTargets) != 0x00ULL)
             {
-                moves.addMove(m2);
-            }
-
-            if ((inCheck && isMoveLegal(m3)) || !inCheck)
-            {
-                moves.addMove(m3);
-            }
-
-            if ((inCheck && isMoveLegal(m4)) || !inCheck)
-            {
-                moves.addMove(m4);
+                sources |= currentSquare >> 9;
             }
         }
         else
         {
-            Move m1(movePiece, currentSquare, Rank::NONE);
-
-            if ((inCheck && isMoveLegal(m1)) || !inCheck)
+            if ((currentSquare & leftTargets) != 0x00ULL)
             {
-                moves.addMove(m1);
+                sources |= currentSquare << 7;
+            }
+
+            if ((currentSquare & rightTargets) != 0x00ULL)
+            {
+                sources |= currentSquare << 9;
             }
         }
 
+        while (sources != 0x00ULL)
+        {
+            currentSourceIndex = Utility::lsb(sources);
+            currentSourceSquare = 0x01ULL << currentSourceIndex;
+
+            Piece currentPiece {getPieceAt(currentSourceSquare)};
+
+            if ((currentSquare == currentSourceSquare << 7 ||
+                currentSquare == currentSourceSquare >> 7) &&
+                isSlidingPiecePinned(currentPiece, Direction::NW))
+            {
+                Utility::flipBit(sources, currentSourceIndex);
+                continue;
+            }
+
+            if ((currentSquare == currentSourceSquare << 9 ||
+                currentSquare == currentSourceSquare >> 9) &&
+                isSlidingPiecePinned(currentPiece, Direction::NE))
+            {
+                Utility::flipBit(sources, currentSourceIndex);
+                continue;
+            }
+
+            if ((currentSquare & 0xFF000000000000FFULL) != 0x00ULL)
+            {
+                Move m1 {currentPiece, currentSquare, Rank::QUEEN};
+                Move m2 {currentPiece, currentSquare, Rank::ROOK};
+                Move m3 {currentPiece, currentSquare, Rank::BISHOP};
+                Move m4 {currentPiece, currentSquare, Rank::KNIGHT};
+
+                if ((inCheck && isMoveLegal(m1)) || !inCheck)
+                {
+                    moves.addMove(m1);
+                }
+
+                if ((inCheck && isMoveLegal(m2)) || !inCheck)
+                {
+                    moves.addMove(m2);
+                }
+
+                if ((inCheck && isMoveLegal(m3)) || !inCheck)
+                {
+                    moves.addMove(m3);
+                }
+
+                if ((inCheck && isMoveLegal(m4)) || !inCheck)
+                {
+                    moves.addMove(m4);
+                }
+            }
+            else
+            {
+                Move m1(currentPiece, currentSquare, Rank::NONE);
+
+                if ((inCheck && isMoveLegal(m1)) || !inCheck)
+                {
+                    moves.addMove(m1);
+                }
+            }
+            
+            Utility::flipBit(sources, currentSourceIndex);
+        }
+        
         Utility::flipBit(targets, currentIndex);
     }
 }
 
-void Position::generatePawnDblAdvancesAt(uint64_t b, MoveList& moves)
-{
-    uint64_t legalMask;
-    uint64_t target;
-    uint64_t firstSquare;
-    Piece movingPiece = getPieceAt(b);
-    bool inCheck {false};
-
-    if (!movingPiece.isValid() || movingPiece.rank != Rank::PAWN ||
-        movingPiece.color != colorToMove)
-    {
-        return;
-    }
-
-    if ((movingPiece.square & currentPinnedPieces) != 0x00ULL)
-    {
-        if (isPiecePinned(movingPiece.square, Direction::E) ||
-            isPiecePinned(movingPiece.square, Direction::W) ||
-            isPiecePinned(movingPiece.square, Direction::SE) ||
-            isPiecePinned(movingPiece.square, Direction::NW) ||
-            isPiecePinned(movingPiece.square, Direction::SW) ||
-            isPiecePinned(movingPiece.square, Direction::NE))
-        {
-            return;
-        }
-    }
-
-    if (colorToMove == Color::WHITE)
-    {
-        legalMask = 0x000000000000FF00ULL;
-        target = b << 16;
-        firstSquare = b << 8;
-
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(whiteKing);
-        }
-    }
-    else
-    {
-        legalMask = 0x00FF000000000000ULL;
-        target = b >> 16;
-        firstSquare = b >> 8;
-
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(blackKing);
-        }
-    }
-
-    if (Utility::inMask(b, legalMask) &&
-        !Utility::inMask(firstSquare, allPieces) &&
-        !Utility::inMask(target, allPieces))
-    {
-        Move m(movingPiece, target, Rank::NONE);
-
-        if ((inCheck && isMoveLegal(m)) || !inCheck)
-        moves.addMove(m);
-    }
-}
-
-void Position::generateSlidingMovesAt(uint64_t b, Direction d,
+void Position::generateSlidingMovesAt(Piece p, Direction d,
     MoveList& moves)
 {
-    Piece piece = getPieceAt(b);
-
-    if (!piece.isValid() ||
-        piece.color != colorToMove)
-    {
-        return;
-    }
-
-
-    if ((piece.square & currentPinnedPieces) != 0x00ULL)
-    {
-        if (isSlidingPiecePinned(piece, d))
-        {
-            return;
-        }
-    }
-
-    return computeSlidingMoves(Utility::lsb(b), piece,
+    return computeSlidingMoves(Utility::lsb(p.square), p,
         getHighBitBlockerByDirection(d),
         LookupData::getRayAttacksByDirection(d), moves);
 }
@@ -1352,8 +1407,7 @@ int Position::getBlockerIndex(uint64_t mask, bool highBitBlock)
     }
 }
 
-void Position::getMovesFromMask(uint64_t mask, Piece p,
-    bool inCheck, MoveList& moves)
+void Position::getMovesFromMask(uint64_t mask, Piece p, MoveList& moves)
 {
     int currentIndex;
     uint64_t currentMove;
@@ -1439,7 +1493,7 @@ uint64_t Position::getOwnPieces(Color c) const
 
 Piece Position::getPieceAt(uint64_t s) const
 {
-    if (!isSquareEmpty(s))
+    if ((s & allPieces) != 0x00ULL)
     {
         if ((whitePawns & s) != 0x00)
         {
@@ -1521,39 +1575,6 @@ uint64_t Position::getPinnedPieceByDirection(int kingIndex, uint64_t ownPieces,
     return 0x00ULL;
 }
 
-uint64_t Position::getPinnedPieces(Color c) const
-{
-    uint64_t pinnedPieces {0x00ULL};
-    uint64_t ownPieces {c == Color::WHITE ? whitePieces : blackPieces};
-    int kingIndex {Utility::lsb(c == Color::WHITE ? whiteKing : blackKing)};
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::N);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::NE);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::NW);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::W);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::E);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::SW);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::SE);
-
-    pinnedPieces |= getPinnedPieceByDirection(kingIndex, ownPieces,
-        Direction::S);
-
-    return pinnedPieces;
-}
-
 int Position::getPotentialPinningPiece(int locationIndex, Direction dir) const
 {
     int index {-1};
@@ -1606,111 +1627,80 @@ int Position::getPotentialPinningPiece(int locationIndex, Direction dir) const
     return index;
 }
 
-bool Position::isPiecePinned(uint64_t location,
-    Direction direction) const
-{
-    int pinningPiece {getPotentialPinningPiece(Utility::lsb(location),
-        direction)};
-    int pinnedKingIndex;
-
-    if (colorToMove == Color::WHITE)
-    {
-        pinnedKingIndex = Utility::msb(whiteKing);
-    }
-    else
-    {
-        pinnedKingIndex = Utility::lsb(blackKing);
-    }
-
-    if (pinningPiece != -1)
-    {
-        return (LookupData::betweenLookup[pinnedKingIndex][pinningPiece] &
-            allPieces) == location;
-    }
-    else
-    {
-        return false;
-    }
-}
-
 bool Position::isSlidingPiecePinned(const Piece p, Direction d) const
 {
-    bool result;
-
     if (d == Direction::N)
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::NE) ||
-            isPiecePinned(p.square, Direction::SW) ||
-            isPiecePinned(p.square, Direction::SE); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else if (d == Direction::S)
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::NE) ||
-            isPiecePinned(p.square, Direction::SW) ||
-            isPiecePinned(p.square, Direction::SE); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else if (d == Direction::W)
     {
-        result = isPiecePinned(p.square, Direction::S) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::NE) ||
-            isPiecePinned(p.square, Direction::SW) ||
-            isPiecePinned(p.square, Direction::SE); 
+        return (p.square & (currentPinnedPiecesS |
+            currentPinnedPiecesN |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else if (d == Direction::E)
     {
-        result = isPiecePinned(p.square, Direction::S) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::NE) ||
-            isPiecePinned(p.square, Direction::SW) ||
-            isPiecePinned(p.square, Direction::SE); 
+        return (p.square & (currentPinnedPiecesN |
+            currentPinnedPiecesS |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else if (d == Direction::NW)
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::NE) ||
-            isPiecePinned(p.square, Direction::SW) ||
-            isPiecePinned(p.square, Direction::S); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesN |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesS)) != 0x00ULL;
     }
     else if (d == Direction::NE)
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::SE) ||
-            isPiecePinned(p.square, Direction::S); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesN |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesS |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else if (d == Direction::SW)
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::S) ||
-            isPiecePinned(p.square, Direction::SE); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesN |
+            currentPinnedPiecesNW |
+            currentPinnedPiecesS |
+            currentPinnedPiecesSE)) != 0x00ULL;
     }
     else
     {
-        result = isPiecePinned(p.square, Direction::E) ||
-            isPiecePinned(p.square, Direction::W) ||
-            isPiecePinned(p.square, Direction::NW) ||
-            isPiecePinned(p.square, Direction::N) ||
-            isPiecePinned(p.square, Direction::S) ||
-            isPiecePinned(p.square, Direction::SW); 
+        return (p.square & (currentPinnedPiecesE |
+            currentPinnedPiecesW |
+            currentPinnedPiecesNE |
+            currentPinnedPiecesN |
+            currentPinnedPiecesSW |
+            currentPinnedPiecesS)) != 0x00ULL;
     }
-
-    return result;
 }
 
 bool Position::isCastleLegal(uint64_t s) const
@@ -1721,8 +1711,8 @@ bool Position::isCastleLegal(uint64_t s) const
     {
         result = colorToMove == Color::WHITE &&
             castlingStatus.getWhiteKingSide() &&
-            isSquareEmpty(0x20ULL) &&
-            isSquareEmpty(0x40ULL) &&
+            ((0x20ULL & allPieces) == 0x00) &&
+            ((0x40ULL & allPieces) == 0x00) &&
             !isSquareAttacked(0x10ULL) &&
             !isSquareAttacked(0x20ULL) &&
             !isSquareAttacked(0x40ULL); 
@@ -1731,9 +1721,9 @@ bool Position::isCastleLegal(uint64_t s) const
     {
         result = colorToMove == Color::WHITE &&
             castlingStatus.getWhiteQueenSide() &&
-            isSquareEmpty(0x08ULL) &&
-            isSquareEmpty(0x04ULL) &&
-            isSquareEmpty(0x02ULL) &&
+            ((0x08ULL & allPieces) == 0x00) &&
+            ((0x04ULL & allPieces) == 0x00) &&
+            ((0x02ULL & allPieces) == 0x00) &&
             !isSquareAttacked(0x10ULL) &&
             !isSquareAttacked(0x08ULL) &&
             !isSquareAttacked(0x04ULL);
@@ -1742,8 +1732,8 @@ bool Position::isCastleLegal(uint64_t s) const
     {
         result = colorToMove == Color::BLACK &&
             castlingStatus.getBlackKingSide() &&
-            isSquareEmpty(0x2000000000000000ULL) &&
-            isSquareEmpty(0x4000000000000000ULL) &&
+            ((0x2000000000000000ULL & allPieces) == 0x00) &&
+            ((0x4000000000000000ULL & allPieces) == 0x00) &&
             !isSquareAttacked(0x1000000000000000ULL) &&
             !isSquareAttacked(0x2000000000000000ULL) &&
             !isSquareAttacked(0x4000000000000000ULL);
@@ -1752,9 +1742,9 @@ bool Position::isCastleLegal(uint64_t s) const
     {
         result = colorToMove == Color::BLACK &&
             castlingStatus.getBlackQueenSide() &&
-            isSquareEmpty(0x0800000000000000ULL) &&
-            isSquareEmpty(0x0400000000000000ULL) &&
-            isSquareEmpty(0x0200000000000000ULL) &&
+            ((0x0800000000000000ULL & allPieces) == 0x00) &&
+            ((0x0400000000000000ULL & allPieces) == 0x00) &&
+            ((0x0200000000000000ULL & allPieces) == 0x00) &&
             !isSquareAttacked(0x1000000000000000ULL) &&
             !isSquareAttacked(0x0800000000000000ULL) &&
             !isSquareAttacked(0x0400000000000000ULL);
@@ -1763,32 +1753,10 @@ bool Position::isCastleLegal(uint64_t s) const
     return result;
 }
 
-bool Position::isInCheck(Color c) const
-{
-    bool inCheck {false};
-
-    if (c == Color::WHITE)
-    {
-        if (whiteKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(whiteKing);
-        }
-    }
-    else
-    {
-        if (blackKing != 0x00ULL)
-        {
-            inCheck = isSquareAttacked(blackKing);
-        }
-    }
-
-    return inCheck;
-}
-
 bool Position::isMoveLegal(const Move& m)
 {
     Piece p = m.movingPiece;
-    uint64_t kingLocation {findPiece(p.color, Rank::KING)};
+    uint64_t kingLocation {colorToMove == Color::WHITE ? whiteKing : blackKing};
 
     bool result = false;
     bool isCastle = m.isCastle();
@@ -1997,11 +1965,6 @@ bool Position::isSquareAttacked(uint64_t square) const
     }
 
     return result;
-}
-
-bool Position::isSquareEmpty(uint64_t s) const
-{
-    return ((allPieces & s) == 0x00ULL);
 }
 
 void Position::removePieceAt(uint64_t loc)
