@@ -25,7 +25,7 @@
 
 #pragma once
 
-#include "../include/gtest/gtest.h"
+#include "gtest/gtest.h"
 
 class PieceTest : public ::testing::Test
 {

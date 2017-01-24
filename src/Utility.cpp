@@ -63,9 +63,6 @@ bool Utility::inMask(uint64_t value, uint64_t  mask)
 
 int Utility::lsb(uint64_t value)
 {
-#ifdef USE_FFS_BUILTIN
-    return __builtin_ffsll(value) - 1
-#else
     /*
     * begin wiki code
     */
@@ -81,19 +78,10 @@ int Utility::lsb(uint64_t value)
     /*
     * end wiki code
     */
-#endif
 }
 
 int Utility::msb(uint64_t value)
 {
-#ifdef USE_BUILTIN_CLZ
-    if (value == 0x00)
-    {
-        return -1;
-    }
-
-    return 63 - __builtin_clzll(value);
-#else
     /*
     * begin wiki code
     */
@@ -116,14 +104,10 @@ int Utility::msb(uint64_t value)
     /*
     * end wiki code
     */
-#endif
 }
 
 int Utility::popcount(uint64_t value)
 {
-#ifdef USE_BUILTIN_POPCOUNT
-    return __builtin_popcount(value)
-#else
     /*
     * begin wiki code
     */
@@ -140,7 +124,6 @@ int Utility::popcount(uint64_t value)
     /*
     * end wiki code
     */
-#endif
 }
 
 std::string Utility::toAlgebraicCoordinate(uint64_t value)
@@ -176,12 +159,12 @@ std::pair<int, int> Utility::toCoordinates(uint64_t value)
 {
     std::string msg {"Bitboard::toCoordinates: Bitboard must only have one bit set to generate a coordinate"};
     uint64_t mask {0x00000000000000FFULL};
-    int rank {0};
-    int file {0};
+    int rank {1};
+    int file {1};
 
     if (value == 0x00ULL)
     {
-        return std::pair<int, int> {0, 0};
+        return std::pair<int, int> {-1, -1};
     }
 
     while ((value & mask) == 0x00ULL)

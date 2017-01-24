@@ -24,31 +24,18 @@
 
 #pragma once
 
-#include "Position.hpp"
-#include "Message.hpp"
+#include "Engine.hpp"
 #include "MessageQueue.hpp"
-#include <cstdint>
+#include "gtest/gtest.h"
 
-namespace TuxedoCat
+using namespace TuxedoCat;
+
+class EngineTest : public ::testing::Test
 {
-    class Engine
-    {
-    public:
-        Engine(Position p, MessageQueue& mq);
-
-        static void start(MessageQueue& mq);
-
-        uint64_t perft(int depth);
-
-    private:
-        void run();
-        std::string divide(int depth);
-        void setboard(std::string fen);
-        int test() const;
-        std::string print() const;
-        void handleUserMoveMessage(const Message& msg);
-
-        Position position;
-        MessageQueue& messages;
-    };
-}
+public:
+    EngineTest();
+protected:
+    MessageQueue mq;
+    Engine startpos;
+    Engine kiwipete;
+};
