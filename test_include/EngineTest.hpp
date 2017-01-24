@@ -38,4 +38,5 @@ protected:
     MessageQueue mq;
     Engine startpos;
     Engine kiwipete;
+    Engine wikiPosition3;
 };

@@ -1374,7 +1374,11 @@ void Position::generatePawnCaptures(MoveList& moves)
             {
                 Move m1(currentPiece, currentSquare, Rank::NONE);
 
-                if ((inCheck && isMoveLegal(m1)) || !inCheck)
+                if ((inCheck && isMoveLegal(m1)) ||
+                    (currentSquare == enPassantTarget &&
+                        isMoveLegal(m1) &&
+                        !inCheck) ||
+                    (!inCheck && currentSquare != enPassantTarget))
                 {
                     moves.addMove(m1);
                 }
@@ -1771,7 +1775,9 @@ bool Position::isMoveLegal(const Move& m)
         return false;
     }
 
-    if (!isSquareAttacked(kingLocation))
+    if (!isSquareAttacked(kingLocation) &&
+        (m.targetSquare != enPassantTarget ||
+        p.rank != Rank::PAWN))
     {
         if (p.rank != Rank::KING)
         {

@@ -30,7 +30,8 @@ using namespace TuxedoCat;
 
 EngineTest::EngineTest()
     : startpos({"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}, mq),
-        kiwipete({"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"}, mq)
+        kiwipete({"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"}, mq),
+        wikiPosition3({"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"}, mq)
 {
 }
 
@@ -109,4 +110,53 @@ TEST_F(EngineTest, perft_kiwipete_perft5)
     uint64_t result {kiwipete.perft(5)};
 
     EXPECT_EQ(193690690ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft1)
+{
+    uint64_t result {wikiPosition3.perft(1)};
+
+    EXPECT_EQ(14ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft2)
+{
+    uint64_t result {wikiPosition3.perft(2)};
+
+    EXPECT_EQ(191ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft3)
+{
+    uint64_t result {wikiPosition3.perft(3)};
+
+    EXPECT_EQ(2812ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft4)
+{
+    uint64_t result {wikiPosition3.perft(4)};
+
+    EXPECT_EQ(43238ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft5)
+{
+    uint64_t result {wikiPosition3.perft(5)};
+
+    EXPECT_EQ(674624ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft6)
+{
+    uint64_t result {wikiPosition3.perft(6)};
+
+    EXPECT_EQ(11030083ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition3_perft7)
+{
+    uint64_t result {wikiPosition3.perft(7)};
+
+    EXPECT_EQ(178633661ULL, result);
 }
