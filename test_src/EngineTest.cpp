@@ -31,7 +31,11 @@ using namespace TuxedoCat;
 EngineTest::EngineTest()
     : startpos({"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"}, mq),
         kiwipete({"r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"}, mq),
-        wikiPosition3({"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"}, mq)
+        wikiPosition3({"8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1"}, mq),
+        wikiPosition4({"r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"}, mq),
+        wikiPosition4_mirrored({"r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1"},
+            mq),
+        wikiPosition5({"rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"}, mq)
 {
 }
 
@@ -159,4 +163,123 @@ TEST_F(EngineTest, perft_wikiPosition3_perft7)
     uint64_t result {wikiPosition3.perft(7)};
 
     EXPECT_EQ(178633661ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft1)
+{
+    uint64_t result {wikiPosition4.perft(1)};
+
+    EXPECT_EQ(6ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft2)
+{
+    uint64_t result {wikiPosition4.perft(2)};
+
+    EXPECT_EQ(264ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft3)
+{
+    uint64_t result {wikiPosition4.perft(3)};
+
+    EXPECT_EQ(9467ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft4)
+{
+    uint64_t result {wikiPosition4.perft(4)};
+
+    EXPECT_EQ(422333ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft5)
+{
+    uint64_t result {wikiPosition4.perft(5)};
+
+    EXPECT_EQ(15833292ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_perft6)
+{
+    uint64_t result {wikiPosition4.perft(6)};
+
+    EXPECT_EQ(706045033ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft1)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(1)};
+
+    EXPECT_EQ(6ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft2)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(2)};
+
+    EXPECT_EQ(264ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft3)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(3)};
+
+    EXPECT_EQ(9467ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft4)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(4)};
+
+    EXPECT_EQ(422333ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft5)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(5)};
+
+    EXPECT_EQ(15833292ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition4_mirrored_perft6)
+{
+    uint64_t result {wikiPosition4_mirrored.perft(6)};
+
+    EXPECT_EQ(706045033ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition5_perft1)
+{
+    uint64_t result {wikiPosition5.perft(1)};
+
+    EXPECT_EQ(44ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition5_perft2)
+{
+    uint64_t result {wikiPosition5.perft(2)};
+
+    EXPECT_EQ(1486ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition5_perft3)
+{
+    uint64_t result {wikiPosition5.perft(3)};
+
+    EXPECT_EQ(62379ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition5_perft4)
+{
+    uint64_t result {wikiPosition5.perft(4)};
+
+    EXPECT_EQ(2103487ULL, result);
+}
+
+TEST_F(EngineTest, perft_wikiPosition5_perft5)
+{
+    uint64_t result {wikiPosition5.perft(5)};
+
+    EXPECT_EQ(89941194ULL, result);
 }

@@ -24,22 +24,16 @@
 
 #pragma once
 
-#include "Engine.hpp"
-#include "MessageQueue.hpp"
+#include "SANEngine.hpp"
 #include "gtest/gtest.h"
 
 using namespace TuxedoCat;
 
-class EngineTest : public ::testing::Test
+class SANEngineTest : public ::testing::Test
 {
 public:
-    EngineTest();
+    SANEngineTest();
 protected:
-    MessageQueue mq;
-    Engine startpos;
-    Engine kiwipete;
-    Engine wikiPosition3;
-    Engine wikiPosition4;
-    Engine wikiPosition4_mirrored;
-    Engine wikiPosition5;
+    Position kiwipete;
+    SANEngine engine;
 };

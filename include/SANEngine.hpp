@@ -24,22 +24,14 @@
 
 #pragma once
 
-#include "Engine.hpp"
-#include "MessageQueue.hpp"
-#include "gtest/gtest.h"
+#include "Position.hpp"
+#include <string>
 
-using namespace TuxedoCat;
-
-class EngineTest : public ::testing::Test
+namespace TuxedoCat
 {
-public:
-    EngineTest();
-protected:
-    MessageQueue mq;
-    Engine startpos;
-    Engine kiwipete;
-    Engine wikiPosition3;
-    Engine wikiPosition4;
-    Engine wikiPosition4_mirrored;
-    Engine wikiPosition5;
-};
+    class SANEngine
+    {
+    public:
+        std::string calculateNotation(Position& pos, const Move& move);
+    };
+}

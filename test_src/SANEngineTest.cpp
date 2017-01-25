@@ -22,24 +22,27 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
-
-#include "Engine.hpp"
-#include "MessageQueue.hpp"
-#include "gtest/gtest.h"
+#include "SANEngineTest.hpp"
 
 using namespace TuxedoCat;
 
-class EngineTest : public ::testing::Test
+SANEngineTest::SANEngineTest()
+    : kiwipete("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1")
 {
-public:
-    EngineTest();
-protected:
-    MessageQueue mq;
-    Engine startpos;
-    Engine kiwipete;
-    Engine wikiPosition3;
-    Engine wikiPosition4;
-    Engine wikiPosition4_mirrored;
-    Engine wikiPosition5;
-};
+}
+
+TEST_F(SANEngineTest, calculateNotation_shouldCalculatePawnAdvance)
+{
+    Move m1 {{Color::WHITE, Rank::PAWN, 0x0200ULL}, 0x020000ULL, Rank::NONE};
+    Move m2 {{Color::BLACK, Rank::PAWN, 0x0004000000000000ULL},
+        0x0000000400000000ULL, Rank::NONE};
+
+    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+
+    kiwipete.makeMove(m1);
+
+    std::string result2 {engine.calculateNotation(kiwipete, m2)};
+
+    EXPECT_EQ("b3", result1);
+    EXPECT_EQ("c5", result2);
+}

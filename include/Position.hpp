@@ -49,6 +49,9 @@ namespace TuxedoCat
         void makeMove(const Move& move);
         std::string toString() const;
         void unmakeMove();
+        bool isSquareOccupied(int squareIndex) const;
+        bool isInCheck() const;
+        int getEnPassantIndex() const;
     private:
         void addPieceAt(uint64_t location, Color c, Rank r);
         void calculateInCheck();

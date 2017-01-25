@@ -118,7 +118,7 @@ void Position::generateMoves(Rank rank, MoveList& moves, bool calculateNotation)
         pieces = blackPieces;
     }
 
-    calculateInCheck();
+    inCheck = isInCheck();
     calculatePinnedPieces();
 
     if (rank == Rank::NONE || rank == Rank::KING)
@@ -795,22 +795,24 @@ void Position::addPieceAt(uint64_t loc, Color c, Rank r)
     updatePieces();
 }
 
-void Position::calculateInCheck()
+bool Position::isInCheck() const
 {
     if (colorToMove == Color::WHITE)
     {
         if (whiteKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(whiteKing);
+            return isSquareAttacked(whiteKing);
         }
     }
     else
     {
         if (blackKing != 0x00ULL)
         {
-            inCheck = isSquareAttacked(blackKing);
+            return isSquareAttacked(blackKing);
         }
     }
+
+    return false;
 }
 
 void Position::calculatePinnedPieces()
@@ -1411,6 +1413,11 @@ int Position::getBlockerIndex(uint64_t mask, bool highBitBlock)
     }
 }
 
+int Position::getEnPassantIndex() const
+{
+    return Utility::lsb(enPassantTarget);
+}
+
 void Position::getMovesFromMask(uint64_t mask, Piece p, MoveList& moves)
 {
     int currentIndex;
@@ -1971,6 +1978,18 @@ bool Position::isSquareAttacked(uint64_t square) const
     }
 
     return result;
+}
+
+bool Position::isSquareOccupied(int squareIndex) const
+{
+    if (squareIndex >= 0 && squareIndex < 64)
+    {
+        return (allPieces & (0x01ULL << squareIndex)) != 0x00ULL;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 void Position::removePieceAt(uint64_t loc)
