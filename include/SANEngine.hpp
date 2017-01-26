@@ -32,6 +32,6 @@ namespace TuxedoCat
     class SANEngine
     {
     public:
-        std::string calculateNotation(Position& pos, const Move& move);
+        static std::string calculateNotation(Position& pos, const Move& move);
     };
 }

@@ -103,7 +103,7 @@ Position::Position(const Position& p)
 
 // begin public methods
 
-void Position::generateMoves(Rank rank, MoveList& moves, bool calculateNotation)
+void Position::generateMoves(Rank rank, MoveList& moves)
 {
     uint64_t pieces;
     uint64_t currentSquare;
@@ -329,11 +329,6 @@ void Position::generateMoves(Rank rank, MoveList& moves, bool calculateNotation)
         }
 
         Utility::flipBit(pieces, currentIndex);
-    }
-
-    if (calculateNotation)
-    {
-        computeMoveNotation(moves);
     }
 }
 
@@ -863,150 +858,6 @@ void Position::calculatePinnedPieces()
         currentPinnedPiecesSW |
         currentPinnedPiecesNE |
         currentPinnedPiecesNW;
-}
-
-void Position::computeMoveNotation(MoveList& moves)
-{
-    std::stringstream san;
-
-    for (int count = 0; count < moves.size(); count++)
-    {
-        san.str("");
-        Move& move = moves[count];
-        Rank movingRank = move.movingPiece.rank;
-
-        if (movingRank != Rank::PAWN)
-        {
-            std::string rank {rankToString(movingRank)};
-            rank[0] = std::toupper(rank[0]);
-
-            if (!move.isCastle())
-            {
-                san << rank;
-
-                bool ambiguity = false;
-
-                if (moves.contains(
-                    move,
-                    MoveSearchCriteria::TARGET_SQUARE |
-                    MoveSearchCriteria::MOVING_PIECE_COLOR |
-                    MoveSearchCriteria::MOVING_PIECE_RANK,
-                    false) > 1)
-                {
-                    ambiguity = true;
-                }
-
-                if (ambiguity)
-                {
-                    bool ranksDiffer = true;
-                    bool filesDiffer = true;
-
-                    if (moves.contains(
-                        move,
-                        MoveSearchCriteria::TARGET_SQUARE |
-                        MoveSearchCriteria::MOVING_PIECE_COLOR |
-                        MoveSearchCriteria::MOVING_PIECE_RANK |
-                        MoveSearchCriteria::MOVING_PIECE_SQUARE_RANK,
-                        false) > 1)
-                    {
-                        ranksDiffer = false;
-                    }
-
-                    if (moves.contains(
-                        move,
-                        MoveSearchCriteria::TARGET_SQUARE |
-                        MoveSearchCriteria::MOVING_PIECE_COLOR |
-                        MoveSearchCriteria::MOVING_PIECE_RANK |
-                        MoveSearchCriteria::MOVING_PIECE_SQUARE_FILE,
-                        false) > 1)
-                    {
-                        filesDiffer = false;
-                    }
-
-                    if (filesDiffer)
-                    {
-                        san << Utility::toAlgebraicCoordinate(
-                            move.movingPiece.square)[0];
-                    }
-                    else if (ranksDiffer)
-                    {
-                        san << Utility::toAlgebraicCoordinate(
-                            move.movingPiece.square)[1];
-                    }
-                    else
-                    {
-                        san << Utility::toAlgebraicCoordinate(
-                            move.movingPiece.square)[0];
-                        san << Utility::toAlgebraicCoordinate(
-                            move.movingPiece.square)[1];
-                    }
-                }
-
-                if ((move.targetSquare & allPieces) != 0x00ULL)
-                {
-                    san << "x";
-                }
-
-                san << Utility::toAlgebraicCoordinate(
-                    move.targetSquare);
-            }
-            else
-            {
-                if (Utility::inMask(move.targetSquare,
-                    0x4000000000000040ULL))
-                {
-                    san << "0-0";
-                }
-                else
-                {
-                    san << "0-0-0";
-                }
-            }
-        }
-        else
-        {
-            bool ep = false;
-
-            if ((move.targetSquare & allPieces) != 0x00ULL)
-            {
-                san << Utility::toAlgebraicCoordinate(
-                    move.movingPiece.square)[0];
-                san << "x";
-
-                if (move.targetSquare == enPassantTarget)
-                {
-                    ep = true;
-                }
-            }
-
-            san << Utility::toAlgebraicCoordinate(
-                move.targetSquare);
-
-            if (ep)
-            {
-                san << "e.p.";
-            }
-
-            if (move.promotedRank != Rank::NONE)
-            {
-                san << "=";
-
-                std::string pr {rankToString(move.promotedRank)};
-                san <<  std::toupper(pr[0]);
-            }
-        }
-
-        makeMove(move);
-
-        if (inCheck)
-        {
-            san << "+";
-        }
-
-        unmakeMove();
-
-        move.notation = san.str();
-    }
 }
 
 void Position::computeSlidingMoves(int index, Piece p, bool highBitBlock,

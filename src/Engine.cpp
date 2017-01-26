@@ -26,6 +26,7 @@
 #include "Move.hpp"
 #include "MoveList.hpp"
 #include "MoveSearchCriteria.hpp"
+#include "SANEngine.hpp"
 #include <sstream>
 #include <iostream>
 #include <chrono>
@@ -174,7 +175,7 @@ std::string Engine::divide(int depth)
     int moveCount = 0;
     MoveList availableMoves;
 
-    position.generateMoves(Rank::NONE, availableMoves, true);
+    position.generateMoves(Rank::NONE, availableMoves);
     std::stringstream output;
 
     if (depth <= 1)
@@ -202,8 +203,9 @@ std::string Engine::divide(int depth)
 
             totalCount += localCount;
 
-            output << availableMoves[index].notation << ": "
-                << localCount << std::endl;
+            output <<
+                SANEngine::calculateNotation(position, availableMoves[index])
+                << ": " << localCount << std::endl;
         }
     }
 

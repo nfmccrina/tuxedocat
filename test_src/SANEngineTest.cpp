@@ -37,11 +37,11 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculatePawnAdvance)
     Move m2 {{Color::BLACK, Rank::PAWN, 0x0004000000000000ULL},
         0x0000000400000000ULL, Rank::NONE};
 
-    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m1)};
 
     kiwipete.makeMove(m1);
 
-    std::string result2 {engine.calculateNotation(kiwipete, m2)};
+    std::string result2 {SANEngine::calculateNotation(kiwipete, m2)};
 
     EXPECT_EQ("b3", result1);
     EXPECT_EQ("c5", result2);
@@ -53,11 +53,11 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculatePawnCapture)
     Move m2 {{Color::BLACK, Rank::PAWN, 0x100000000000ULL},
         0x0800000000ULL, Rank::NONE};
 
-    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m1)};
 
     kiwipete.makeMove(m1);
 
-    std::string result2 {engine.calculateNotation(kiwipete, m2)};
+    std::string result2 {SANEngine::calculateNotation(kiwipete, m2)};
 
     EXPECT_EQ("gxh3", result1);
     EXPECT_EQ("exd5", result2);
@@ -69,11 +69,11 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculateCastle)
     Move m2 {{Color::BLACK, Rank::KING, 0x1000000000000000ULL},
         0x0400000000000000ULL, Rank::NONE};
 
-    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m1)};
 
     kiwipete.makeMove(m1);
 
-    std::string result2 {engine.calculateNotation(kiwipete, m2)};
+    std::string result2 {SANEngine::calculateNotation(kiwipete, m2)};
 
     EXPECT_EQ("0-0", result1);
     EXPECT_EQ("0-0-0", result2);
@@ -82,9 +82,10 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculateCastle)
 TEST_F(SANEngineTest, calculateNotation_shouldCalculateKnightCapture)
 {
     Move m1 {{Color::BLACK, Rank::KNIGHT, 0x200000000000ULL},
-        0x8000000000ULL, Rank::NONE};
+        0x0800000000ULL, Rank::NONE};
 
-    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+    kiwipete.makeMove({{}, 0x00ULL, Rank::NONE});
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m1)};
 
     EXPECT_EQ("Nfxd5", result1);
 }
@@ -95,8 +96,9 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculateRookMove)
     Move m2 {{Color::WHITE, Rank::ROOK, 0x01ULL}, 0x04ULL, Rank::NONE};
 
     kiwipete.makeMove(m1);
+    kiwipete.makeMove({{}, 0x00ULL, Rank::NONE});
 
-    std::string result1 {engine.calculateNotation(kiwipete, m2)};
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m2)};
 
     EXPECT_EQ("Rac1", result1);
 }
@@ -108,15 +110,15 @@ TEST_F(SANEngineTest, calculateNotation_shouldCalculatePawnPromotion)
         0x20000000ULL, Rank::NONE};
     Move m3 {{Color::BLACK, Rank::PAWN, 0x4000ULL}, 0x40ULL, Rank::ROOK};
 
-    std::string result1 {engine.calculateNotation(kiwipete, m1)};
+    std::string result1 {SANEngine::calculateNotation(kiwipete, m1)};
 
     kiwipete.makeMove(m1);
 
-    std::string result2 {engine.calculateNotation(kiwipete, m2)};
+    std::string result2 {SANEngine::calculateNotation(kiwipete, m2)};
 
     kiwipete.makeMove(m2);
 
-    std::string result3 {engine.calculateNotation(kiwipete, m3)};
+    std::string result3 {SANEngine::calculateNotation(kiwipete, m3)};
 
     EXPECT_EQ("hxg2", result1);
     EXPECT_EQ("Qf4", result2);

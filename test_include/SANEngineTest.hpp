@@ -35,5 +35,4 @@ public:
     SANEngineTest();
 protected:
     Position kiwipete;
-    SANEngine engine;
 };

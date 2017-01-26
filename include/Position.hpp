@@ -43,8 +43,7 @@ namespace TuxedoCat
         Position(std::string fen);
         Position(const Position& p);
 
-        void generateMoves(Rank rank, MoveList& moves,
-            bool calculateNotation = false);
+        void generateMoves(Rank rank, MoveList& moves);
         Move getMoveFromString(std::string s) const;
         void makeMove(const Move& move);
         std::string toString() const;
@@ -56,7 +55,6 @@ namespace TuxedoCat
         void addPieceAt(uint64_t location, Color c, Rank r);
         void calculateInCheck();
         void calculatePinnedPieces();
-        void computeMoveNotation(MoveList& moves);
         void computeSlidingMoves(int index, Piece p, bool highBitBlock,
             const std::array<uint64_t, 64>& rayMask, MoveList& moves);
         void generateCastles(MoveList& moves);

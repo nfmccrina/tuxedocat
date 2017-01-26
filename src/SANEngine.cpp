@@ -149,7 +149,7 @@ std::string SANEngine::calculateNotation(Position& pos, const Move& move)
             san << "=";
 
             std::string pr {rankToString(move.promotedRank)};
-            san <<  std::toupper(pr[0]);
+            san << static_cast<char>(std::toupper(pr[0]));
         }
     }
 
