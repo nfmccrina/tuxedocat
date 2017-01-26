@@ -27,7 +27,6 @@
 
 #include "SetBoardMessage.hpp"
 #include "QuitMessage.hpp"
-#include "TestMessage.hpp"
 #include "DivideMessage.hpp"
 #include "PrintMessage.hpp"
 #include "PerftMessage.hpp"
