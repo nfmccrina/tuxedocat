@@ -25,10 +25,12 @@
 
 #include "TestMessage.hpp"
 #include "MessageType.hpp"
+#include <string>
 
 using namespace TuxedoCat;
 
-TestMessage::TestMessage()
+TestMessage::TestMessage(std::string filter)
     : Message(MessageType::TEST)
 {
+    arguments.push_back(MessageArgument("filter", filter));
 }

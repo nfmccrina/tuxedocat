@@ -26,14 +26,7 @@
 
 namespace TuxedoCat
 {
-    enum class MessageType
+    class MoveGenerator
     {
-        SETBOARD,
-        QUIT,
-        DIVIDE,
-        PRINT,
-        PERFT,
-        USERMOVE,
-        UNDO
     };
 }

@@ -26,12 +26,13 @@
 #pragma once
 
 #include "Message.hpp"
+#include <string>
 
 namespace TuxedoCat
 {
     class TestMessage : public Message
     {
     public:
-        TestMessage();
+        TestMessage(std::string filter);
     };
 }

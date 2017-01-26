@@ -26,11 +26,11 @@
 #include "Move.hpp"
 #include "MoveList.hpp"
 #include "MoveSearchCriteria.hpp"
-#include "gtest/gtest.h"
 #include <sstream>
 #include <iostream>
 #include <chrono>
 #include <ctime>
+#include <string>
 
 using namespace TuxedoCat;
 
@@ -59,10 +59,6 @@ void Engine::run()
             if (msgType == MessageType::QUIT)
             {
                 break;
-            }
-            else if (msgType == MessageType::TEST)
-            {
-                test();
             }
             else if (msgType == MessageType::DIVIDE)
             {
@@ -219,34 +215,6 @@ std::string Engine::divide(int depth)
 void Engine::setboard(std::string fen)
 {
     position = Position(fen);
-}
-
-int Engine::test() const
-{
-    int argc {1};
-    char* argv[1];
-
-    int result;
-
-    argv[0] = new char[10];
-
-    argv[0][0] = 't';
-    argv[0][1] = 'u';
-    argv[0][2] = 'x';
-    argv[0][3] = 'e';
-    argv[0][4] = 'd';
-    argv[0][5] = 'o';
-    argv[0][6] = 'c';
-    argv[0][7] = 'a';
-    argv[0][8] = 't';
-    argv[0][9] = '\0';
-
-    ::testing::InitGoogleTest(&argc, argv);
-    result = RUN_ALL_TESTS();
-
-    delete argv[0];
-
-    return result;
 }
 
 std::string Engine::print() const

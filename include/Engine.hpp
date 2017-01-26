@@ -28,6 +28,7 @@
 #include "Message.hpp"
 #include "MessageQueue.hpp"
 #include <cstdint>
+#include <string>
 
 namespace TuxedoCat
 {
@@ -44,7 +45,7 @@ namespace TuxedoCat
         void run();
         std::string divide(int depth);
         void setboard(std::string fen);
-        int test() const;
+        int test(std::string filter) const;
         std::string print() const;
         void handleUserMoveMessage(const Message& msg);
 

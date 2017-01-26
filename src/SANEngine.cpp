@@ -80,12 +80,12 @@ std::string SANEngine::calculateNotation(Position& pos, const Move& move)
 
             if (ambiguity)
             {
-                if (filesDiffer)
+                if (filesDiffer && !ranksDiffer)
                 {
                     san << Utility::toAlgebraicCoordinate(
                         move.movingPiece.square)[0];
                 }
-                else if (ranksDiffer)
+                else if (ranksDiffer && !filesDiffer)
                 {
                     san << Utility::toAlgebraicCoordinate(
                         move.movingPiece.square)[1];

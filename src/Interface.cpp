@@ -65,10 +65,6 @@ void Interface::run()
             messages.addMessage(QuitMessage());
             break;
         }
-        else if (cmdParts[0] == "test")
-        {
-            messages.addMessage(TestMessage());
-        }
         else if (cmdParts[0] == "divide")
         {
             if (cmdParts.size() > 1)

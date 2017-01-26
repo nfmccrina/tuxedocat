@@ -22,18 +22,14 @@
 * DEALINGS IN THE SOFTWARE.
 */
 
-#pragma once
+#include "gtest/gtest.h"
 
-namespace TuxedoCat
+int main(int argc, char* argv[])
 {
-    enum class MessageType
-    {
-        SETBOARD,
-        QUIT,
-        DIVIDE,
-        PRINT,
-        PERFT,
-        USERMOVE,
-        UNDO
-    };
+    int result;
+
+    ::testing::InitGoogleTest(&argc, argv);
+    result = RUN_ALL_TESTS();
+
+    return result;
 }
