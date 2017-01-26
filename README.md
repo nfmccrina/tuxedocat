@@ -25,10 +25,8 @@ See the COPYING file.
 
 ### Windows
 
-There is a Visual Studio solution which will build the code, but Windows is
-a second-class citizen so it is not always up to date when I'm making lots of
-changes. Any time the code is release-worthy though I will make sure it can be
-built on Windows.
+CMake should generate Visual Studio projects, but I haven't had a chance to
+test it yet.
 
 ### Linux
 
@@ -40,8 +38,11 @@ You can get CMake from https://cmake.org/download/. On Linux you can do
 
 To build a debug version of the engine, do the following:
 `mkdir DebugBuild`
+
 `cd DebugBuild`
+
 `cmake -D CMAKE_BUILD_TYPE=Debug ..`
+
 `make`
 
 To build a release version, just replace "Debug" with "Release" in the steps
@@ -50,6 +51,10 @@ above.
 ## Usage
 
 `tuxedocat`
+
+or,
+
+`tuxedocat_test` to run the unit tests.
 
 ### Commands
 
@@ -63,8 +68,6 @@ depth.
 
 divide [depth]: Similar to perft, but prints a list of the root moves and how
 many of the perft branches originate from each move.
-
-test: Runs a small suite of unit tests.
 
 ## Logging
 
