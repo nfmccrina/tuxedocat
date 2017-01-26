@@ -95,7 +95,7 @@ namespace TuxedoCat
         uint64_t enPassantTarget;
         uint32_t fullMoveCounter;
         uint32_t halfMoveCounter;
-        std::stack<Position> positionStack;
+        std::stack<Position, std::vector<Position>> positionStack;
         uint64_t whiteBishops;
         uint64_t whiteKing;
         uint64_t whiteKnights;

@@ -27,6 +27,7 @@
 #include "LookupData.hpp"
 #include "Utility.hpp"
 #include <sstream>
+#include <cctype>
 
 using namespace TuxedoCat;
 
